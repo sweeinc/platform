@@ -76,7 +76,7 @@
     "url": "https://github.com/sweeinc/platform/issues"
   },
   "peerDependencies": {
-    "@mysten/sui": "^2.0.0"
+    "@mysten/sui": "^2.6.0"
   },
   "devDependencies": {
     "@mysten/sui": "^2.6.0",
