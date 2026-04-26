@@ -1,0 +1,58 @@
+{
+  "name": "@sweeinc/platform",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Swee Inc public TS SDK monorepo — release vault for mature, audited code",
+  "author": "Swee Inc",
+  "license": "Apache-2.0",
+  "type": "module",
+  "homepage": "https://github.com/sweeinc/platform",
+  "bugs": {
+    "url": "https://github.com/sweeinc/platform/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sweeinc/platform.git"
+  },
+  "scripts": {
+    "build": "moon run :build",
+    "test": "moon run :test",
+    "test:live": "moon run :test-live",
+    "typecheck": "moon run :typecheck",
+    "lint": "pnpm run oxlint:check && pnpm run prettier:check",
+    "lint:fix": "pnpm run oxlint:fix && pnpm run prettier:fix",
+    "oxlint:check": "oxlint .",
+    "oxlint:fix": "oxlint --fix .",
+    "prettier:check": "prettier -c --ignore-unknown .",
+    "prettier:fix": "prettier -w --ignore-unknown .",
+    "clean": "moon run :clean",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "moon run :build && changeset publish"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=10"
+  },
+  "packageManager": "pnpm@10.33.0",
+  "pnpm": {
+    "overrides": {
+      "@mysten/sui": "^2.6.0"
+    }
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.1",
+    "@changesets/cli": "^2.29.8",
+    "@ianvs/prettier-plugin-sort-imports": "^4.7.0",
+    "@moonrepo/cli": "^2.2.3",
+    "@manypkg/cli": "^0.24.0",
+    "oxlint": "^0.15.0",
+    "prettier": "^3.5.0",
+    "tsdown": "^0.6.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  },
+  "manypkg": {
+    "ignoredRules": ["INTERNAL_MISMATCH", "ROOT_HAS_DEV_DEPENDENCIES"]
+  }
+}

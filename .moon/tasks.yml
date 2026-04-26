@@ -1,0 +1,42 @@
+# Inherited tasks for all TS projects
+# See https://moonrepo.dev/docs/config/tasks
+
+$schema: 'https://moonrepo.dev/schemas/tasks.json'
+
+fileGroups:
+  sources:
+    - 'src/**/*'
+    - 'package.json'
+    - 'tsconfig.json'
+  tests:
+    - 'test/**/*'
+    - 'tests/**/*'
+    - '__tests__/**/*'
+
+tasks:
+  build:
+    command: 'tsdown'
+    inputs:
+      - '@group(sources)'
+      - '/.moon/toolchain.yml'
+    outputs:
+      - 'dist'
+
+  test:
+    command: 'vitest run'
+    deps:
+      - '~:build'
+    inputs:
+      - '@group(sources)'
+      - '@group(tests)'
+
+  typecheck:
+    command: 'tsc --noEmit'
+    inputs:
+      - '@group(sources)'
+      - '@group(tests)'
+
+  clean:
+    command: 'rm -rf dist node_modules .turbo .moon/cache'
+    options:
+      cache: false

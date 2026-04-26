@@ -1,0 +1,14 @@
+# Moon workspace config for sweeinc/platform
+# See https://moonrepo.dev/docs/config/workspace
+
+$schema: 'https://moonrepo.dev/schemas/workspace.json'
+
+# Project discovery — Moon finds projects under these globs
+projects:
+  - 'products/*/*'
+  - 'shared/*'
+
+# Version control settings
+vcs:
+  defaultBranch: 'main'
+  provider: 'github'
