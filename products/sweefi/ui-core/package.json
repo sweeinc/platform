@@ -1,6 +1,6 @@
 {
   "name": "@sweefi/ui-core",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "type": "module",
   "description": "Framework-agnostic payment state machine and adapter interface for SweeFi",
   "keywords": [
@@ -60,7 +60,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.13.4",
-    "tsdown": "^0.20.3",
+    "tsdown": "^0.21.10",
     "typescript": "^5.7.3",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.0.5"
