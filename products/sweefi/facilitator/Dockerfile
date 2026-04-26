@@ -16,7 +16,8 @@ FROM base AS build
 WORKDIR /app
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY products/ ./products/
-COPY shared/ ./shared/
+# shared/ is in pnpm-workspace.yaml but not yet populated; uncomment when packages land there:
+# COPY shared/ ./shared/
 RUN pnpm install --frozen-lockfile
 RUN pnpm --filter @sweefi/facilitator... build
 RUN pnpm --filter @sweefi/facilitator deploy /deploy --prod --legacy
