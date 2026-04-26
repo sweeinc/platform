@@ -1,0 +1,11 @@
+import { defineConfig } from "tsdown";
+
+export default defineConfig({
+  entry: ["src/index.ts", "src/cli.ts", "src/app.ts"],
+  format: "esm",
+  dts: true,
+  sourcemap: true,
+  target: "es2020",
+  outDir: "dist",
+  clean: true,
+});
