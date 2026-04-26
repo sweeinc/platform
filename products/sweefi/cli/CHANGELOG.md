@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.4
+
+### Patch Changes
+
+- c409402: Bulk migrate `@sweefi/*` packages from `sweeinc/sweefi` to `sweeinc/platform` under the v5.2 product-based subtree architecture (`products/sweefi/{name}/`). No API changes; same source code, new repo home. Patch bumps across all 8 packages. Tooling now Moon-orchestrated alongside pnpm + changesets.
+- Updated dependencies [c409402]
+  - @sweefi/sui@0.4.2
+
 All notable changes to `@sweefi/cli` will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
@@ -8,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed (v0.3 review)
+
 - Idempotent receipt hit now includes `txDigest` (populated via `showPreviousTransaction`)
 - Idempotency key matching uses exact segment comparison (prevents substring collisions with short keys)
 - pay-402 paid-fetch timeout/failure marked `retryable: false` (TX may already be on-chain)
@@ -16,16 +25,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Warning emitted when memo provided without `packageId` in `@sweefi/sui` client
 
 ### Fixed (v0.4 R1 — schema integrity + output contract)
+
 - PAYMENT_FAILED error code in schema corrected to `retryable: false` (matches code behavior)
 - `pay` command idempotent hit now includes `txDigest` (same fix as pay-402)
 
 ### Fixed (v0.4 R2 — adversarial audit)
+
 - `parseAmount` rejects hex literals (`0xFF`) that JavaScript's `Number()` silently parses as decimal
 - `parseDuration` guards against `Infinity` overflow before `BigInt()` conversion (prevents RangeError crash)
 - `sanitize()` base64 detection threshold lowered from 60 to 40 chars (covers Ed25519 44-char keys)
 - Error handler now tracks `_command` and `_reqCtx` module-level state for correct error envelope context
 
 ### Added
+
 - pay-402 `--dry-run` returns 402 requirements without executing payment
 - `dry-run` flag in pay-402 schema manifest
 - 41 schema integrity tests (CI-enforced cross-reference of schema vs actual command behavior)
@@ -35,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.3.0] - 2026-03-07
 
 ### Added
+
 - **pay-402 idempotency** via `--idempotency-key` — same crash-safe dedup as `pay`
 - **Payment metadata** in pay-402 output — `txDigest`, `receiptId`, `gasCostSui` in nested `payment` object
 - `--idempotency-key` required in JSON mode for `pay-402` (prevents silent double-spend)
@@ -42,14 +55,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CHANGELOG.md
 
 ### Changed
+
 - pay-402 output field `status` renamed to `httpStatus` (avoids ambiguity with tx status)
 
 ### Fixed
+
 - pay-402 routing now receives `idempotencyKey` and `dryRun` flags (previously only `pay` received these)
 
 ## [0.2.0] - 2026-03-07
 
 ### Added
+
 - Idempotent payments via `--idempotency-key` for `pay` command
 - `meta` block in every JSON response (network, timing, gas, requestId)
 - `sweefi schema` command — machine-readable manifest with commands, globalFlags, envVars, errorCodes
@@ -63,11 +79,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `requiresHumanAction` flag on mandate/revocation errors
 
 ### Changed
+
 - `--idempotency-key` required in JSON mode for `pay` (prevents silent double-spend)
 
 ## [0.1.0] - 2026-02-28
 
 ### Added
+
 - Initial release
 - Commands: pay, pay-402, balance, receipt, prepaid (deposit/status/list), mandate (create/check/list), wallet generate
 - JSON-first output with `--human` mode
