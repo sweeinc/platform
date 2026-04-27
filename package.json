@@ -15,20 +15,20 @@
     "url": "https://github.com/sweeinc/platform.git"
   },
   "scripts": {
-    "build": "moon run :build",
-    "test": "moon run :test",
-    "test:live": "moon run :test-live",
-    "typecheck": "moon run :typecheck",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "test:live": "turbo run test:live",
+    "typecheck": "turbo run typecheck",
     "lint": "pnpm run oxlint:check && pnpm run prettier:check",
     "lint:fix": "pnpm run oxlint:fix && pnpm run prettier:fix",
     "oxlint:check": "oxlint .",
     "oxlint:fix": "oxlint --fix .",
     "prettier:check": "prettier -c --ignore-unknown .",
     "prettier:fix": "prettier -w --ignore-unknown .",
-    "clean": "moon run :clean",
+    "clean": "turbo run clean && rm -rf node_modules/.cache .turbo",
     "changeset": "changeset",
     "version": "changeset version",
-    "release": "moon run :build && changeset publish"
+    "release": "turbo run build && changeset publish"
   },
   "engines": {
     "node": ">=20",
@@ -45,11 +45,11 @@
     "@arethetypeswrong/cli": "^0.18.1",
     "@changesets/cli": "^2.29.8",
     "@ianvs/prettier-plugin-sort-imports": "^4.7.0",
-    "@moonrepo/cli": "^2.2.3",
     "@manypkg/cli": "^0.24.0",
     "oxlint": "^0.15.0",
     "prettier": "^3.5.0",
     "tsdown": "^0.21.10",
+    "turbo": "^2.5.0",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
   },
