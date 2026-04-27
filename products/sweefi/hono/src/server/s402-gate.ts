@@ -25,17 +25,13 @@
  */
 
 import type { Context, MiddlewareHandler } from 'hono';
+import type { s402PaymentRequirements, s402Scheme, s402SettleResponse } from 's402';
 import {
-  S402_VERSION,
-  S402_HEADERS,
-  encodePaymentRequired,
   decodePaymentPayload,
+  encodePaymentRequired,
   encodeSettleResponse,
-} from 's402';
-import type {
-  s402PaymentRequirements,
-  s402Scheme,
-  s402SettleResponse,
+  S402_HEADERS,
+  S402_VERSION,
 } from 's402';
 
 export interface s402GateConfig {
@@ -67,7 +63,10 @@ export interface s402GateConfig {
   /** Gas station config — when set, the facilitator sponsors gas for transactions */
   gasStation?: { sponsorAddress: string; maxBudget?: string };
   /** Custom verify+settle handler (overrides built-in facilitator call) */
-  processPayment?: (payload: unknown, requirements: s402PaymentRequirements) => Promise<s402SettleResponse>;
+  processPayment?: (
+    payload: unknown,
+    requirements: s402PaymentRequirements,
+  ) => Promise<s402SettleResponse>;
 }
 
 export function s402Gate(config: s402GateConfig): MiddlewareHandler {
@@ -111,12 +110,14 @@ export function s402Gate(config: s402GateConfig): MiddlewareHandler {
     protocolFeeAddress,
     mandate: mandate ? { required: mandate.required, minPerTx: mandate.minPerTx } : undefined,
     extensions: gasStation ? { gasStation } : undefined,
-    prepaid: prepaid ? {
-      ratePerCall: prepaid.ratePerCall,
-      maxCalls: prepaid.maxCalls,
-      minDeposit: prepaid.minDeposit,
-      withdrawalDelayMs: prepaid.withdrawalDelayMs,
-    } : undefined,
+    prepaid: prepaid
+      ? {
+          ratePerCall: prepaid.ratePerCall,
+          maxCalls: prepaid.maxCalls,
+          minDeposit: prepaid.minDeposit,
+          withdrawalDelayMs: prepaid.withdrawalDelayMs,
+        }
+      : undefined,
   };
 
   return async (c: Context, next) => {
@@ -127,13 +128,9 @@ export function s402Gate(config: s402GateConfig): MiddlewareHandler {
       // No payment — return 402 with requirements
       const encoded = encodePaymentRequired(requirements);
 
-      return c.json(
-        { error: 'Payment Required', s402Version: S402_VERSION },
-        402,
-        {
-          [S402_HEADERS.PAYMENT_REQUIRED]: encoded,
-        },
-      );
+      return c.json({ error: 'Payment Required', s402Version: S402_VERSION }, 402, {
+        [S402_HEADERS.PAYMENT_REQUIRED]: encoded,
+      });
     }
 
     // Payment present — decode and process
@@ -164,17 +161,17 @@ export function s402Gate(config: s402GateConfig): MiddlewareHandler {
         // has NOT been verified or settled on-chain. Granting access here
         // would allow any well-formed (but potentially unfunded) payload through.
         return c.json(
-          { error: 'Payment settlement not configured. Server must provide a processPayment handler.' },
+          {
+            error:
+              'Payment settlement not configured. Server must provide a processPayment handler.',
+          },
           402,
         );
       }
 
       await next();
     } catch (error) {
-      return c.json(
-        { error: error instanceof Error ? error.message : 'Invalid payment' },
-        400,
-      );
+      return c.json({ error: error instanceof Error ? error.message : 'Invalid payment' }, 400);
     }
   };
 }

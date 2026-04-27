@@ -1,14 +1,17 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 const envSchema = z.object({
   /** Port to listen on */
   PORT: z.coerce.number().default(4022),
 
   /** Comma-separated list of valid API keys — each key must be ≥16 characters */
-  API_KEYS: z.string().min(1).refine(
-    (val) => val.split(",").every((k) => k.trim().length >= 16),
-    { message: "Each API key must be at least 16 characters. Short keys are trivially brute-forceable." }
-  ),
+  API_KEYS: z
+    .string()
+    .min(1)
+    .refine((val) => val.split(',').every((k) => k.trim().length >= 16), {
+      message:
+        'Each API key must be at least 16 characters. Short keys are trivially brute-forceable.',
+    }),
 
   /** Fee in micro-percent (default: 5000 = 0.5%, where 1000000 = 100%) */
   FEE_MICRO_PERCENT: z.coerce.number().min(0).max(1_000_000).default(5_000),
@@ -55,7 +58,7 @@ const envSchema = z.object({
   RATE_LIMIT_REFILL_RATE: z.coerce.number().min(0.1).default(10),
 
   /** Log level */
-  LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
+  LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
 });
 
 export type Config = z.infer<typeof envSchema>;

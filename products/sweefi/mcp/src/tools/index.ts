@@ -1,16 +1,16 @@
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { SweefiContext } from "../context.js";
-import { registerBalanceTool } from "./balance.js";
-import { registerSupportedTool } from "./supported.js";
-import { registerReceiptTool } from "./receipt.js";
-import { registerPayTool } from "./pay.js";
-import { registerInvoiceTools } from "./invoice.js";
-import { registerStreamTools } from "./stream.js";
-import { registerEscrowTools } from "./escrow.js";
-import { registerProveTool } from "./prove.js";
-import { registerAdminTools } from "./admin.js";
-import { registerPrepaidTools, registerPrepaidProviderTools } from "./prepaid.js";
-import { registerMandateTools } from "./mandate.js";
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { SweefiContext } from '../context.js';
+import { registerAdminTools } from './admin.js';
+import { registerBalanceTool } from './balance.js';
+import { registerEscrowTools } from './escrow.js';
+import { registerInvoiceTools } from './invoice.js';
+import { registerMandateTools } from './mandate.js';
+import { registerPayTool } from './pay.js';
+import { registerPrepaidProviderTools, registerPrepaidTools } from './prepaid.js';
+import { registerProveTool } from './prove.js';
+import { registerReceiptTool } from './receipt.js';
+import { registerStreamTools } from './stream.js';
+import { registerSupportedTool } from './supported.js';
 
 export interface RegisterToolsOptions {
   /** Enable admin tools (pause/unpause/burn). Defaults to false. */
@@ -25,7 +25,11 @@ export interface RegisterToolsOptions {
  * Admin tools (pause/unpause/burn) are only registered when explicitly opted in.
  * Provider tools (prepaid claim) are only registered when explicitly opted in.
  */
-export function registerAllTools(server: McpServer, ctx: SweefiContext, opts?: RegisterToolsOptions) {
+export function registerAllTools(
+  server: McpServer,
+  ctx: SweefiContext,
+  opts?: RegisterToolsOptions,
+) {
   // Read-only tools (no wallet needed)
   registerBalanceTool(server, ctx);
   registerSupportedTool(server, ctx);

@@ -18,24 +18,20 @@
  *   const controller = createPaymentController(adapter);
  */
 
-import {
-  PublicKey,
-  SystemProgram,
-  Transaction,
-} from '@solana/web3.js';
+import type { Connection } from '@solana/web3.js';
+import type { PaymentAdapter, SimulationResult } from '@sweefi/ui-core';
+import type { s402PaymentRequirements } from 's402';
+import type { SolanaNetwork } from '../constants.js';
+import type { ClientSolanaSigner } from '../signer.js';
 import {
   createAssociatedTokenAccountIdempotentInstruction,
   createTransferInstruction,
   getAssociatedTokenAddress,
   TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
-import type { Connection } from '@solana/web3.js';
-import type { PaymentAdapter, SimulationResult } from '@sweefi/ui-core';
-import type { s402PaymentRequirements } from 's402';
-import type { ClientSolanaSigner } from '../signer.js';
+import { PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
+import { ATA_RENT_LAMPORTS, BASE_FEE_LAMPORTS, NATIVE_SOL_MINT } from '../constants.js';
 import { ExactSolanaClientScheme } from '../s402/exact/client.js';
-import type { SolanaNetwork } from '../constants.js';
-import { NATIVE_SOL_MINT, BASE_FEE_LAMPORTS, ATA_RENT_LAMPORTS } from '../constants.js';
 import { base64ToUint8Array } from '../utils/encoding.js';
 
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -181,14 +177,7 @@ export class SolanaPaymentAdapter implements PaymentAdapter {
           );
         } else {
           tx.add(
-            createTransferInstruction(
-              sourceAta,
-              destAta,
-              payer,
-              totalAmount,
-              [],
-              TOKEN_PROGRAM_ID,
-            ),
+            createTransferInstruction(sourceAta, destAta, payer, totalAmount, [], TOKEN_PROGRAM_ID),
           );
         }
       }
@@ -212,9 +201,7 @@ export class SolanaPaymentAdapter implements PaymentAdapter {
       return {
         success: true,
         estimatedFee: {
-          amount: ataCreationRequired
-            ? BASE_FEE_LAMPORTS + ATA_RENT_LAMPORTS
-            : BASE_FEE_LAMPORTS,
+          amount: ataCreationRequired ? BASE_FEE_LAMPORTS + ATA_RENT_LAMPORTS : BASE_FEE_LAMPORTS,
           currency: 'SOL',
         },
         ...(ataCreationRequired && {
@@ -276,9 +263,7 @@ export class SolanaPaymentAdapter implements PaymentAdapter {
     );
 
     if (confirmation.value.err) {
-      throw new Error(
-        `Transaction failed: ${JSON.stringify(confirmation.value.err)}`,
-      );
+      throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
     }
 
     return { txId: signature };
@@ -306,9 +291,7 @@ export class SolanaPaymentAdapter implements PaymentAdapter {
     const tx = new Transaction();
 
     // Idempotent ATA creation — no-ops if ATA already exists (race condition safety).
-    tx.add(
-      createAssociatedTokenAccountIdempotentInstruction(payer, destAta, recipient, mint),
-    );
+    tx.add(createAssociatedTokenAccountIdempotentInstruction(payer, destAta, recipient, mint));
 
     if (reqs.protocolFeeBps && reqs.protocolFeeBps > 0 && reqs.protocolFeeAddress) {
       const feeAmount = (totalAmount * BigInt(reqs.protocolFeeBps)) / 10000n;
@@ -325,8 +308,10 @@ export class SolanaPaymentAdapter implements PaymentAdapter {
       );
     }
 
-    const { serialized, blockhash, lastValidBlockHeight } =
-      await this.wallet.signTransaction(tx, this.connection);
+    const { serialized, blockhash, lastValidBlockHeight } = await this.wallet.signTransaction(
+      tx,
+      this.connection,
+    );
 
     const txBytes = base64ToUint8Array(serialized);
     const txId = await this.connection.sendRawTransaction(txBytes, { skipPreflight: false });

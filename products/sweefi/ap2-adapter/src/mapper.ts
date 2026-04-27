@@ -16,12 +16,12 @@
  */
 
 import type {
-  AP2IntentMandate,
   AP2CartMandate,
-  AP2PaymentReceipt,
+  AP2IntentMandate,
   AP2PaymentMethodData,
-  MandateDefaults,
+  AP2PaymentReceipt,
   InvoiceDefaults,
+  MandateDefaults,
 } from './types';
 
 // Re-use the SweeFi param types directly (no wrapper)
@@ -137,9 +137,7 @@ export function createInvoiceFromAP2Cart(
   const { currency, value } = total.amount;
 
   if (currency !== 'USD') {
-    throw new Error(
-      `Unsupported currency: ${currency}. Only USD is currently supported.`,
-    );
+    throw new Error(`Unsupported currency: ${currency}. Only USD is currently supported.`);
   }
 
   if (value <= 0) {
@@ -152,12 +150,12 @@ export function createInvoiceFromAP2Cart(
   const expectedAmount = fiatToBaseUnits(value, config.usdToBaseUnits);
 
   return {
-    sender: config.payee,        // Payee creates the invoice
-    recipient: config.payee,     // Payee receives payment
+    sender: config.payee, // Payee creates the invoice
+    recipient: config.payee, // Payee receives payment
     expectedAmount,
     feeMicroPercent: config.feeMicroPercent,
     feeRecipient: config.feeRecipient,
-    sendTo: config.payer,        // Invoice sent to payer
+    sendTo: config.payer, // Invoice sent to payer
   };
 }
 
@@ -205,9 +203,7 @@ export function toAP2PaymentReceiptError(errorMessage: string): AP2PaymentReceip
  *
  * @param schemes - s402 schemes this facilitator supports (default: all 5)
  */
-export function toAP2PaymentMethodData(
-  schemes?: string[],
-): AP2PaymentMethodData {
+export function toAP2PaymentMethodData(schemes?: string[]): AP2PaymentMethodData {
   return {
     supported_methods: ['s402'],
     data: {

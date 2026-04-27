@@ -16,35 +16,35 @@
  * Skip with: SKIP_DRYRUN=1 pnpm test
  */
 
-import { describe, it, beforeAll } from "vitest";
-import { SuiJsonRpcClient, getJsonRpcFullnodeUrl } from "@mysten/sui/jsonRpc";
-import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
+import { getJsonRpcFullnodeUrl, SuiJsonRpcClient } from '@mysten/sui/jsonRpc';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+import { beforeAll, describe, it } from 'vitest';
 import {
-  testnetConfig,
-  buildPayTx,
-  buildPayComposableTx,
-  buildPayAndProveTx,
+  buildCreateEscrowTx,
   buildCreateInvoiceTx,
   buildCreateStreamTx,
   buildCreateStreamWithTimeoutTx,
-  buildCreateEscrowTx,
-} from "../../src/ptb";
+  buildPayAndProveTx,
+  buildPayComposableTx,
+  buildPayTx,
+  testnetConfig,
+} from '../../src/ptb';
 
 // Live lane is opt-in to keep default CI/local runs deterministic.
-const LIVE_TESTNET = process.env.SWEEFI_LIVE_TESTNET === "1";
-const SKIP = process.env.SKIP_DRYRUN === "1" || !LIVE_TESTNET;
+const LIVE_TESTNET = process.env.SWEEFI_LIVE_TESTNET === '1';
+const SKIP = process.env.SKIP_DRYRUN === '1' || !LIVE_TESTNET;
 
-const SUI_COIN_TYPE = "0x2::sui::SUI";
+const SUI_COIN_TYPE = '0x2::sui::SUI';
 const config = testnetConfig;
 
 let client: SuiJsonRpcClient;
 let senderAddress: string;
-const RECIPIENT = "0x" + "22".repeat(32);
-const FEE_RECIPIENT = "0x" + "33".repeat(32);
-const ARBITER = "0x" + "77".repeat(32);
+const RECIPIENT = '0x' + '22'.repeat(32);
+const FEE_RECIPIENT = '0x' + '33'.repeat(32);
+const ARBITER = '0x' + '77'.repeat(32);
 
 beforeAll(() => {
-  client = new SuiJsonRpcClient({ url: getJsonRpcFullnodeUrl("testnet"), network: "testnet" });
+  client = new SuiJsonRpcClient({ url: getJsonRpcFullnodeUrl('testnet'), network: 'testnet' });
   const sender = Ed25519Keypair.generate();
   senderAddress = sender.toSuiAddress();
 });
@@ -54,7 +54,7 @@ beforeAll(() => {
  * Uses devInspectTransactionBlock which doesn't require gas coins —
  * the RPC simulates execution with unlimited gas.
  */
-async function devInspect(tx: import("@mysten/sui/transactions").Transaction) {
+async function devInspect(tx: import('@mysten/sui/transactions').Transaction) {
   const result = await client.devInspectTransactionBlock({
     transactionBlock: tx,
     sender: senderAddress,
@@ -70,21 +70,19 @@ async function devInspect(tx: import("@mysten/sui/transactions").Transaction) {
  */
 function assertValidStructure(result: any, builderName: string) {
   const status = result.effects?.status;
-  if (status?.status === "success") return; // great — full valid execution
+  if (status?.status === 'success') return; // great — full valid execution
 
-  const error = status?.error || "";
+  const error = status?.error || '';
   // These are acceptable — PTB is valid, just no funds on ephemeral key
   const acceptableErrors = [
-    "InsufficientGas",
-    "InsufficientCoinBalance",
-    "GasBalanceTooLow",
-    "gas", // various gas-related
-    "CommandArgumentError", // coinWithBalance can't resolve with no coins
+    'InsufficientGas',
+    'InsufficientCoinBalance',
+    'GasBalanceTooLow',
+    'gas', // various gas-related
+    'CommandArgumentError', // coinWithBalance can't resolve with no coins
   ];
 
-  const isAcceptable = acceptableErrors.some((e) =>
-    error.toLowerCase().includes(e.toLowerCase()),
-  );
+  const isAcceptable = acceptableErrors.some((e) => error.toLowerCase().includes(e.toLowerCase()));
 
   if (!isAcceptable) {
     // This is a real error — the PTB structure doesn't match the contract
@@ -95,10 +93,10 @@ function assertValidStructure(result: any, builderName: string) {
   }
 }
 
-describe.skipIf(SKIP)("PTB dev-inspect against live testnet", () => {
+describe.skipIf(SKIP)('PTB dev-inspect against live testnet', () => {
   // ── Payment builders ──────────────────────────────────────
 
-  it("buildPayTx dev-inspects without Move errors", async () => {
+  it('buildPayTx dev-inspects without Move errors', async () => {
     const tx = buildPayTx(config, {
       coinType: SUI_COIN_TYPE,
       sender: senderAddress,
@@ -108,10 +106,10 @@ describe.skipIf(SKIP)("PTB dev-inspect against live testnet", () => {
       feeRecipient: FEE_RECIPIENT,
     });
     const result = await devInspect(tx);
-    assertValidStructure(result, "buildPayTx");
+    assertValidStructure(result, 'buildPayTx');
   }, 15000);
 
-  it("buildPayComposableTx dev-inspects without Move errors", async () => {
+  it('buildPayComposableTx dev-inspects without Move errors', async () => {
     const { tx, receipt } = buildPayComposableTx(config, {
       coinType: SUI_COIN_TYPE,
       sender: senderAddress,
@@ -123,10 +121,10 @@ describe.skipIf(SKIP)("PTB dev-inspect against live testnet", () => {
     // Must consume the receipt or Sui rejects with UnusedValueWithoutDrop
     tx.transferObjects([receipt], senderAddress);
     const result = await devInspect(tx);
-    assertValidStructure(result, "buildPayComposableTx");
+    assertValidStructure(result, 'buildPayComposableTx');
   }, 15000);
 
-  it("buildPayAndProveTx dev-inspects without Move errors", async () => {
+  it('buildPayAndProveTx dev-inspects without Move errors', async () => {
     const tx = buildPayAndProveTx(config, {
       coinType: SUI_COIN_TYPE,
       sender: senderAddress,
@@ -135,13 +133,13 @@ describe.skipIf(SKIP)("PTB dev-inspect against live testnet", () => {
       feeMicroPercent: 5_000,
       feeRecipient: FEE_RECIPIENT,
       receiptDestination: senderAddress,
-      memo: "dryrun-test",
+      memo: 'dryrun-test',
     });
     const result = await devInspect(tx);
-    assertValidStructure(result, "buildPayAndProveTx");
+    assertValidStructure(result, 'buildPayAndProveTx');
   }, 15000);
 
-  it("buildCreateInvoiceTx dev-inspects without Move errors", async () => {
+  it('buildCreateInvoiceTx dev-inspects without Move errors', async () => {
     const tx = buildCreateInvoiceTx(config, {
       sender: senderAddress,
       recipient: RECIPIENT,
@@ -151,12 +149,12 @@ describe.skipIf(SKIP)("PTB dev-inspect against live testnet", () => {
       sendTo: senderAddress,
     });
     const result = await devInspect(tx);
-    assertValidStructure(result, "buildCreateInvoiceTx");
+    assertValidStructure(result, 'buildCreateInvoiceTx');
   }, 15000);
 
   // ── Stream builders ───────────────────────────────────────
 
-  it("buildCreateStreamTx dev-inspects without Move errors", async () => {
+  it('buildCreateStreamTx dev-inspects without Move errors', async () => {
     const tx = buildCreateStreamTx(config, {
       coinType: SUI_COIN_TYPE,
       sender: senderAddress,
@@ -168,10 +166,10 @@ describe.skipIf(SKIP)("PTB dev-inspect against live testnet", () => {
       feeRecipient: FEE_RECIPIENT,
     });
     const result = await devInspect(tx);
-    assertValidStructure(result, "buildCreateStreamTx");
+    assertValidStructure(result, 'buildCreateStreamTx');
   }, 15000);
 
-  it("buildCreateStreamWithTimeoutTx dev-inspects without Move errors (v6)", async () => {
+  it('buildCreateStreamWithTimeoutTx dev-inspects without Move errors (v6)', async () => {
     const tx = buildCreateStreamWithTimeoutTx(config, {
       coinType: SUI_COIN_TYPE,
       sender: senderAddress,
@@ -184,7 +182,7 @@ describe.skipIf(SKIP)("PTB dev-inspect against live testnet", () => {
       recipientCloseTimeoutMs: 172_800_000n, // 2 days
     });
     const result = await devInspect(tx);
-    assertValidStructure(result, "buildCreateStreamWithTimeoutTx");
+    assertValidStructure(result, 'buildCreateStreamWithTimeoutTx');
   }, 15000);
 
   // NOTE: claim, pause, resume, close, recipientClose, topUp need a real
@@ -193,7 +191,7 @@ describe.skipIf(SKIP)("PTB dev-inspect against live testnet", () => {
 
   // ── Escrow builders ───────────────────────────────────────
 
-  it("buildCreateEscrowTx dev-inspects without Move errors", async () => {
+  it('buildCreateEscrowTx dev-inspects without Move errors', async () => {
     const tx = buildCreateEscrowTx(config, {
       coinType: SUI_COIN_TYPE,
       sender: senderAddress,
@@ -203,10 +201,10 @@ describe.skipIf(SKIP)("PTB dev-inspect against live testnet", () => {
       deadlineMs: BigInt(Date.now() + 86_400_000),
       feeMicroPercent: 5_000,
       feeRecipient: FEE_RECIPIENT,
-      memo: "dryrun-test",
+      memo: 'dryrun-test',
     });
     const result = await devInspect(tx);
-    assertValidStructure(result, "buildCreateEscrowTx");
+    assertValidStructure(result, 'buildCreateEscrowTx');
   }, 15000);
 
   // NOTE: release, refund, dispute need a real Escrow object ID.

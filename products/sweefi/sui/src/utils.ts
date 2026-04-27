@@ -1,13 +1,13 @@
-import { SuiJsonRpcClient, getJsonRpcFullnodeUrl } from "@mysten/sui/jsonRpc";
-import { normalizeStructTag } from "@mysten/sui/utils";
+import { getJsonRpcFullnodeUrl, SuiJsonRpcClient } from '@mysten/sui/jsonRpc';
+import { normalizeStructTag } from '@mysten/sui/utils';
 import {
+  SUI_ADDRESS_REGEX,
+  SUI_DEVNET_CAIP2,
   SUI_MAINNET_CAIP2,
   SUI_TESTNET_CAIP2,
-  SUI_DEVNET_CAIP2,
   USDC_MAINNET,
   USDC_TESTNET,
-  SUI_ADDRESS_REGEX,
-} from "./constants";
+} from './constants';
 
 /**
  * Create a SuiClient for the specified network
@@ -32,9 +32,12 @@ export function createSuiClient(network: string, customRpcUrl?: string): SuiJson
 
 function caip2ToShortNetwork(network: string): 'mainnet' | 'testnet' | 'devnet' {
   switch (network) {
-    case SUI_MAINNET_CAIP2: return 'mainnet';
-    case SUI_TESTNET_CAIP2: return 'testnet';
-    case SUI_DEVNET_CAIP2: return 'devnet';
+    case SUI_MAINNET_CAIP2:
+      return 'mainnet';
+    case SUI_TESTNET_CAIP2:
+      return 'testnet';
+    case SUI_DEVNET_CAIP2:
+      return 'devnet';
     default:
       throw new Error(`Unsupported Sui network: ${network}`);
   }
@@ -80,17 +83,17 @@ export function validateSuiAddress(address: string): boolean {
  */
 export function convertToTokenAmount(decimalAmount: string, decimals: number): string {
   const trimmed = decimalAmount.trim();
-  if (trimmed.startsWith("-")) {
+  if (trimmed.startsWith('-')) {
     throw new Error(`Negative amounts not allowed: ${decimalAmount}`);
   }
   if (!/^\d+(\.\d+)?$/.test(trimmed)) {
     throw new Error(`Invalid amount: ${decimalAmount}`);
   }
   // Pure string-based conversion — no parseFloat to avoid precision loss
-  const [intPart, decPart = ""] = trimmed.split(".");
+  const [intPart, decPart = ''] = trimmed.split('.');
   // Pad or truncate the decimal part to exactly `decimals` places
-  const paddedDec = decPart.slice(0, decimals).padEnd(decimals, "0");
-  const tokenAmount = (intPart + paddedDec).replace(/^0+/, "") || "0";
+  const paddedDec = decPart.slice(0, decimals).padEnd(decimals, '0');
+  const tokenAmount = (intPart + paddedDec).replace(/^0+/, '') || '0';
   return tokenAmount;
 }
 

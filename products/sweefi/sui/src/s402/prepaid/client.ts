@@ -16,16 +16,16 @@
 
 import type {
   s402ClientScheme,
+  s402PaymentPayload,
   s402PaymentRequirements,
   s402PrepaidPayload,
-  s402PaymentPayload,
-  s402SettleResponse,
   s402SettlementVerification,
+  s402SettleResponse,
 } from 's402';
-import { S402_VERSION } from 's402';
-import { Transaction } from '@mysten/sui/transactions';
-import type { ClientSuiSigner } from '../../signer.js';
 import type { SweefiConfig } from '../../ptb/types.js';
+import type { ClientSuiSigner } from '../../signer.js';
+import { Transaction } from '@mysten/sui/transactions';
+import { S402_VERSION } from 's402';
 import { bpsToMicroPercent } from '../../ptb/assert.js';
 import { PrepaidContract } from '../../transactions/prepaid.js';
 import { createBuilderConfig } from '../../utils/config.js';
@@ -39,15 +39,15 @@ export class PrepaidSuiClientScheme implements s402ClientScheme {
     private readonly signer: ClientSuiSigner,
     config: SweefiConfig,
   ) {
-    this.#contract = new PrepaidContract(createBuilderConfig({
-      packageId: config.packageId,
-      protocolState: config.protocolStateId,
-    }));
+    this.#contract = new PrepaidContract(
+      createBuilderConfig({
+        packageId: config.packageId,
+        protocolState: config.protocolStateId,
+      }),
+    );
   }
 
-  async createPayment(
-    requirements: s402PaymentRequirements,
-  ): Promise<s402PrepaidPayload> {
+  async createPayment(requirements: s402PaymentRequirements): Promise<s402PrepaidPayload> {
     const prepaid = requirements.prepaid;
     if (!prepaid) {
       throw new Error('Prepaid requirements missing prepaid config');
@@ -81,7 +81,7 @@ export class PrepaidSuiClientScheme implements s402ClientScheme {
       // Client-side validation: mirrors Move's EWithdrawalDelayTooShort assert
       if (withdrawalDelay < disputeWindowMs) {
         throw new Error(
-          `withdrawalDelayMs (${withdrawalDelay}) must be >= disputeWindowMs (${disputeWindowMs})`
+          `withdrawalDelayMs (${withdrawalDelay}) must be >= disputeWindowMs (${disputeWindowMs})`,
         );
       }
 

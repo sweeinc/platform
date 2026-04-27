@@ -1,13 +1,13 @@
-import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
-import type { SweefiConfig } from "./types";
-import { SUI_CLOCK } from "./deployments";
-import { assertFeeMicroPercent, assertPositive } from "./assert";
+import type { SweefiConfig } from './types';
+import { coinWithBalance, Transaction } from '@mysten/sui/transactions';
+import { assertFeeMicroPercent, assertPositive } from './assert';
+import { SUI_CLOCK } from './deployments';
 
 function requireProtocolState(config: SweefiConfig): string {
   if (!config.protocolStateId) {
     throw new Error(
-      "buildCreateUptoDepositTx: SweefiConfig.protocolStateId is required for upto deposits. " +
-      "Set it to the shared ProtocolState object ID from your deployment.",
+      'buildCreateUptoDepositTx: SweefiConfig.protocolStateId is required for upto deposits. ' +
+        'Set it to the shared ProtocolState object ID from your deployment.',
     );
   }
   return config.protocolStateId;
@@ -73,14 +73,14 @@ export function buildCreateUptoDepositTx(
   config: SweefiConfig,
   params: CreateUptoDepositParams,
 ): Transaction {
-  assertPositive(params.maxAmount, "maxAmount", "buildCreateUptoDepositTx");
-  assertFeeMicroPercent(params.feeMicroPercent, "buildCreateUptoDepositTx");
+  assertPositive(params.maxAmount, 'maxAmount', 'buildCreateUptoDepositTx');
+  assertFeeMicroPercent(params.feeMicroPercent, 'buildCreateUptoDepositTx');
 
   if (params.settlementCeiling !== undefined) {
     if (params.settlementCeiling < 1n || params.settlementCeiling > params.maxAmount) {
       throw new Error(
         `buildCreateUptoDepositTx: settlementCeiling must be 1 <= ceiling <= maxAmount ` +
-        `(got ceiling=${params.settlementCeiling}, maxAmount=${params.maxAmount})`,
+          `(got ceiling=${params.settlementCeiling}, maxAmount=${params.maxAmount})`,
       );
     }
   }
@@ -134,11 +134,8 @@ export function buildCreateUptoDepositTx(
  * The facilitator calls this with the actual amount determined by usage.
  * Sends actualAmount to the recipient (minus fee), remainder back to payer.
  */
-export function buildSettleUptoTx(
-  config: SweefiConfig,
-  params: SettleUptoParams,
-): Transaction {
-  assertPositive(params.actualAmount, "actualAmount", "buildSettleUptoTx");
+export function buildSettleUptoTx(config: SweefiConfig, params: SettleUptoParams): Transaction {
+  assertPositive(params.actualAmount, 'actualAmount', 'buildSettleUptoTx');
 
   const tx = new Transaction();
   tx.setSender(params.sender);
@@ -161,20 +158,14 @@ export function buildSettleUptoTx(
  * Can be triggered by anyone after the settlement deadline.
  * Returns the full deposit to the payer. No fee charged on expiry.
  */
-export function buildExpireUptoTx(
-  config: SweefiConfig,
-  params: ExpireUptoParams,
-): Transaction {
+export function buildExpireUptoTx(config: SweefiConfig, params: ExpireUptoParams): Transaction {
   const tx = new Transaction();
   tx.setSender(params.sender);
 
   tx.moveCall({
     target: `${config.packageId}::upto_deposit::expire`,
     typeArguments: [params.coinType],
-    arguments: [
-      tx.object(params.depositId),
-      tx.object(SUI_CLOCK),
-    ],
+    arguments: [tx.object(params.depositId), tx.object(SUI_CLOCK)],
   });
 
   return tx;

@@ -1,17 +1,17 @@
-import { Hono } from "hono";
-import { bodyLimit } from "hono/body-limit";
-import { createFacilitator } from "./facilitator";
-import { createRoutes } from "./routes";
-import { apiKeyAuth } from "./auth/api-key";
-import { RateLimiter } from "./middleware/rate-limiter";
-import { requestLogger } from "./middleware/logger";
-import { payloadDedup } from "./middleware/dedup";
-import { UsageTracker } from "./metering/usage-tracker";
-import { InMemoryGasSponsorTracker } from "./metering/gas-sponsor-tracker";
-import { meteringContext } from "./metering/hooks";
-import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
-import { decodeSuiPrivateKey } from "@mysten/sui/cryptography";
-import type { Config } from "./config";
+import type { Config } from './config';
+import { decodeSuiPrivateKey } from '@mysten/sui/cryptography';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+import { Hono } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
+import { apiKeyAuth } from './auth/api-key';
+import { createFacilitator } from './facilitator';
+import { InMemoryGasSponsorTracker } from './metering/gas-sponsor-tracker';
+import { meteringContext } from './metering/hooks';
+import { UsageTracker } from './metering/usage-tracker';
+import { payloadDedup } from './middleware/dedup';
+import { requestLogger } from './middleware/logger';
+import { RateLimiter } from './middleware/rate-limiter';
+import { createRoutes } from './routes';
 
 /**
  * Decode a facilitator keypair from bech32 (suiprivkey1...) or raw base64.
@@ -32,8 +32,8 @@ function decodeKeypair(raw: string | undefined): Ed25519Keypair | undefined {
 
 /** Default Sui RPC URLs used when custom ones are not configured in env. */
 const DEFAULT_RPC_URLS: Record<string, string> = {
-  "sui:testnet": "https://fullnode.testnet.sui.io:443",
-  "sui:mainnet": "https://fullnode.mainnet.sui.io:443",
+  'sui:testnet': 'https://fullnode.testnet.sui.io:443',
+  'sui:mainnet': 'https://fullnode.mainnet.sui.io:443',
 };
 
 /**
@@ -43,23 +43,23 @@ const DEFAULT_RPC_URLS: Record<string, string> = {
  * call that proves the endpoint is reachable and responding to JSON-RPC.
  * 3-second timeout prevents /ready from hanging during Sui RPC outages.
  */
-async function pingRpc(url: string): Promise<"ok" | "timeout" | "error"> {
+async function pingRpc(url: string): Promise<'ok' | 'timeout' | 'error'> {
   try {
     const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        jsonrpc: "2.0",
+        jsonrpc: '2.0',
         id: 1,
-        method: "sui_getLatestCheckpointSequenceNumber",
+        method: 'sui_getLatestCheckpointSequenceNumber',
         params: [],
       }),
       signal: AbortSignal.timeout(3_000),
     });
-    return res.ok ? "ok" : "error";
+    return res.ok ? 'ok' : 'error';
   } catch (err) {
-    if (err instanceof DOMException && err.name === "TimeoutError") return "timeout";
-    return "error";
+    if (err instanceof DOMException && err.name === 'TimeoutError') return 'timeout';
+    return 'error';
   }
 }
 
@@ -76,11 +76,11 @@ export function createApp(config: Config) {
   const app = new Hono();
 
   // ── Global middleware ────────────────────────────────────────────────────────
-  app.use("*", bodyLimit({ maxSize: 256 * 1024 })); // 256 KB
-  app.use("*", requestLogger());
+  app.use('*', bodyLimit({ maxSize: 256 * 1024 })); // 256 KB
+  app.use('*', requestLogger());
 
   // ── Public endpoints (no auth) ───────────────────────────────────────────────
-  app.get("/health", (c) => c.json({ status: "ok", timestamp: new Date().toISOString() }));
+  app.get('/health', (c) => c.json({ status: 'ok', timestamp: new Date().toISOString() }));
 
   /**
    * Readiness probe for orchestrators (Kubernetes, Fly.io).
@@ -99,17 +99,18 @@ export function createApp(config: Config) {
    * unauthenticated callers from using /ready as an RPC amplification vector.
    * Without caching, each request generates 2 outbound RPC calls to Sui fullnodes.
    */
-  let readyCache: { result: Record<string, unknown>; ready: boolean; expiresAt: number } | null = null;
+  let readyCache: { result: Record<string, unknown>; ready: boolean; expiresAt: number } | null =
+    null;
 
-  app.get("/ready", async (c) => {
+  app.get('/ready', async (c) => {
     const now = Date.now();
     if (readyCache && readyCache.expiresAt > now) {
       return c.json(readyCache.result, readyCache.ready ? 200 : 503);
     }
 
     const rpcUrls: Record<string, string> = {
-      "sui:testnet": config.SUI_TESTNET_RPC ?? DEFAULT_RPC_URLS["sui:testnet"],
-      "sui:mainnet": config.SUI_MAINNET_RPC ?? DEFAULT_RPC_URLS["sui:mainnet"],
+      'sui:testnet': config.SUI_TESTNET_RPC ?? DEFAULT_RPC_URLS['sui:testnet'],
+      'sui:mainnet': config.SUI_MAINNET_RPC ?? DEFAULT_RPC_URLS['sui:mainnet'],
     };
 
     const schemes: Record<string, string[]> = {};
@@ -125,7 +126,7 @@ export function createApp(config: Config) {
         rpcResults[network] = await pingRpc(url);
       }),
     );
-    const rpcReady = Object.values(rpcResults).every((r) => r === "ok");
+    const rpcReady = Object.values(rpcResults).every((r) => r === 'ok');
 
     const ready = schemesReady && rpcReady;
     const result = { ready, checks: { schemes, rpc: rpcResults } };
@@ -162,23 +163,20 @@ export function createApp(config: Config) {
    * Upgrade path: replace raw Ed25519 signature with JWS compact serialization
    * (panva/jose, RFC 7515) for `alg: EdDSA` standard compliance.
    */
-  app.get("/.well-known/s402-facilitator", async (c) => {
+  app.get('/.well-known/s402-facilitator', async (c) => {
     const now = Date.now();
     const origin = new URL(c.req.url).origin;
 
     // supportedSchemes per network — gather all supported chains
     const supportedNetworks: Record<string, string[]> = {};
-    const allNetworks = [
-      "sui:testnet", "sui:mainnet",
-      "solana:devnet", "solana:mainnet-beta",
-    ];
+    const allNetworks = ['sui:testnet', 'sui:mainnet', 'solana:devnet', 'solana:mainnet-beta'];
     for (const network of allNetworks) {
       const schemes = facilitator.supportedSchemes(network);
       if (schemes.length > 0) supportedNetworks[network] = schemes;
     }
 
     const schedule: Record<string, unknown> = {
-      version: "1",
+      version: '1',
       // SECURITY: Clients MUST verify issuer === URL they fetched from (RFC 8414 §3).
       issuer: origin,
       // feeBps is the industry-standard representation (0–10 000; 10 000 = 100%).
@@ -194,7 +192,7 @@ export function createApp(config: Config) {
       // within 1 hour even if validUntil is farther in the future.
       validFrom: new Date(now).toISOString(),
       validUntil: new Date(now + 24 * 60 * 60 * 1000).toISOString(), // 24 h
-      docsUrl: "https://sweefi.xyz/docs/facilitator",
+      docsUrl: 'https://sweefi.xyz/docs/facilitator',
     };
 
     // Optional Ed25519 signature over the canonical schedule.
@@ -203,12 +201,9 @@ export function createApp(config: Config) {
     const keypair = decodeKeypair(config.FACILITATOR_KEYPAIR);
     if (keypair) {
       try {
-        const canonical = JSON.stringify(
-          schedule,
-          Object.keys(schedule).sort(),
-        );
+        const canonical = JSON.stringify(schedule, Object.keys(schedule).sort());
         const sigBytes = await keypair.sign(new TextEncoder().encode(canonical));
-        schedule.signature = Buffer.from(sigBytes).toString("base64");
+        schedule.signature = Buffer.from(sigBytes).toString('base64');
         schedule.publicKey = keypair.getPublicKey().toBase64();
       } catch {
         // Signing failure must not block fee schedule delivery.
@@ -216,45 +211,54 @@ export function createApp(config: Config) {
       }
     }
 
-    c.header("Cache-Control", "public, max-age=3600, must-revalidate");
+    c.header('Cache-Control', 'public, max-age=3600, must-revalidate');
     return c.json(schedule);
   });
 
   // ── Protected routes ─────────────────────────────────────────────────────────
-  const validKeys = new Set(config.API_KEYS.split(",").map((k) => k.trim()).filter((k) => k.length > 0));
-  const rateLimiter = new RateLimiter(
-    config.RATE_LIMIT_MAX_TOKENS,
-    config.RATE_LIMIT_REFILL_RATE,
+  const validKeys = new Set(
+    config.API_KEYS.split(',')
+      .map((k) => k.trim())
+      .filter((k) => k.length > 0),
   );
+  const rateLimiter = new RateLimiter(config.RATE_LIMIT_MAX_TOKENS, config.RATE_LIMIT_REFILL_RATE);
 
-  app.use("/verify", apiKeyAuth(validKeys));
-  app.use("/settle", apiKeyAuth(validKeys));
-  app.use("/supported", apiKeyAuth(validKeys));
-  app.use("/settlements", apiKeyAuth(validKeys));
-  app.use("/s402/*", apiKeyAuth(validKeys));
-  app.use("/sponsor", apiKeyAuth(validKeys));
+  app.use('/verify', apiKeyAuth(validKeys));
+  app.use('/settle', apiKeyAuth(validKeys));
+  app.use('/supported', apiKeyAuth(validKeys));
+  app.use('/settlements', apiKeyAuth(validKeys));
+  app.use('/s402/*', apiKeyAuth(validKeys));
+  app.use('/sponsor', apiKeyAuth(validKeys));
 
   // Metering context propagates API key for inline metering in route handlers.
   // Must be AFTER auth (needs apiKey) and BEFORE routes.
-  app.use("/settle", meteringContext());
-  app.use("/s402/process", meteringContext());
+  app.use('/settle', meteringContext());
+  app.use('/s402/process', meteringContext());
 
   // Payload dedup prevents duplicate settlement attempts caused by network
   // timeouts. Must be AFTER auth (needs apiKey to scope cache per-tenant) and
   // BEFORE the rate limiter (cache hits skip rate limit token consumption).
-  app.use("/settle", payloadDedup());
-  app.use("/s402/process", payloadDedup());
+  app.use('/settle', payloadDedup());
+  app.use('/s402/process', payloadDedup());
 
   // General rate limiter applies to all authenticated routes including /sponsor.
   // /sponsor is intentionally double-gated: this general limiter provides DoS
   // protection (requests/second), while gasSponsorTracker.tryConsume() in the
   // route handler enforces the gas sponsorship budget (requests/hour per key).
   // The two limits serve different purposes and should both remain.
-  app.use("*", rateLimiter.middleware());
+  app.use('*', rateLimiter.middleware());
 
   // Mount facilitator routes (verify, settle, supported, s402/process, settlements, sponsor)
-  const routes = createRoutes(facilitator, usageTracker, config.FEE_MICRO_PERCENT, config.FEE_RECIPIENT, serverStartTime, gasSponsorTracker, gasSponsorService);
-  app.route("/", routes);
+  const routes = createRoutes(
+    facilitator,
+    usageTracker,
+    config.FEE_MICRO_PERCENT,
+    config.FEE_RECIPIENT,
+    serverStartTime,
+    gasSponsorTracker,
+    gasSponsorService,
+  );
+  app.route('/', routes);
 
   return { app, usageTracker, gasSponsorService };
 }

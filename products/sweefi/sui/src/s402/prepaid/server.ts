@@ -6,11 +6,7 @@
  * The client then builds a deposit PTB matching these requirements.
  */
 
-import type {
-  s402ServerScheme,
-  s402PaymentRequirements,
-  s402RouteConfig,
-} from 's402';
+import type { s402PaymentRequirements, s402RouteConfig, s402ServerScheme } from 's402';
 import { S402_VERSION } from 's402';
 import { getUsdcCoinType } from '../../utils.js';
 

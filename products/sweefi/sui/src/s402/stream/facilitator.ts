@@ -29,14 +29,14 @@ import type {
   s402FacilitatorScheme,
   s402PaymentPayload,
   s402PaymentRequirements,
-  s402VerifyResponse,
   s402SettleResponse,
   s402StreamPayload,
+  s402VerifyResponse,
 } from 's402';
 import type { FacilitatorSuiSigner } from '../../signer.js';
-import { coinTypesEqual } from '../../utils.js';
 import { normalizeSuiAddress } from '@mysten/sui/utils';
 import { bpsToMicroPercent } from '../../ptb/assert.js';
+import { coinTypesEqual } from '../../utils.js';
 
 export class StreamSuiFacilitatorScheme implements s402FacilitatorScheme {
   readonly scheme = 'stream' as const;
@@ -54,8 +54,8 @@ export class StreamSuiFacilitatorScheme implements s402FacilitatorScheme {
   ) {
     if (!packageId) {
       throw new Error(
-        "StreamSuiFacilitatorScheme: packageId is required to prevent event spoofing. " +
-        "Set SWEEFI_PACKAGE_ID environment variable."
+        'StreamSuiFacilitatorScheme: packageId is required to prevent event spoofing. ' +
+          'Set SWEEFI_PACKAGE_ID environment variable.',
       );
     }
   }
@@ -274,8 +274,8 @@ function extractStreamCreatedEvent(
   packageId?: string,
 ): StreamCreatedEventData | null {
   const event = packageId
-    ? events.find(e => e.type.startsWith(`${packageId}::`) && e.type.endsWith('::StreamCreated'))
-    : events.find(e => e.type.endsWith('::stream::StreamCreated'));
+    ? events.find((e) => e.type.startsWith(`${packageId}::`) && e.type.endsWith('::StreamCreated'))
+    : events.find((e) => e.type.endsWith('::stream::StreamCreated'));
   if (!event?.parsedJson || typeof event.parsedJson !== 'object') return null;
 
   // Explicit field validation — fail fast on schema mismatch

@@ -20,13 +20,29 @@ export { ExactSolanaFacilitatorScheme } from './exact/facilitator.js';
 export { ExactSolanaServerScheme } from './exact/server.js';
 
 // Upto (TypeScript ready)
-export { UptoSolanaClientScheme, UptoSolanaServerScheme, UptoSolanaFacilitatorScheme } from './upto/index.js';
+export {
+  UptoSolanaClientScheme,
+  UptoSolanaServerScheme,
+  UptoSolanaFacilitatorScheme,
+} from './upto/index.js';
 
 // Stream (TypeScript ready)
-export { StreamSolanaClientScheme, StreamSolanaServerScheme, StreamSolanaFacilitatorScheme } from './stream/index.js';
+export {
+  StreamSolanaClientScheme,
+  StreamSolanaServerScheme,
+  StreamSolanaFacilitatorScheme,
+} from './stream/index.js';
 
 // Escrow (TypeScript ready)
-export { EscrowSolanaClientScheme, EscrowSolanaServerScheme, EscrowSolanaFacilitatorScheme } from './escrow/index.js';
+export {
+  EscrowSolanaClientScheme,
+  EscrowSolanaServerScheme,
+  EscrowSolanaFacilitatorScheme,
+} from './escrow/index.js';
 
 // Prepaid (TypeScript ready)
-export { PrepaidSolanaClientScheme, PrepaidSolanaServerScheme, PrepaidSolanaFacilitatorScheme } from './prepaid/index.js';
+export {
+  PrepaidSolanaClientScheme,
+  PrepaidSolanaServerScheme,
+  PrepaidSolanaFacilitatorScheme,
+} from './prepaid/index.js';

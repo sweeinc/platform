@@ -25,12 +25,12 @@ Per-product repos extracted lazily via `git filter-repo` only when justified (in
 
 ## Naming convention
 
-| Pattern | Rule | Examples |
-|---|---|---|
-| Brand-name product | NO hyphen | `sweedollar`, `sweecoin`, `sweetap`, `sweesense`, `sweeworld`, `sweemandate`, `sweepay`, `sweeverify`, `sweeid` |
-| Multi-concept descriptor | Hyphenated | `sweefi-cli`, `sweefi-contracts`, `sweeinc-landing`, `sui-gas-station` |
-| Product SDKs on npm | `@sweeinc/{brand}-sdk` | `@sweeinc/sweemandate-sdk`, `@sweeinc/sweepay-sdk`, `@sweeinc/sweeid-sdk` |
-| Generic infra | `@sweeinc/{name}` | `@sweeinc/std` |
+| Pattern                  | Rule                   | Examples                                                                                                        |
+| ------------------------ | ---------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Brand-name product       | NO hyphen              | `sweedollar`, `sweecoin`, `sweetap`, `sweesense`, `sweeworld`, `sweemandate`, `sweepay`, `sweeverify`, `sweeid` |
+| Multi-concept descriptor | Hyphenated             | `sweefi-cli`, `sweefi-contracts`, `sweeinc-landing`, `sui-gas-station`                                          |
+| Product SDKs on npm      | `@sweeinc/{brand}-sdk` | `@sweeinc/sweemandate-sdk`, `@sweeinc/sweepay-sdk`, `@sweeinc/sweeid-sdk`                                       |
+| Generic infra            | `@sweeinc/{name}`      | `@sweeinc/std`                                                                                                  |
 
 Physical paths use `products/{brand}/{component}/`. Component names are short within product context (`sui/`, `cli/`, `move/`, `sdk/`, `gateway/`, `dapp/`).
 
@@ -38,12 +38,12 @@ Physical paths use `products/{brand}/{component}/`. Component names are short wi
 
 A package graduates from `lab` → `platform` when **at least one** scriptably-verifiable external forcing function passes:
 
-| Type | External signal (must pass at least one) |
-|---|---|
-| TS SDK | (a) ≥3 unique GitHub usernames NOT in `sweeinc/`/`Danny-Devs/`/`s402-protocol/` orgs, with public dep declaration OR merged PR OR public Issue with code; OR (b) Sui docs citation; OR (c) paying customer dependency |
-| Move contract | (a) external audit firm signed off; OR (b) ≥4 weeks testnet uptime AND ≥100 unique non-Danny addresses; OR (c) bug bounty 30+ days no critical findings |
-| Service | (a) ≥4 weeks production uptime serving external traffic; OR (b) external operator self-hosting (fork or non-sweeinc.com deployment) |
-| App / dApp | (a) ≥100 unique real wallet users (on-chain verifiable); OR (b) Sui Foundation feature; OR (c) public launch announcement |
+| Type          | External signal (must pass at least one)                                                                                                                                                                              |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TS SDK        | (a) ≥3 unique GitHub usernames NOT in `sweeinc/`/`Danny-Devs/`/`s402-protocol/` orgs, with public dep declaration OR merged PR OR public Issue with code; OR (b) Sui docs citation; OR (c) paying customer dependency |
+| Move contract | (a) external audit firm signed off; OR (b) ≥4 weeks testnet uptime AND ≥100 unique non-Danny addresses; OR (c) bug bounty 30+ days no critical findings                                                               |
+| Service       | (a) ≥4 weeks production uptime serving external traffic; OR (b) external operator self-hosting (fork or non-sweeinc.com deployment)                                                                                   |
+| App / dApp    | (a) ≥100 unique real wallet users (on-chain verifiable); OR (b) Sui Foundation feature; OR (c) public launch announcement                                                                                             |
 
 Internal criteria (tests ≥80%, README quality, no AI-slop) are **prerequisites only**. External signal triggers graduation.
 
@@ -59,9 +59,8 @@ intent: graduates-to-platform | proprietary-forever | undecided
 target_graduation_signal: external-audit | testnet-uptime | external-users | sui-docs-citation | n/a
 status: greenfield | dev | testnet | pre-graduation | graduated
 ---
-
 ## Notes
-{prose context, what blocks graduation, last review date}
+{ prose context, what blocks graduation, last review date }
 ```
 
 `lab/moats/*` STATUS.md must declare `intent: proprietary-forever`.
@@ -75,19 +74,22 @@ Per Move package, lives at `products/{X}/MOVE-PROVENANCE.md`:
 
 ## Deployed Package IDs
 
-| Network | Package ID | Deployed | Source SHA | Source Path | Audit Ref |
-|---|---|---|---|---|---|
-| testnet | 0x... | 2026-MM-DD | sha | path | — |
-| mainnet | 0x... | 2026-MM-DD | sha | path | audits/{X}/AUDIT-v1.pdf |
+| Network | Package ID | Deployed   | Source SHA | Source Path | Audit Ref               |
+| ------- | ---------- | ---------- | ---------- | ----------- | ----------------------- |
+| testnet | 0x...      | 2026-MM-DD | sha        | path        | —                       |
+| mainnet | 0x...      | 2026-MM-DD | sha        | path        | audits/{X}/AUDIT-v1.pdf |
 
 ## Source Path History
+
 {path migrations across graduation events}
 
 ## Upgrade Policy
+
 - {immutable | publisher-trusted}
 - UpgradeCap holder: {address or DAO}
 
 ## Audit References
+
 {linked reports}
 ```
 
@@ -105,10 +107,10 @@ Update `MOVE-PROVENANCE.md` at each stage transition.
 
 ## Audit reports flow (dual-track)
 
-| Where | What | When |
-|---|---|---|
+| Where                      | What                                                                           | When                  |
+| -------------------------- | ------------------------------------------------------------------------------ | --------------------- |
 | `lab/products/{X}/audits/` | Proprietary process artifacts: auditor correspondence, drafts, internal triage | Forever — never moves |
-| `platform/audits/{X}/` | Sanitized public report (PDF/markdown) | Copied at graduation |
+| `platform/audits/{X}/`     | Sanitized public report (PDF/markdown)                                         | Copied at graduation  |
 
 ## Cross-monorepo discipline
 
@@ -131,13 +133,13 @@ See Linear DAN-411 §16 for the canonical tooling stack. Subject to amendment as
 
 ## Existing repos absorbed (planned)
 
-| Existing | Destination |
-|---|---|
-| `sweeinc/sweefi` (PUBLIC, 1.6MB) | `sweeinc/platform/products/sweefi/` (this repo) |
-| `sweeinc/sweeagent` (PRIVATE) | `sweeinc/lab/products/sweeagent/` |
-| `sweeinc/sweesense` (PRIVATE, Rust) | `sweeinc/lab/moats/sweesense/` |
-| `sweeinc/sweeworld` (PRIVATE) | `sweeinc/lab/moats/sweeworld/` |
-| `sweeinc/sweeos` (PRIVATE) | `sweeinc/lab/products/sweeos/` (or moats — TBD) |
+| Existing                            | Destination                                     |
+| ----------------------------------- | ----------------------------------------------- |
+| `sweeinc/sweefi` (PUBLIC, 1.6MB)    | `sweeinc/platform/products/sweefi/` (this repo) |
+| `sweeinc/sweeagent` (PRIVATE)       | `sweeinc/lab/products/sweeagent/`               |
+| `sweeinc/sweesense` (PRIVATE, Rust) | `sweeinc/lab/moats/sweesense/`                  |
+| `sweeinc/sweeworld` (PRIVATE)       | `sweeinc/lab/moats/sweeworld/`                  |
+| `sweeinc/sweeos` (PRIVATE)          | `sweeinc/lab/products/sweeos/` (or moats — TBD) |
 
 Migration via `git filter-repo` to preserve full history.
 

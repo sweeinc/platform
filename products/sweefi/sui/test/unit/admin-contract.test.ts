@@ -1,12 +1,10 @@
-import { describe, it, expect } from 'vitest';
 import { Transaction } from '@mysten/sui/transactions';
+import { describe, expect, it } from 'vitest';
 import { AdminContract } from '../../src/transactions/admin';
 import { SweefiPluginConfig } from '../../src/utils/config';
-import type { AutoUnpauseParams } from '../../src/ptb/admin';
 
 const PACKAGE_ID = '0x' + 'ab'.repeat(32);
 const SENDER = '0x' + '11'.repeat(32);
-const SUI_COIN_TYPE = '0x2::sui::SUI';
 const PROTOCOL_STATE = '0x' + '99'.repeat(32);
 const ADMIN_CAP = '0x' + '88'.repeat(32);
 
@@ -20,9 +18,7 @@ const contract = new AdminContract(config);
 
 function expectMoveCall(tx: Transaction, module: string, fn: string) {
   const data = tx.getData();
-  const moveCall = data.commands.find(
-    (c: any) => c.$kind === 'MoveCall',
-  );
+  const moveCall = data.commands.find((c: any) => c.$kind === 'MoveCall');
   expect(moveCall, `expected a MoveCall for ${module}::${fn}`).toBeDefined();
   expect(moveCall!.MoveCall.module).toBe(module);
   expect(moveCall!.MoveCall.function).toBe(fn);
@@ -49,10 +45,12 @@ describe('AdminContract.pause', () => {
 
   it('works with tx.add()', () => {
     const tx = new Transaction();
-    tx.add(contract.pause({
-      adminCapId: ADMIN_CAP,
-      sender: SENDER,
-    }));
+    tx.add(
+      contract.pause({
+        adminCapId: ADMIN_CAP,
+        sender: SENDER,
+      }),
+    );
 
     expectMoveCall(tx, 'admin', 'pause');
   });

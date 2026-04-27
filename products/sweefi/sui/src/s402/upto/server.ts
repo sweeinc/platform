@@ -5,8 +5,7 @@
  * The server advertises estimatedAmount (advisory) so clients can set tight ceilings.
  */
 
-import type { s402ServerScheme, s402RouteConfig } from 's402';
-import type { s402PaymentRequirements, s402Scheme } from 's402';
+import type { s402PaymentRequirements, s402RouteConfig, s402Scheme, s402ServerScheme } from 's402';
 import { S402_VERSION } from 's402';
 
 export class UptoSuiServerScheme implements s402ServerScheme {

@@ -1,7 +1,7 @@
 /**
  * Network shorthand: 'sui:testnet' | 'sui:mainnet' | 'sui:devnet'
  */
-export type SuiNetwork = "sui:testnet" | "sui:mainnet" | "sui:devnet";
+export type SuiNetwork = 'sui:testnet' | 'sui:mainnet' | 'sui:devnet';
 
 /**
  * Price format accepted by s402Gate().

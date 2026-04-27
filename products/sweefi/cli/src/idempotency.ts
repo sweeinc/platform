@@ -18,11 +18,11 @@
  * (V9 contracts, see TODO.md).
  */
 
-import { fromBase64 } from "@mysten/sui/utils";
-import type { SuiJsonRpcClient } from "@mysten/sui/jsonRpc";
-import { CliError } from "./context.js";
+import type { SuiJsonRpcClient } from '@mysten/sui/jsonRpc';
+import { fromBase64 } from '@mysten/sui/utils';
+import { CliError } from './context.js';
 
-const IDEMPOTENCY_PREFIX = "swee:idempotency:";
+const IDEMPOTENCY_PREFIX = 'swee:idempotency:';
 
 export interface ExistingReceipt {
   receiptId: string;
@@ -38,7 +38,7 @@ export interface ExistingReceipt {
  * Returns the UTF-8 decoded string, or undefined if decoding fails.
  */
 function decodeMemo(raw: unknown): string | undefined {
-  if (typeof raw !== "string" || raw.length === 0) return undefined;
+  if (typeof raw !== 'string' || raw.length === 0) return undefined;
   try {
     const bytes = fromBase64(raw);
     return new TextDecoder().decode(bytes);
@@ -52,7 +52,7 @@ function decodeMemo(raw: unknown): string | undefined {
 /** Check if a memo contains an exact idempotency segment (not a substring). */
 function memoContainsKey(memo: string, needle: string): boolean {
   // Memo format: "swee:idempotency:KEY" or "user text | swee:idempotency:KEY"
-  const segments = memo.split(" | ");
+  const segments = memo.split(' | ');
   return segments.some((s) => s === needle);
 }
 
@@ -101,7 +101,7 @@ export async function checkIdempotencyKey(
     for (const obj of page.data) {
       const data = obj.data;
       const content = data?.content;
-      if (!data || content?.dataType !== "moveObject") continue;
+      if (!data || content?.dataType !== 'moveObject') continue;
 
       const fields = content.fields as Record<string, unknown>;
       // Move memo is vector<u8> → RPC returns Base64. Decode to UTF-8.
@@ -113,8 +113,8 @@ export async function checkIdempotencyKey(
         const receipt: ExistingReceipt = {
           receiptId: data.objectId,
           txDigest: data.previousTransaction ?? undefined,
-          recipient: typeof fields.recipient === "string" ? fields.recipient : undefined,
-          amount: typeof fields.amount === "string" ? fields.amount : String(fields.amount ?? ""),
+          recipient: typeof fields.recipient === 'string' ? fields.recipient : undefined,
+          amount: typeof fields.amount === 'string' ? fields.amount : String(fields.amount ?? ''),
           memo,
         };
 
@@ -127,10 +127,10 @@ export async function checkIdempotencyKey(
             (receiptAmount !== undefined && receiptAmount !== expectedAmount)
           ) {
             throw new CliError(
-              "IDEMPOTENCY_CONFLICT",
+              'IDEMPOTENCY_CONFLICT',
               `Idempotency key "${idempotencyKey}" was already used with different parameters (recipient: ${receipt.recipient}, amount: ${receipt.amount})`,
               false,
-              "Use a new UUID for a different payment. Idempotency keys are one-time-use per unique (recipient, amount) pair.",
+              'Use a new UUID for a different payment. Idempotency keys are one-time-use per unique (recipient, amount) pair.',
               false,
             );
           }
@@ -158,19 +158,19 @@ export function validateIdempotencyKey(key: string): string {
   const trimmed = key.trim();
   if (trimmed.length === 0) {
     throw new CliError(
-      "MISSING_ARGS",
-      "Idempotency key cannot be empty",
+      'MISSING_ARGS',
+      'Idempotency key cannot be empty',
       false,
-      "Provide a UUID: --idempotency-key 550e8400-e29b-41d4-a716-446655440000",
+      'Provide a UUID: --idempotency-key 550e8400-e29b-41d4-a716-446655440000',
     );
   }
   // Accept any non-empty string but warn-free for UUIDs (most common agent pattern)
   if (trimmed.length > 128) {
     throw new CliError(
-      "INVALID_VALUE",
-      "Idempotency key is too long (max 128 characters)",
+      'INVALID_VALUE',
+      'Idempotency key is too long (max 128 characters)',
       false,
-      "Use a UUID or short identifier",
+      'Use a UUID or short identifier',
     );
   }
   return trimmed;

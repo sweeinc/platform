@@ -2,16 +2,14 @@
  * Solana connection helpers — network config and cluster URL resolution.
  */
 
-import { Connection, clusterApiUrl } from '@solana/web3.js';
-import { USDC_MAINNET_MINT, USDC_DEVNET_MINT, SOLANA_MAINNET_CAIP2 } from '../constants.js';
 import type { SolanaNetwork } from '../constants.js';
+import { clusterApiUrl, Connection } from '@solana/web3.js';
+import { SOLANA_MAINNET_CAIP2, USDC_DEVNET_MINT, USDC_MAINNET_MINT } from '../constants.js';
 
 // ─── Cluster name mapping ─────────────────────────────────────────────────────
 
 /** Maps a CAIP-2 network identifier to a Solana cluster name. */
-export function networkToCluster(
-  network: SolanaNetwork,
-): 'mainnet-beta' | 'devnet' | 'testnet' {
+export function networkToCluster(network: SolanaNetwork): 'mainnet-beta' | 'devnet' | 'testnet' {
   switch (network) {
     case 'solana:mainnet-beta':
       return 'mainnet-beta';

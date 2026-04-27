@@ -5,8 +5,7 @@
  * Phase 2: validates X-STREAM-ID header for ongoing access.
  */
 
-import type { s402ServerScheme, s402RouteConfig } from 's402';
-import type { s402PaymentRequirements, s402Scheme } from 's402';
+import type { s402PaymentRequirements, s402RouteConfig, s402Scheme, s402ServerScheme } from 's402';
 import { S402_VERSION } from 's402';
 
 export class StreamSuiServerScheme implements s402ServerScheme {

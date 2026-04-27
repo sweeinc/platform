@@ -20,21 +20,21 @@ npm install @sweefi/solana @solana/web3.js @solana/spl-token
 
 ## Peer Dependencies
 
-| Package | Version |
-|---------|---------|
-| `@solana/web3.js` | `^1.95.0` |
-| `@solana/spl-token` | `^0.4.0` |
+| Package             | Version   |
+| ------------------- | --------- |
+| `@solana/web3.js`   | `^1.95.0` |
+| `@solana/spl-token` | `^0.4.0`  |
 
 ## Quick Start
 
 ### Node.js agent (keypair)
 
 ```typescript
-import { Connection, Keypair, clusterApiUrl } from '@solana/web3.js';
+import { clusterApiUrl, Connection, Keypair } from '@solana/web3.js';
 import {
-  SolanaPaymentAdapter,
-  SolanaKeypairSigner,
   SOLANA_DEVNET_CAIP2,
+  SolanaKeypairSigner,
+  SolanaPaymentAdapter,
   USDC_DEVNET_MINT,
 } from '@sweefi/solana';
 
@@ -56,7 +56,7 @@ const sim = await adapter.simulate({
   accepts: ['exact'],
   network: SOLANA_DEVNET_CAIP2,
   asset: USDC_DEVNET_MINT,
-  amount: '1000000',          // 1 USDC (6 decimals)
+  amount: '1000000', // 1 USDC (6 decimals)
   payTo: '0xRecipient...',
 });
 
@@ -119,12 +119,12 @@ const { txId } = await adapter.signAndBroadcast({
 
 `SolanaPaymentAdapter` implements the `PaymentAdapter` interface from `@sweefi/ui-core`:
 
-| Method | Description |
-|--------|-------------|
-| `network` | CAIP-2 identifier (`'solana:mainnet-beta'`, `'solana:devnet'`, or `'solana:testnet'`) |
-| `getAddress()` | Returns the payer's base58 public key, or `null` if the wallet is disconnected |
-| `simulate(reqs)` | Dry-run the transaction. Returns `{ success, estimatedFee? }` or `{ success: false, error }` |
-| `signAndBroadcast(reqs)` | Sign, broadcast, and confirm the transaction. Returns `{ txId }` |
+| Method                   | Description                                                                                  |
+| ------------------------ | -------------------------------------------------------------------------------------------- |
+| `network`                | CAIP-2 identifier (`'solana:mainnet-beta'`, `'solana:devnet'`, or `'solana:testnet'`)        |
+| `getAddress()`           | Returns the payer's base58 public key, or `null` if the wallet is disconnected               |
+| `simulate(reqs)`         | Dry-run the transaction. Returns `{ success, estimatedFee? }` or `{ success: false, error }` |
+| `signAndBroadcast(reqs)` | Sign, broadcast, and confirm the transaction. Returns `{ txId }`                             |
 
 `simulate()` builds the exact same instruction set as `signAndBroadcast()` — including protocol fee splits — using a legacy `Transaction` so simulation results match on-chain behavior.
 
@@ -148,8 +148,8 @@ const signer = new SolanaKeypairSigner(keypair);
 ### `SolanaWalletSigner` — Browser wallets
 
 ```typescript
-import { SolanaWalletSigner } from '@sweefi/solana';
 import type { SolanaWalletAdapter } from '@sweefi/solana';
+import { SolanaWalletSigner } from '@sweefi/solana';
 
 // Any wallet implementing { publicKey, signTransaction } works — no hard dep on wallet-adapter-base
 const signer = new SolanaWalletSigner(wallet);
@@ -167,8 +167,10 @@ A naive implementation fetches a fresh blockhash twice: once when building the t
 
 ```typescript
 // ClientSolanaSigner.signTransaction returns all four values:
-const { serialized, signature, blockhash, lastValidBlockHeight } =
-  await signer.signTransaction(tx, connection);
+const { serialized, signature, blockhash, lastValidBlockHeight } = await signer.signTransaction(
+  tx,
+  connection,
+);
 
 // ExactSolanaClientScheme.createPaymentWithMeta surfaces them:
 const { s402Payload, blockhash, lastValidBlockHeight } =
@@ -204,23 +206,23 @@ const facilitator = toFacilitatorSolanaSigner({
 
 `FacilitatorSolanaSigner` methods:
 
-| Method | Description |
-|--------|-------------|
-| `verifyAndGetPayer(serializedTx, network)` | Ed25519-verify the payer's signature via Web Crypto API. Returns the payer's base58 address or throws |
-| `simulateTransaction(serializedTx, network)` | Dry-run; returns pre/post SOL and SPL token balances keyed by account index |
-| `executeTransaction(serializedTx, network)` | Broadcast raw signed bytes; returns the transaction signature (txid) |
-| `confirmTransaction(signature, network)` | Wait for `'confirmed'` finality; throws on failure |
+| Method                                       | Description                                                                                           |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `verifyAndGetPayer(serializedTx, network)`   | Ed25519-verify the payer's signature via Web Crypto API. Returns the payer's base58 address or throws |
+| `simulateTransaction(serializedTx, network)` | Dry-run; returns pre/post SOL and SPL token balances keyed by account index                           |
+| `executeTransaction(serializedTx, network)`  | Broadcast raw signed bytes; returns the transaction signature (txid)                                  |
+| `confirmTransaction(signature, network)`     | Wait for `'confirmed'` finality; throws on failure                                                    |
 
 `verifyAndGetPayer` uses `crypto.subtle.verify('Ed25519', ...)` — zero extra dependencies, works in Node.js 18+ and all modern browsers.
 
 ## s402 Scheme Implementations
 
-| Scheme | Client | Facilitator | Server |
-|--------|--------|-------------|--------|
-| Exact | `ExactSolanaClientScheme` | `ExactSolanaFacilitatorScheme` | `ExactSolanaServerScheme` |
-| Prepaid | — | — | — |
-| Stream | — | — | — |
-| Escrow | — | — | — |
+| Scheme  | Client                    | Facilitator                    | Server                    |
+| ------- | ------------------------- | ------------------------------ | ------------------------- |
+| Exact   | `ExactSolanaClientScheme` | `ExactSolanaFacilitatorScheme` | `ExactSolanaServerScheme` |
+| Prepaid | —                         | —                              | —                         |
+| Stream  | —                         | —                              | —                         |
+| Escrow  | —                         | —                              | —                         |
 
 **Only the Exact scheme is implemented.** Prepaid, Stream, and Escrow require Anchor programs that have not yet been deployed on Solana. Those will be added once the on-chain programs are ready.
 
@@ -238,7 +240,7 @@ const requirements = server.buildRequirements({
   payTo: 'YourWallet...',
   amount: '1000000', // 1 USDC
   asset: USDC_DEVNET_MINT, // optional — defaults to USDC for the network
-  protocolFeeBps: 50,      // optional — 0.5%
+  protocolFeeBps: 50, // optional — 0.5%
   protocolFeeAddress: 'FeeWallet...',
 });
 // Returns a fully-formed s402PaymentRequirements object
@@ -247,8 +249,8 @@ const requirements = server.buildRequirements({
 ### Client scheme — building a payment payload
 
 ```typescript
-import { ExactSolanaClientScheme, SolanaKeypairSigner } from '@sweefi/solana';
 import { Connection } from '@solana/web3.js';
+import { ExactSolanaClientScheme, SolanaKeypairSigner } from '@sweefi/solana';
 
 const scheme = new ExactSolanaClientScheme(
   new SolanaKeypairSigner(keypair),
@@ -280,6 +282,7 @@ const settlement = await scheme.settle(payload, requirements);
 ```
 
 `verify()` runs a 4-step check:
+
 1. Scheme validation (is the payload type `'exact'`?)
 2. Network validation (is this actually a Solana network?)
 3. Signature recovery — cryptographic proof the payer signed the transaction (Web Crypto Ed25519)
@@ -292,16 +295,16 @@ const settlement = await scheme.settle(payload, requirements);
 
 ```typescript
 import {
-  SOLANA_MAINNET_CAIP2,  // 'solana:mainnet-beta'
-  SOLANA_DEVNET_CAIP2,   // 'solana:devnet'
-  SOLANA_TESTNET_CAIP2,  // 'solana:testnet'
-  NATIVE_SOL_MINT,       // 'So11111111111111111111111111111111111111112'
-  USDC_MAINNET_MINT,     // 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
-  USDC_DEVNET_MINT,      // '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU'
-  USDC_DECIMALS,         // 6
-  SOL_DECIMALS,          // 9
-  LAMPORTS_PER_SOL,      // 1_000_000_000
-  BASE_FEE_LAMPORTS,     // 5_000n
+  BASE_FEE_LAMPORTS, // 5_000n
+  LAMPORTS_PER_SOL, // 1_000_000_000
+  NATIVE_SOL_MINT, // 'So11111111111111111111111111111111111111112'
+  SOL_DECIMALS, // 9
+  SOLANA_DEVNET_CAIP2, // 'solana:devnet'
+  SOLANA_MAINNET_CAIP2, // 'solana:mainnet-beta'
+  SOLANA_TESTNET_CAIP2, // 'solana:testnet'
+  USDC_DECIMALS, // 6
+  USDC_DEVNET_MINT, // '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU'
+  USDC_MAINNET_MINT, // 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
 } from '@sweefi/solana';
 ```
 
@@ -309,11 +312,11 @@ import {
 
 ```typescript
 import {
-  createSolanaConnection,   // Create a Connection from a CAIP-2 network identifier
-  networkToCluster,         // 'solana:devnet' → 'devnet'
-  getDefaultUsdcMint,       // Returns the correct USDC mint for mainnet-beta or devnet
-  uint8ArrayToBase64,       // Browser-safe Uint8Array → base64 (btoa, not Buffer)
-  base64ToUint8Array,       // Browser-safe base64 → Uint8Array (atob, not Buffer)
+  base64ToUint8Array, // Browser-safe base64 → Uint8Array (atob, not Buffer)
+  createSolanaConnection, // Create a Connection from a CAIP-2 network identifier
+  getDefaultUsdcMint, // Returns the correct USDC mint for mainnet-beta or devnet
+  networkToCluster, // 'solana:devnet' → 'devnet'
+  uint8ArrayToBase64, // Browser-safe Uint8Array → base64 (btoa, not Buffer)
 } from '@sweefi/solana';
 
 // createSolanaConnection accepts an optional RPC URL override

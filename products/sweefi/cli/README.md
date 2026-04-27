@@ -22,21 +22,21 @@ sweefi pay 0xRecipient... 1.5 --idempotency-key $(uuidgen)
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `sweefi pay <recipient> <amount>` | Execute a payment on Sui |
-| `sweefi pay-402 --url <URL>` | Handle HTTP 402 Payment Required automatically |
-| `sweefi balance [address]` | Check wallet balance |
-| `sweefi receipt <object-id>` | Fetch an on-chain payment receipt |
-| `sweefi prepaid deposit <provider> <amount>` | Open a prepaid balance |
-| `sweefi prepaid status <balance-id>` | Check prepaid budget |
-| `sweefi prepaid list [address]` | List prepaid balances |
-| `sweefi mandate create <agent> <per-tx> <total> <expires>` | Set spending caps |
-| `sweefi mandate check <mandate-id>` | Verify mandate status |
-| `sweefi mandate list [address]` | List active mandates |
-| `sweefi wallet generate` | Generate a new keypair |
-| `sweefi doctor` | Run setup diagnostics |
-| `sweefi schema` | Machine-readable command manifest |
+| Command                                                    | Description                                    |
+| ---------------------------------------------------------- | ---------------------------------------------- |
+| `sweefi pay <recipient> <amount>`                          | Execute a payment on Sui                       |
+| `sweefi pay-402 --url <URL>`                               | Handle HTTP 402 Payment Required automatically |
+| `sweefi balance [address]`                                 | Check wallet balance                           |
+| `sweefi receipt <object-id>`                               | Fetch an on-chain payment receipt              |
+| `sweefi prepaid deposit <provider> <amount>`               | Open a prepaid balance                         |
+| `sweefi prepaid status <balance-id>`                       | Check prepaid budget                           |
+| `sweefi prepaid list [address]`                            | List prepaid balances                          |
+| `sweefi mandate create <agent> <per-tx> <total> <expires>` | Set spending caps                              |
+| `sweefi mandate check <mandate-id>`                        | Verify mandate status                          |
+| `sweefi mandate list [address]`                            | List active mandates                           |
+| `sweefi wallet generate`                                   | Generate a new keypair                         |
+| `sweefi doctor`                                            | Run setup diagnostics                          |
+| `sweefi schema`                                            | Machine-readable command manifest              |
 
 ## Output
 
@@ -84,25 +84,25 @@ Idempotency uses on-chain memo scanning (paginated `getOwnedObjects`). This prot
 
 ## Environment Variables
 
-| Variable | Required | Description |
-|----------|----------|-------------|
+| Variable          | Required               | Description                                    |
+| ----------------- | ---------------------- | ---------------------------------------------- |
 | `SUI_PRIVATE_KEY` | Yes (for transactions) | Wallet key (bech32 `suiprivkey1...` or base64) |
-| `SUI_NETWORK` | No | `testnet` (default), `mainnet`, or `devnet` |
-| `SUI_RPC_URL` | No | Custom RPC endpoint |
-| `SUI_PACKAGE_ID` | No | Override deployed contract package ID |
+| `SUI_NETWORK`     | No                     | `testnet` (default), `mainnet`, or `devnet`    |
+| `SUI_RPC_URL`     | No                     | Custom RPC endpoint                            |
+| `SUI_PACKAGE_ID`  | No                     | Override deployed contract package ID          |
 
 No config files. Environment variables only. Zero stored state = zero drift.
 
 ## Global Flags
 
-| Flag | Description |
-|------|-------------|
-| `--network <testnet\|mainnet\|devnet>` | Override `SUI_NETWORK` |
-| `--human` | Human-readable output |
-| `--dry-run` | Simulate without executing |
-| `--idempotency-key <uuid>` | Dedup key for crash-safe payments |
-| `--verbose` | Debug output on stderr |
-| `--timeout <ms>` | RPC timeout (default: 30000) |
+| Flag                                   | Description                       |
+| -------------------------------------- | --------------------------------- |
+| `--network <testnet\|mainnet\|devnet>` | Override `SUI_NETWORK`            |
+| `--human`                              | Human-readable output             |
+| `--dry-run`                            | Simulate without executing        |
+| `--idempotency-key <uuid>`             | Dedup key for crash-safe payments |
+| `--verbose`                            | Debug output on stderr            |
+| `--timeout <ms>`                       | RPC timeout (default: 30000)      |
 
 ## Agent Integration
 

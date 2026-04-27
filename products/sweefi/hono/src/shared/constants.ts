@@ -5,4 +5,4 @@
  * Callers can override by passing `facilitatorUrl` to createS402Client().
  * Self-host with Docker/Fly.io using packages/facilitator.
  */
-export const DEFAULT_FACILITATOR_URL = "https://swee-facilitator.fly.dev";
+export const DEFAULT_FACILITATOR_URL = 'https://swee-facilitator.fly.dev';

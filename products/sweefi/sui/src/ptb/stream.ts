@@ -1,13 +1,20 @@
-import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
-import type { SweefiConfig, CreateStreamParams, CreateStreamWithTimeoutParams, StreamOpParams, StreamTopUpParams, BatchClaimParams } from "./types";
-import { SUI_CLOCK } from "./deployments";
-import { assertFeeMicroPercent, assertPositive } from "./assert";
+import type {
+  BatchClaimParams,
+  CreateStreamParams,
+  CreateStreamWithTimeoutParams,
+  StreamOpParams,
+  StreamTopUpParams,
+  SweefiConfig,
+} from './types';
+import { coinWithBalance, Transaction } from '@mysten/sui/transactions';
+import { assertFeeMicroPercent, assertPositive } from './assert';
+import { SUI_CLOCK } from './deployments';
 
 function requireProtocolState(config: SweefiConfig, fn: string): string {
   if (!config.protocolStateId) {
     throw new Error(
       `${fn}: SweefiConfig.protocolStateId is required for stream creation/top-up. ` +
-      "Set it to the shared ProtocolState object ID from your deployment.",
+        'Set it to the shared ProtocolState object ID from your deployment.',
     );
   }
   return config.protocolStateId;
@@ -19,15 +26,12 @@ function requireProtocolState(config: SweefiConfig, fn: string): string {
  * Accrual starts immediately at the specified rate.
  * Default recipient_close timeout: 7 days. Use buildCreateStreamWithTimeoutTx for custom.
  */
-export function buildCreateStreamTx(
-  config: SweefiConfig,
-  params: CreateStreamParams,
-): Transaction {
-  assertPositive(params.depositAmount, "depositAmount", "buildCreateStreamTx");
-  assertPositive(params.ratePerSecond, "ratePerSecond", "buildCreateStreamTx");
-  assertFeeMicroPercent(params.feeMicroPercent, "buildCreateStreamTx");
+export function buildCreateStreamTx(config: SweefiConfig, params: CreateStreamParams): Transaction {
+  assertPositive(params.depositAmount, 'depositAmount', 'buildCreateStreamTx');
+  assertPositive(params.ratePerSecond, 'ratePerSecond', 'buildCreateStreamTx');
+  assertFeeMicroPercent(params.feeMicroPercent, 'buildCreateStreamTx');
 
-  const protocolStateId = requireProtocolState(config, "buildCreateStreamTx");
+  const protocolStateId = requireProtocolState(config, 'buildCreateStreamTx');
   const tx = new Transaction();
   tx.setSender(params.sender);
 
@@ -62,11 +66,11 @@ export function buildCreateStreamWithTimeoutTx(
   config: SweefiConfig,
   params: CreateStreamWithTimeoutParams,
 ): Transaction {
-  assertPositive(params.depositAmount, "depositAmount", "buildCreateStreamWithTimeoutTx");
-  assertPositive(params.ratePerSecond, "ratePerSecond", "buildCreateStreamWithTimeoutTx");
-  assertFeeMicroPercent(params.feeMicroPercent, "buildCreateStreamWithTimeoutTx");
+  assertPositive(params.depositAmount, 'depositAmount', 'buildCreateStreamWithTimeoutTx');
+  assertPositive(params.ratePerSecond, 'ratePerSecond', 'buildCreateStreamWithTimeoutTx');
+  assertFeeMicroPercent(params.feeMicroPercent, 'buildCreateStreamWithTimeoutTx');
 
-  const protocolStateId = requireProtocolState(config, "buildCreateStreamWithTimeoutTx");
+  const protocolStateId = requireProtocolState(config, 'buildCreateStreamWithTimeoutTx');
   const tx = new Transaction();
   tx.setSender(params.sender);
 
@@ -96,20 +100,14 @@ export function buildCreateStreamWithTimeoutTx(
  * Works for both active streams and paused streams with pending accrual.
  * Fees are split to fee_recipient automatically.
  */
-export function buildClaimTx(
-  config: SweefiConfig,
-  params: StreamOpParams,
-): Transaction {
+export function buildClaimTx(config: SweefiConfig, params: StreamOpParams): Transaction {
   const tx = new Transaction();
   tx.setSender(params.sender);
 
   tx.moveCall({
     target: `${config.packageId}::stream::claim`,
     typeArguments: [params.coinType],
-    arguments: [
-      tx.object(params.meterId),
-      tx.object(SUI_CLOCK),
-    ],
+    arguments: [tx.object(params.meterId), tx.object(SUI_CLOCK)],
   });
 
   return tx;
@@ -119,20 +117,14 @@ export function buildClaimTx(
  * Build a PTB for the payer to pause a stream.
  * Accrual stops at the pause timestamp. Pre-pause accrual remains claimable.
  */
-export function buildPauseTx(
-  config: SweefiConfig,
-  params: StreamOpParams,
-): Transaction {
+export function buildPauseTx(config: SweefiConfig, params: StreamOpParams): Transaction {
   const tx = new Transaction();
   tx.setSender(params.sender);
 
   tx.moveCall({
     target: `${config.packageId}::stream::pause`,
     typeArguments: [params.coinType],
-    arguments: [
-      tx.object(params.meterId),
-      tx.object(SUI_CLOCK),
-    ],
+    arguments: [tx.object(params.meterId), tx.object(SUI_CLOCK)],
   });
 
   return tx;
@@ -143,20 +135,14 @@ export function buildPauseTx(
  * Pre-pause accrual is preserved via time-shift pattern (v5 fix).
  * Accrual restarts from current timestamp with backward-shifted last_claim_ms.
  */
-export function buildResumeTx(
-  config: SweefiConfig,
-  params: StreamOpParams,
-): Transaction {
+export function buildResumeTx(config: SweefiConfig, params: StreamOpParams): Transaction {
   const tx = new Transaction();
   tx.setSender(params.sender);
 
   tx.moveCall({
     target: `${config.packageId}::stream::resume`,
     typeArguments: [params.coinType],
-    arguments: [
-      tx.object(params.meterId),
-      tx.object(SUI_CLOCK),
-    ],
+    arguments: [tx.object(params.meterId), tx.object(SUI_CLOCK)],
   });
 
   return tx;
@@ -167,20 +153,14 @@ export function buildResumeTx(
  * Final claim sent to recipient (including paused accrual), remainder refunded to payer.
  * The StreamingMeter object is consumed (deleted).
  */
-export function buildCloseTx(
-  config: SweefiConfig,
-  params: StreamOpParams,
-): Transaction {
+export function buildCloseTx(config: SweefiConfig, params: StreamOpParams): Transaction {
   const tx = new Transaction();
   tx.setSender(params.sender);
 
   tx.moveCall({
     target: `${config.packageId}::stream::close`,
     typeArguments: [params.coinType],
-    arguments: [
-      tx.object(params.meterId),
-      tx.object(SUI_CLOCK),
-    ],
+    arguments: [tx.object(params.meterId), tx.object(SUI_CLOCK)],
   });
 
   return tx;
@@ -195,20 +175,14 @@ export function buildCloseTx(
  * NOTE: This is the safety valve — prevents permanent fund lockup
  * when a payer loses keys or abandons the stream.
  */
-export function buildRecipientCloseTx(
-  config: SweefiConfig,
-  params: StreamOpParams,
-): Transaction {
+export function buildRecipientCloseTx(config: SweefiConfig, params: StreamOpParams): Transaction {
   const tx = new Transaction();
   tx.setSender(params.sender);
 
   tx.moveCall({
     target: `${config.packageId}::stream::recipient_close`,
     typeArguments: [params.coinType],
-    arguments: [
-      tx.object(params.meterId),
-      tx.object(SUI_CLOCK),
-    ],
+    arguments: [tx.object(params.meterId), tx.object(SUI_CLOCK)],
   });
 
   return tx;
@@ -222,15 +196,12 @@ export function buildRecipientCloseTx(
  * Economic context: At $0.0003/sec accrual and ~$0.005/claim gas,
  * batching 5 claims saves ~$0.015-0.020 in gas per batch.
  */
-export function buildBatchClaimTx(
-  config: SweefiConfig,
-  params: BatchClaimParams,
-): Transaction {
+export function buildBatchClaimTx(config: SweefiConfig, params: BatchClaimParams): Transaction {
   if (params.meterIds.length === 0) {
-    throw new Error("buildBatchClaimTx: meterIds must not be empty");
+    throw new Error('buildBatchClaimTx: meterIds must not be empty');
   }
   if (params.meterIds.length > 512) {
-    throw new Error("buildBatchClaimTx: max 512 streams per batch (Sui PTB command limit)");
+    throw new Error('buildBatchClaimTx: max 512 streams per batch (Sui PTB command limit)');
   }
 
   const tx = new Transaction();
@@ -240,10 +211,7 @@ export function buildBatchClaimTx(
     tx.moveCall({
       target: `${config.packageId}::stream::claim`,
       typeArguments: [params.coinType],
-      arguments: [
-        tx.object(meterId),
-        tx.object(SUI_CLOCK),
-      ],
+      arguments: [tx.object(meterId), tx.object(SUI_CLOCK)],
     });
   }
 
@@ -253,12 +221,9 @@ export function buildBatchClaimTx(
 /**
  * Build a PTB for the payer to add more funds to an existing stream.
  */
-export function buildTopUpTx(
-  config: SweefiConfig,
-  params: StreamTopUpParams,
-): Transaction {
-  assertPositive(params.depositAmount, "depositAmount", "buildTopUpTx");
-  const protocolStateId = requireProtocolState(config, "buildTopUpTx");
+export function buildTopUpTx(config: SweefiConfig, params: StreamTopUpParams): Transaction {
+  assertPositive(params.depositAmount, 'depositAmount', 'buildTopUpTx');
+  const protocolStateId = requireProtocolState(config, 'buildTopUpTx');
   const tx = new Transaction();
   tx.setSender(params.sender);
 

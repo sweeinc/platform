@@ -1,6 +1,6 @@
 import type { QueryContext } from './context.js';
-import { ResourceNotFoundError } from '../utils/errors.js';
 import { PrepaidBalanceBcs } from '../types/bcs.js';
+import { ResourceNotFoundError } from '../utils/errors.js';
 
 export interface PrepaidState {
   agent: string;

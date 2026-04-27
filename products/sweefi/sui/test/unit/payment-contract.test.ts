@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
 import { Transaction } from '@mysten/sui/transactions';
+import { describe, expect, it } from 'vitest';
 import { PaymentContract } from '../../src/transactions/payment';
 import { SweefiPluginConfig } from '../../src/utils/config';
 
@@ -19,9 +19,7 @@ const contract = new PaymentContract(config);
 /** Find the first MoveCall command and assert module::function */
 function expectMoveCall(tx: Transaction, module: string, fn: string) {
   const data = tx.getData();
-  const moveCall = data.commands.find(
-    (c: any) => c.$kind === 'MoveCall',
-  );
+  const moveCall = data.commands.find((c: any) => c.$kind === 'MoveCall');
   expect(moveCall, `expected a MoveCall command`).toBeDefined();
   expect(moveCall!.MoveCall.module).toBe(module);
   expect(moveCall!.MoveCall.function).toBe(fn);
@@ -57,14 +55,16 @@ describe('PaymentContract.pay', () => {
 
   it('works with tx.add()', () => {
     const tx = new Transaction();
-    tx.add(contract.pay({
-      coinType: SUI_COIN_TYPE,
-      sender: SENDER,
-      recipient: RECIPIENT,
-      amount: 1_000_000_000n,
-      feeMicroPercent: 10_000,
-      feeRecipient: FEE_RECIPIENT,
-    }));
+    tx.add(
+      contract.pay({
+        coinType: SUI_COIN_TYPE,
+        sender: SENDER,
+        recipient: RECIPIENT,
+        amount: 1_000_000_000n,
+        feeMicroPercent: 10_000,
+        feeRecipient: FEE_RECIPIENT,
+      }),
+    );
 
     expectMoveCall(tx, 'payment', 'pay_and_keep');
   });
@@ -205,9 +205,7 @@ describe('PaymentContract.createInvoice', () => {
     expectMoveCall(tx, 'payment', 'create_invoice');
 
     const data = tx.getData();
-    const transfer = data.commands.find(
-      (c: any) => c.$kind === 'TransferObjects',
-    );
+    const transfer = data.commands.find((c: any) => c.$kind === 'TransferObjects');
     expect(transfer).toBeDefined();
   });
 

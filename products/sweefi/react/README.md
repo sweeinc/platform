@@ -26,7 +26,11 @@ import { SweefiProvider } from '@sweefi/react';
 import { SuiPaymentAdapter } from '@sweefi/sui';
 import { createPaymentController } from '@sweefi/ui-core';
 
-const adapter = new SuiPaymentAdapter({ wallet: currentWallet, client: suiClient, network: 'sui:testnet' });
+const adapter = new SuiPaymentAdapter({
+  wallet: currentWallet,
+  client: suiClient,
+  network: 'sui:testnet',
+});
 const controller = createPaymentController(adapter);
 
 export function App() {
@@ -46,7 +50,10 @@ export function PayButton({ requirements }) {
   const { state, pay } = useSweefiPayment(); // controller from context
 
   return (
-    <button disabled={state.status !== 'idle'} onClick={() => pay('https://api.example.com/premium', { requirements })}>
+    <button
+      disabled={state.status !== 'idle'}
+      onClick={() => pay('https://api.example.com/premium', { requirements })}
+    >
       {state.status === 'idle' ? 'Pay' : state.status}
     </button>
   );
@@ -74,12 +81,12 @@ function PayButton({ controller, requirements }) {
 const { state, pay, confirm, reset } = useSweefiPayment(controller?);
 ```
 
-| Return value | Type | Description |
-|---|---|---|
-| `state` | `PaymentState` | Current state (snapshot, concurrent-mode safe) |
-| `pay(url, options?)` | function | Start a payment flow for the given URL |
-| `confirm()` | function | Confirm a pending payment (if applicable) |
-| `reset()` | function | Reset to `idle` state |
+| Return value         | Type           | Description                                    |
+| -------------------- | -------------- | ---------------------------------------------- |
+| `state`              | `PaymentState` | Current state (snapshot, concurrent-mode safe) |
+| `pay(url, options?)` | function       | Start a payment flow for the given URL         |
+| `confirm()`          | function       | Confirm a pending payment (if applicable)      |
+| `reset()`            | function       | Reset to `idle` state                          |
 
 The hook uses `useSyncExternalStore` internally for optimal concurrent-mode behavior. The snapshot reference is cached in a `useRef` to avoid infinite re-renders — do not remove this pattern when modifying the hook.
 
@@ -87,12 +94,12 @@ The hook uses `useSyncExternalStore` internally for optimal concurrent-mode beha
 
 ## Ecosystem
 
-| Package | Purpose |
-|---------|---------|
+| Package                                                            | Purpose                                              |
+| ------------------------------------------------------------------ | ---------------------------------------------------- |
 | [`@sweefi/ui-core`](https://www.npmjs.com/package/@sweefi/ui-core) | Framework-agnostic state machine + adapter interface |
-| [`@sweefi/sui`](https://www.npmjs.com/package/@sweefi/sui) | Sui adapter + PTB builders + `createS402Client` |
-| [`@sweefi/vue`](https://www.npmjs.com/package/@sweefi/vue) | Vue 3 equivalent |
-| [`@sweefi/react`](https://www.npmjs.com/package/@sweefi/react) | This package |
+| [`@sweefi/sui`](https://www.npmjs.com/package/@sweefi/sui)         | Sui adapter + PTB builders + `createS402Client`      |
+| [`@sweefi/vue`](https://www.npmjs.com/package/@sweefi/vue)         | Vue 3 equivalent                                     |
+| [`@sweefi/react`](https://www.npmjs.com/package/@sweefi/react)     | This package                                         |
 
 ---
 

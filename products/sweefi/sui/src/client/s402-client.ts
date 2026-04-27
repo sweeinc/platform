@@ -29,29 +29,29 @@
  * ```
  */
 
-import { SuiJsonRpcClient, getJsonRpcFullnodeUrl } from "@mysten/sui/jsonRpc";
+import type { s402PaymentRequirements } from 's402';
+import type { s402ClientConfig, S402FetchInit, S402PaymentMetadata } from './s402-types.js';
+import { getJsonRpcFullnodeUrl, SuiJsonRpcClient } from '@mysten/sui/jsonRpc';
 import {
-  s402Client,
-  s402Error,
-  S402_HEADERS,
-  encodePaymentPayload,
   decodePaymentRequired,
   decodeSettleResponse,
-} from "s402";
-import type { s402PaymentRequirements } from "s402";
-import { s402PaymentSentError } from "@sweefi/hono/client";
-import { DEFAULT_FACILITATOR_URL } from "@sweefi/hono";
+  encodePaymentPayload,
+  S402_HEADERS,
+  s402Client,
+  s402Error,
+} from 's402';
+import { DEFAULT_FACILITATOR_URL } from '@sweefi/hono';
+import { s402PaymentSentError } from '@sweefi/hono/client';
 import {
+  DirectSuiSettlement,
+  EscrowSuiClientScheme,
   ExactSuiClientScheme,
   PrepaidSuiClientScheme,
   StreamSuiClientScheme,
-  EscrowSuiClientScheme,
   UnlockSuiClientScheme,
-  DirectSuiSettlement,
   verifySuiSettlement,
-} from "../s402/index.js";
-import { toClientSuiSigner } from "../signer.js";
-import type { s402ClientConfig, S402FetchInit, S402PaymentMetadata } from "./s402-types.js";
+} from '../s402/index.js';
+import { toClientSuiSigner } from '../signer.js';
 
 /**
  * Attach s402 payment metadata to a Response as a non-enumerable property.
@@ -67,11 +67,10 @@ function attachMetadata(response: Response, metadata: S402PaymentMetadata): void
   });
 }
 
-
 export function createS402Client(config: s402ClientConfig) {
   const { wallet, network, rpcUrl, facilitatorUrl, packageId, mandate } = config;
 
-  const suiNetwork = network.replace("sui:", "") as "testnet" | "mainnet" | "devnet";
+  const suiNetwork = network.replace('sui:', '') as 'testnet' | 'mainnet' | 'devnet';
   const suiClient = rpcUrl
     ? new SuiJsonRpcClient({ url: rpcUrl, network: suiNetwork })
     : new SuiJsonRpcClient({ url: getJsonRpcFullnodeUrl(suiNetwork), network: suiNetwork });
@@ -86,9 +85,10 @@ export function createS402Client(config: s402ClientConfig) {
       'mandate config requires packageId — validate_and_spend needs the Move package target',
     );
   }
-  const mandateConfig = mandate && packageId
-    ? { mandateId: mandate.mandateId, registryId: mandate.registryId, packageId }
-    : undefined;
+  const mandateConfig =
+    mandate && packageId
+      ? { mandateId: mandate.mandateId, registryId: mandate.registryId, packageId }
+      : undefined;
 
   // Pass packageId to ExactSuiClientScheme so memo-bearing payments can use
   // payment::pay_and_keep to create on-chain PaymentReceipts.
@@ -114,10 +114,7 @@ export function createS402Client(config: s402ClientConfig) {
    *   1. Extracts `s402.memo` from init, sets it on the exact scheme
    *   2. After successful paid fetch, attaches S402PaymentMetadata to Response
    */
-  async function s402Fetch(
-    input: string | URL | Request,
-    init?: S402FetchInit,
-  ): Promise<Response> {
+  async function s402Fetch(input: string | URL | Request, init?: S402FetchInit): Promise<Response> {
     // Extract s402 options and build clean RequestInit for underlying fetch
     const s402Options = init?.s402;
     let cleanInit: RequestInit | undefined;

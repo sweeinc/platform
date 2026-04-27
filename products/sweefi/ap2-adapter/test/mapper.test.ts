@@ -1,17 +1,17 @@
-import { describe, it, expect } from 'vitest';
+import type {
+  AP2CartMandate,
+  AP2IntentMandate,
+  InvoiceDefaults,
+  MandateDefaults,
+} from '../src/types';
+import { describe, expect, it } from 'vitest';
 import {
   createAgentMandateFromAP2Intent,
   createInvoiceFromAP2Cart,
+  toAP2PaymentMethodData,
   toAP2PaymentReceipt,
   toAP2PaymentReceiptError,
-  toAP2PaymentMethodData,
 } from '../src/mapper';
-import type {
-  AP2IntentMandate,
-  AP2CartMandate,
-  MandateDefaults,
-  InvoiceDefaults,
-} from '../src/types';
 
 // ══════════════════════════════════════════════════════════════
 // Test fixtures
@@ -23,10 +23,10 @@ const mandateDefaults: MandateDefaults = {
   coinType: '0x2::sui::SUI',
   delegator: VALID_SUI_ADDRESS,
   delegate: '0x' + 'b'.repeat(64),
-  maxPerTx: '1000000000',    // 1 SUI
-  dailyLimit: '5000000000',  // 5 SUI
+  maxPerTx: '1000000000', // 1 SUI
+  dailyLimit: '5000000000', // 5 SUI
   weeklyLimit: '20000000000', // 20 SUI
-  maxTotal: '100000000000',   // 100 SUI
+  maxTotal: '100000000000', // 100 SUI
   level: 2, // CAPPED
 };
 
@@ -35,7 +35,7 @@ const invoiceDefaults: InvoiceDefaults = {
   payer: VALID_SUI_ADDRESS,
   payee: '0x' + 'c'.repeat(64),
   usdToBaseUnits: 1_000_000n, // 1 USD = 1M base units (USDC-6 style)
-  feeMicroPercent: 10_000,     // 1%
+  feeMicroPercent: 10_000, // 1%
   feeRecipient: '0x' + 'd'.repeat(64),
 };
 
@@ -102,17 +102,13 @@ describe('createAgentMandateFromAP2Intent', () => {
 
   it('throws on invalid intent_expiry', () => {
     const badIntent = { ...sampleIntent, intent_expiry: 'garbage' };
-    expect(() =>
-      createAgentMandateFromAP2Intent(badIntent, mandateDefaults),
-    ).toThrow('Invalid intent_expiry');
+    expect(() => createAgentMandateFromAP2Intent(badIntent, mandateDefaults)).toThrow(
+      'Invalid intent_expiry',
+    );
   });
 
   it('handles various ISO 8601 date formats', () => {
-    const dates = [
-      '2026-12-31T23:59:59Z',
-      '2026-01-01T00:00:00.000Z',
-      '2026-06-15T12:30:00+05:30',
-    ];
+    const dates = ['2026-12-31T23:59:59Z', '2026-01-01T00:00:00.000Z', '2026-06-15T12:30:00+05:30'];
     for (const date of dates) {
       const intent = { ...sampleIntent, intent_expiry: date };
       const result = createAgentMandateFromAP2Intent(intent, mandateDefaults);

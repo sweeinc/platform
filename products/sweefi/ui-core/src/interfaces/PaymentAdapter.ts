@@ -9,7 +9,7 @@
  * Dependency direction: @sweefi/sui → @sweefi/ui-core (never the reverse).
  */
 
-import type { s402PaymentRequirements } from "s402";
+import type { s402PaymentRequirements } from 's402';
 
 // ─── SimulationResult ────────────────────────────────────────────────────────
 

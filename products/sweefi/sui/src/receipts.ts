@@ -15,7 +15,7 @@
 // ── BCS encoding helpers ──────────────────────────────────
 
 function bcsAddress(hex: string): Uint8Array {
-  const clean = hex.replace(/^0x/, "");
+  const clean = hex.replace(/^0x/, '');
   if (clean.length !== 64) {
     throw new Error(`Address must be 64 hex chars, got ${clean.length}`);
   }
@@ -93,7 +93,10 @@ export function buildReceiptMessage(
 export type Ed25519Signer = (message: Uint8Array) => Promise<Uint8Array> | Uint8Array;
 
 /** A pluggable Ed25519 verifier — keeps this module zero-dependency. */
-export type Ed25519Verifier = (message: Uint8Array, signature: Uint8Array) => Promise<boolean> | boolean;
+export type Ed25519Verifier = (
+  message: Uint8Array,
+  signature: Uint8Array,
+) => Promise<boolean> | boolean;
 
 /**
  * Sign a receipt message using a pluggable Ed25519 signer.

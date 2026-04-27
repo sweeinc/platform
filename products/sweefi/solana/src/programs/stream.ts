@@ -8,16 +8,16 @@
  */
 
 import {
-  PublicKey,
-  TransactionInstruction,
-  SystemProgram,
-  SYSVAR_RENT_PUBKEY,
-} from '@solana/web3.js';
-import {
-  TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getAssociatedTokenAddress,
+  TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
+import {
+  PublicKey,
+  SystemProgram,
+  SYSVAR_RENT_PUBKEY,
+  TransactionInstruction,
+} from '@solana/web3.js';
 
 // ─── Program Constants ───────────────────────────────────────────────────────
 
@@ -78,10 +78,7 @@ export function deriveStreamMeterPda(
  * Get the escrow token account address for a stream meter.
  * Uses standard ATA derivation with the meter PDA as authority.
  */
-export async function getEscrowTokenAccount(
-  meter: PublicKey,
-  mint: PublicKey,
-): Promise<PublicKey> {
+export async function getEscrowTokenAccount(meter: PublicKey, mint: PublicKey): Promise<PublicKey> {
   return getAssociatedTokenAddress(mint, meter, true);
 }
 
@@ -143,11 +140,19 @@ export async function buildCreateStreamIx(
   const argsBuffer = Buffer.alloc(8 + 8 + 8 + 2 + 8 + 8);
   let offset = 0;
 
-  argsBuffer.writeBigUInt64LE(params.deposit, offset); offset += 8;
-  argsBuffer.writeBigUInt64LE(params.ratePerSecond, offset); offset += 8;
-  argsBuffer.writeBigUInt64LE(params.budgetCap ?? 0n, offset); offset += 8;
-  argsBuffer.writeUInt16LE(params.feeBps, offset); offset += 2;
-  argsBuffer.writeBigInt64LE(params.recipientCloseTimeout ?? BigInt(DEFAULT_RECIPIENT_CLOSE_TIMEOUT), offset); offset += 8;
+  argsBuffer.writeBigUInt64LE(params.deposit, offset);
+  offset += 8;
+  argsBuffer.writeBigUInt64LE(params.ratePerSecond, offset);
+  offset += 8;
+  argsBuffer.writeBigUInt64LE(params.budgetCap ?? 0n, offset);
+  offset += 8;
+  argsBuffer.writeUInt16LE(params.feeBps, offset);
+  offset += 2;
+  argsBuffer.writeBigInt64LE(
+    params.recipientCloseTimeout ?? BigInt(DEFAULT_RECIPIENT_CLOSE_TIMEOUT),
+    offset,
+  );
+  offset += 8;
   argsBuffer.writeBigUInt64LE(params.nonce, offset);
 
   const data = Buffer.concat([discriminator, argsBuffer]);

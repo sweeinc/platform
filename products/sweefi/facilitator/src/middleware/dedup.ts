@@ -1,5 +1,5 @@
-import type { Context, MiddlewareHandler } from "hono";
-import { createHash } from "node:crypto";
+import type { Context, MiddlewareHandler } from 'hono';
+import { createHash } from 'node:crypto';
 
 interface CacheEntry {
   response: unknown;
@@ -13,7 +13,7 @@ interface CacheEntry {
  * that retry with the same logical payload but different key ordering.
  */
 function canonicalize(value: unknown): unknown {
-  if (value === null || typeof value !== "object") return value;
+  if (value === null || typeof value !== 'object') return value;
   if (Array.isArray(value)) return (value as unknown[]).map(canonicalize);
   const obj = value as Record<string, unknown>;
   const sorted: Record<string, unknown> = {};
@@ -73,7 +73,7 @@ export function payloadDedup(ttlMs = 60_000, maxEntries = 10_000): MiddlewareHan
   return async function dedupMiddleware(c: Context, next) {
     // API key is set by apiKeyAuth middleware — dedup must run after auth
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const apiKey = (c as any).get("apiKey") as string | undefined;
+    const apiKey = (c as any).get('apiKey') as string | undefined;
     if (!apiKey) return next();
 
     let body: unknown;
@@ -85,16 +85,14 @@ export function payloadDedup(ttlMs = 60_000, maxEntries = 10_000): MiddlewareHan
     }
 
     const canonical = JSON.stringify(canonicalize(body));
-    const hash = createHash("sha256")
-      .update(`${apiKey}:${canonical}`)
-      .digest("hex");
+    const hash = createHash('sha256').update(`${apiKey}:${canonical}`).digest('hex');
 
     const now = Date.now();
     const cached = cache.get(hash);
 
     if (cached && cached.expiresAt > now) {
       // Cache hit — return stored response without touching the Sui RPC
-      c.header("X-Idempotent-Replay", "true");
+      c.header('X-Idempotent-Replay', 'true');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return c.json(cached.response, cached.status as any);
     }

@@ -14,9 +14,9 @@
  * @see docs/adr/007-prepaid-trust-model.md — trust model evolution
  */
 
-import { signReceipt, buildReceiptMessage } from './receipts.js';
 import type { Ed25519Signer, Ed25519Verifier } from './receipts.js';
-import { toBase64, fromBase64 } from '@mysten/sui/utils';
+import { fromBase64, toBase64 } from '@mysten/sui/utils';
+import { buildReceiptMessage, signReceipt } from './receipts.js';
 
 // ── Constants ────────────────────────────────────────
 
@@ -177,15 +177,13 @@ export class ReceiptAccumulator {
 
     if (existing) {
       // Check for duplicate with different hash (fraud indicator)
-      const isDuplicate = existing.some(
-        (r) => arraysEqual(r.responseHash, receipt.responseHash),
-      );
+      const isDuplicate = existing.some((r) => arraysEqual(r.responseHash, receipt.responseHash));
       if (isDuplicate) return; // Exact duplicate, skip
 
       // Same callNumber, different responseHash — evidence of provider fraud
       console.warn(
         `[ReceiptAccumulator] Fraud indicator: provider signed different responses ` +
-        `for callNumber ${receipt.callNumber} on balance ${this.balanceId}`,
+          `for callNumber ${receipt.callNumber} on balance ${this.balanceId}`,
       );
       existing.push(receipt);
     } else {
@@ -212,7 +210,9 @@ export class ReceiptAccumulator {
     for (const group of this.receipts.values()) {
       all.push(...group);
     }
-    return all.sort((a, b) => (a.callNumber < b.callNumber ? -1 : a.callNumber > b.callNumber ? 1 : 0));
+    return all.sort((a, b) =>
+      a.callNumber < b.callNumber ? -1 : a.callNumber > b.callNumber ? 1 : 0,
+    );
   }
 
   /** Number of unique call numbers accumulated. */

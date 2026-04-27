@@ -11,10 +11,9 @@ import { z } from 'zod';
 // Shared primitives
 // ══════════════════════════════════════════════════════════════
 
-const iso8601 = z.string().refine(
-  (s) => !isNaN(Date.parse(s)),
-  { message: 'Must be a valid ISO 8601 date string' },
-);
+const iso8601 = z
+  .string()
+  .refine((s) => !isNaN(Date.parse(s)), { message: 'Must be a valid ISO 8601 date string' });
 
 const paymentCurrencyAmount = z.object({
   currency: z.string().min(3).max(3).describe('ISO 4217 currency code'),
@@ -66,15 +65,13 @@ export const paymentMethodDataSchema = z.object({
 // Config schemas (SweeFi-side defaults)
 // ══════════════════════════════════════════════════════════════
 
-const suiAddress = z.string().regex(
-  /^0x[0-9a-fA-F]{64}$/,
-  'Must be a 32-byte Sui address (0x + 64 hex chars)',
-);
+const suiAddress = z
+  .string()
+  .regex(/^0x[0-9a-fA-F]{64}$/, 'Must be a 32-byte Sui address (0x + 64 hex chars)');
 
-const mistAmount = z.string().regex(
-  /^(0|[1-9][0-9]*)$/,
-  'Must be a non-negative integer string (MIST)',
-);
+const mistAmount = z
+  .string()
+  .regex(/^(0|[1-9][0-9]*)$/, 'Must be a non-negative integer string (MIST)');
 
 /** Validates MandateDefaults config */
 export const mandateDefaultsSchema = z.object({

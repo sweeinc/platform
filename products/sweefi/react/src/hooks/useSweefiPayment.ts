@@ -14,10 +14,10 @@
  *   const { state, pay, confirm, reset } = useSweefiPayment();
  */
 
-import { useCallback, useContext, useRef, useSyncExternalStore } from "react";
-import type { PaymentController, PaymentState } from "@sweefi/ui-core";
-import type { s402PaymentRequirements } from "s402";
-import { SweefiPaymentContext } from "../context.js";
+import type { PaymentController, PaymentState } from '@sweefi/ui-core';
+import type { s402PaymentRequirements } from 's402';
+import { useCallback, useContext, useRef, useSyncExternalStore } from 'react';
+import { SweefiPaymentContext } from '../context.js';
 
 export interface UseSweefiPaymentReturn {
   /** Reactive snapshot of the PaymentController state. */
@@ -38,9 +38,7 @@ export interface UseSweefiPaymentReturn {
  *   reads from SweefiPaymentContext (provided by SweefiProvider). Throws if
  *   neither is available.
  */
-export function useSweefiPayment(
-  controller?: PaymentController
-): UseSweefiPaymentReturn {
+export function useSweefiPayment(controller?: PaymentController): UseSweefiPaymentReturn {
   // Always call useContext — React's rules of hooks forbid conditional calls.
   // If `controller` is passed directly it takes precedence over the context value.
   const contextController = useContext(SweefiPaymentContext);
@@ -48,8 +46,8 @@ export function useSweefiPayment(
 
   if (!ctrl) {
     throw new Error(
-      "useSweefiPayment: no PaymentController found. " +
-        "Either pass one directly or wrap with <SweefiProvider controller={controller}>."
+      'useSweefiPayment: no PaymentController found. ' +
+        'Either pass one directly or wrap with <SweefiProvider controller={controller}>.',
     );
   }
 
@@ -68,15 +66,14 @@ export function useSweefiPayment(
         snapshotRef.current = newState;
         notify();
       }),
-    [ctrl]
+    [ctrl],
   );
 
   const state = useSyncExternalStore(subscribe, () => snapshotRef.current);
 
   const pay = useCallback(
-    (url: string, opts?: { requirements?: s402PaymentRequirements }) =>
-      ctrl.pay(url, opts),
-    [ctrl]
+    (url: string, opts?: { requirements?: s402PaymentRequirements }) => ctrl.pay(url, opts),
+    [ctrl],
   );
   const confirm = useCallback(() => ctrl.confirm(), [ctrl]);
   const reset = useCallback(() => ctrl.reset(), [ctrl]);

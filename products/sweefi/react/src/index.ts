@@ -19,6 +19,6 @@
  *   const { state, pay, confirm } = useSweefiPayment(controller);
  */
 
-export { SweefiProvider, useSweefiController, SweefiPaymentContext } from "./context.js";
-export { useSweefiPayment } from "./hooks/useSweefiPayment.js";
-export type { UseSweefiPaymentReturn } from "./hooks/useSweefiPayment.js";
+export { SweefiProvider, useSweefiController, SweefiPaymentContext } from './context.js';
+export { useSweefiPayment } from './hooks/useSweefiPayment.js';
+export type { UseSweefiPaymentReturn } from './hooks/useSweefiPayment.js';

@@ -9,38 +9,34 @@
  * This sidesteps Vue's ref-unwrapping on wrapper.vm and tests the actual
  * reactive pipeline: controller.subscribe → ref.value update → re-render.
  */
-
-import { describe, it, expect, vi } from "vitest";
-import { defineComponent, nextTick } from "vue";
-import { mount } from "@vue/test-utils";
-import {
-  createPaymentController,
-  type PaymentAdapter,
-  type SimulationResult,
-} from "@sweefi/ui-core";
-import type { s402PaymentRequirements } from "s402";
-import { SweefiPlugin, useSweefiPayment } from "../src/index";
+import type { PaymentAdapter, SimulationResult } from '@sweefi/ui-core';
+import type { s402PaymentRequirements } from 's402';
+import { mount } from '@vue/test-utils';
+import { describe, expect, it, vi } from 'vitest';
+import { defineComponent, nextTick } from 'vue';
+import { createPaymentController } from '@sweefi/ui-core';
+import { SweefiPlugin, useSweefiPayment } from '../src/index';
 
 // ─── Mock adapter ─────────────────────────────────────────────────────────────
 
 const mockReqs: s402PaymentRequirements = {
-  s402Version: "1",
-  accepts: ["exact"],
-  network: "sui:testnet",
-  asset: "0x2::sui::SUI",
-  amount: "1000",
-  payTo: "0x1111",
+  s402Version: '1',
+  accepts: ['exact'],
+  network: 'sui:testnet',
+  asset: '0x2::sui::SUI',
+  amount: '1000',
+  payTo: '0x1111',
 };
 
 function makeAdapter(overrides?: Partial<PaymentAdapter>): PaymentAdapter {
   return {
-    network: "sui:testnet",
-    getAddress: vi.fn().mockReturnValue("0xabc"),
+    network: 'sui:testnet',
+    getAddress: vi.fn().mockReturnValue('0xabc'),
     simulate: vi.fn().mockResolvedValue({
       success: true,
-      estimatedFee: { amount: 500n, currency: "SUI" },
+      estimatedFee: { amount: 500n, currency: 'SUI' },
     } satisfies SimulationResult),
-    signAndBroadcast: vi.fn().mockResolvedValue({ txId: "0xdeadbeef" }),
+    signAndBroadcast: vi.fn().mockResolvedValue({ txId: '0xdeadbeef' }),
     ...overrides,
   };
 }
@@ -71,50 +67,50 @@ function makeTestComponent(controller: ReturnType<typeof createPaymentController
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
-describe("useSweefiPayment", () => {
-  describe("initial state", () => {
-    it("renders idle status and wallet address on mount", () => {
+describe('useSweefiPayment', () => {
+  describe('initial state', () => {
+    it('renders idle status and wallet address on mount', () => {
       const controller = createPaymentController(makeAdapter());
       const wrapper = mount(makeTestComponent(controller));
 
-      expect(wrapper.find("[data-testid='status']").text()).toBe("idle");
-      expect(wrapper.find("[data-testid='address']").text()).toBe("0xabc");
+      expect(wrapper.find("[data-testid='status']").text()).toBe('idle');
+      expect(wrapper.find("[data-testid='address']").text()).toBe('0xabc');
     });
   });
 
-  describe("reactivity", () => {
+  describe('reactivity', () => {
     it("re-renders with 'ready' status after pay() resolves", async () => {
       const controller = createPaymentController(makeAdapter());
       const wrapper = mount(makeTestComponent(controller));
 
-      await controller.pay("https://example.com/api", { requirements: mockReqs });
+      await controller.pay('https://example.com/api', { requirements: mockReqs });
       await nextTick();
 
-      expect(wrapper.find("[data-testid='status']").text()).toBe("ready");
+      expect(wrapper.find("[data-testid='status']").text()).toBe('ready');
     });
 
     it("re-renders with 'settled' and txId after confirm() resolves", async () => {
       const controller = createPaymentController(makeAdapter());
       const wrapper = mount(makeTestComponent(controller));
 
-      await controller.pay("https://example.com/api", { requirements: mockReqs });
+      await controller.pay('https://example.com/api', { requirements: mockReqs });
       await controller.confirm();
       await nextTick();
 
-      expect(wrapper.find("[data-testid='status']").text()).toBe("settled");
-      expect(wrapper.find("[data-testid='txId']").text()).toBe("0xdeadbeef");
+      expect(wrapper.find("[data-testid='status']").text()).toBe('settled');
+      expect(wrapper.find("[data-testid='txId']").text()).toBe('0xdeadbeef');
     });
 
     it("re-renders with 'idle' after reset()", async () => {
       const controller = createPaymentController(makeAdapter());
       const wrapper = mount(makeTestComponent(controller));
 
-      await controller.pay("https://example.com/api", { requirements: mockReqs });
+      await controller.pay('https://example.com/api', { requirements: mockReqs });
       controller.reset();
       await nextTick();
 
-      expect(wrapper.find("[data-testid='status']").text()).toBe("idle");
-      expect(wrapper.find("[data-testid='txId']").text()).toBe("");
+      expect(wrapper.find("[data-testid='status']").text()).toBe('idle');
+      expect(wrapper.find("[data-testid='txId']").text()).toBe('');
     });
 
     it("re-renders with 'error' when simulation fails", async () => {
@@ -122,31 +118,29 @@ describe("useSweefiPayment", () => {
         makeAdapter({
           simulate: vi.fn().mockResolvedValue({
             success: false,
-            error: { code: "INSUFFICIENT_BALANCE", message: "Not enough SUI" },
+            error: { code: 'INSUFFICIENT_BALANCE', message: 'Not enough SUI' },
           } satisfies SimulationResult),
-        })
+        }),
       );
       const wrapper = mount(makeTestComponent(controller));
 
-      await controller
-        .pay("https://example.com/api", { requirements: mockReqs })
-        .catch(() => {});
+      await controller.pay('https://example.com/api', { requirements: mockReqs }).catch(() => {});
       await nextTick();
 
-      expect(wrapper.find("[data-testid='status']").text()).toBe("error");
-      expect(wrapper.find("[data-testid='error']").text()).toBe("Not enough SUI");
+      expect(wrapper.find("[data-testid='status']").text()).toBe('error');
+      expect(wrapper.find("[data-testid='error']").text()).toBe('Not enough SUI');
     });
   });
 
-  describe("unsubscribe on unmount", () => {
-    it("stops reacting to controller changes after unmount", async () => {
+  describe('unsubscribe on unmount', () => {
+    it('stops reacting to controller changes after unmount', async () => {
       const controller = createPaymentController(makeAdapter());
       const wrapper = mount(makeTestComponent(controller));
 
       // Component is alive — should respond to state changes
-      await controller.pay("https://example.com/api", { requirements: mockReqs });
+      await controller.pay('https://example.com/api', { requirements: mockReqs });
       await nextTick();
-      expect(wrapper.find("[data-testid='status']").text()).toBe("ready");
+      expect(wrapper.find("[data-testid='status']").text()).toBe('ready');
 
       // Unmount — subscription should be torn down
       wrapper.unmount();
@@ -156,8 +150,8 @@ describe("useSweefiPayment", () => {
     });
   });
 
-  describe("standalone pay/confirm/reset delegation", () => {
-    it("pay() delegates to the controller", async () => {
+  describe('standalone pay/confirm/reset delegation', () => {
+    it('pay() delegates to the controller', async () => {
       const adapter = makeAdapter();
       const controller = createPaymentController(adapter);
 
@@ -172,17 +166,16 @@ describe("useSweefiPayment", () => {
 
       // Call pay via the composable's exposed method
       const cmpWrapper = mount(TestCmp);
-      await (cmpWrapper.vm as { pay: typeof controller.pay }).pay(
-        "https://example.com/api",
-        { requirements: mockReqs }
-      );
+      await (cmpWrapper.vm as { pay: typeof controller.pay }).pay('https://example.com/api', {
+        requirements: mockReqs,
+      });
 
       expect(adapter.simulate).toHaveBeenCalledWith(mockReqs);
     });
   });
 
-  describe("error when no controller", () => {
-    it("throws when useSweefiPayment() is called with no controller and no plugin", () => {
+  describe('error when no controller', () => {
+    it('throws when useSweefiPayment() is called with no controller and no plugin', () => {
       const BrokenComponent = defineComponent({
         setup() {
           useSweefiPayment();
@@ -190,13 +183,13 @@ describe("useSweefiPayment", () => {
         template: `<span />`,
       });
 
-      expect(() => mount(BrokenComponent)).toThrow("no PaymentController found");
+      expect(() => mount(BrokenComponent)).toThrow('no PaymentController found');
     });
   });
 });
 
-describe("SweefiPlugin", () => {
-  it("provides controller to child via plugin + inject", async () => {
+describe('SweefiPlugin', () => {
+  it('provides controller to child via plugin + inject', async () => {
     const controller = createPaymentController(makeAdapter());
 
     const ChildComponent = defineComponent({
@@ -218,14 +211,12 @@ describe("SweefiPlugin", () => {
       },
     });
 
-    expect(wrapper.find("[data-testid='status']").text()).toBe("idle");
+    expect(wrapper.find("[data-testid='status']").text()).toBe('idle');
   });
 
-  it("install throws when no controller is passed", () => {
-    const { createApp } = require("vue");
-    const app = createApp({ template: "<div />" });
-    expect(() => app.use(SweefiPlugin)).toThrow(
-      "SweefiPlugin requires a PaymentController"
-    );
+  it('install throws when no controller is passed', () => {
+    const { createApp } = require('vue');
+    const app = createApp({ template: '<div />' });
+    expect(() => app.use(SweefiPlugin)).toThrow('SweefiPlugin requires a PaymentController');
   });
 });

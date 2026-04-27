@@ -1,7 +1,7 @@
-import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
-import type { SweefiConfig, PayParams } from "./types";
-import { SUI_CLOCK } from "./deployments";
-import { assertFeeMicroPercent, assertPositive } from "./assert";
+import type { PayParams, SweefiConfig } from './types';
+import { coinWithBalance, Transaction } from '@mysten/sui/transactions';
+import { assertFeeMicroPercent, assertPositive } from './assert';
+import { SUI_CLOCK } from './deployments';
 
 // ══════════════════════════════════════════════════════════════
 // Agent Mandate types
@@ -108,8 +108,8 @@ export function buildCreateAgentMandateTx(
   // This catches the likely mistake of creating a spending mandate with no spending authority.
   if (params.level >= MandateLevel.CAPPED && params.maxTotal === 0n) {
     throw new Error(
-      "[sweefi] AgentMandate at L2+ with maxTotal=0 has zero lifetime budget (no spending possible). " +
-      "Use BigInt('18446744073709551615') (u64::MAX) for unlimited, or a specific cap for bounded spending.",
+      '[sweefi] AgentMandate at L2+ with maxTotal=0 has zero lifetime budget (no spending possible). ' +
+        "Use BigInt('18446744073709551615') (u64::MAX) for unlimited, or a specific cap for bounded spending.",
     );
   }
 
@@ -126,7 +126,7 @@ export function buildCreateAgentMandateTx(
       tx.pure.u64(params.dailyLimit),
       tx.pure.u64(params.weeklyLimit),
       tx.pure.u64(params.maxTotal),
-      tx.pure.option("u64", params.expiresAtMs),
+      tx.pure.option('u64', params.expiresAtMs),
       tx.object(SUI_CLOCK),
     ],
   });
@@ -144,8 +144,8 @@ export function buildAgentMandatedPayTx(
   config: SweefiConfig,
   params: AgentMandatedPayParams,
 ): Transaction {
-  assertFeeMicroPercent(params.feeMicroPercent, "buildAgentMandatedPayTx");
-  assertPositive(params.amount, "amount", "buildAgentMandatedPayTx");
+  assertFeeMicroPercent(params.feeMicroPercent, 'buildAgentMandatedPayTx');
+  assertPositive(params.amount, 'amount', 'buildAgentMandatedPayTx');
 
   const tx = new Transaction();
   tx.setSender(params.sender);
@@ -163,9 +163,10 @@ export function buildAgentMandatedPayTx(
   });
 
   // Step 2: Execute the payment
-  const memo = typeof params.memo === "string"
-    ? new TextEncoder().encode(params.memo)
-    : params.memo ?? new Uint8Array();
+  const memo =
+    typeof params.memo === 'string'
+      ? new TextEncoder().encode(params.memo)
+      : (params.memo ?? new Uint8Array());
 
   const coin = coinWithBalance({ type: params.coinType, balance: params.amount });
 
@@ -178,7 +179,7 @@ export function buildAgentMandatedPayTx(
       tx.pure.u64(params.amount),
       tx.pure.u64(params.feeMicroPercent),
       tx.pure.address(params.feeRecipient),
-      tx.pure.vector("u8", Array.from(memo)),
+      tx.pure.vector('u8', Array.from(memo)),
       tx.object(SUI_CLOCK),
     ],
   });
@@ -205,10 +206,7 @@ export function buildUpgradeMandateLevelTx(
   tx.moveCall({
     target: `${config.packageId}::agent_mandate::upgrade_level`,
     typeArguments: [params.coinType],
-    arguments: [
-      tx.object(params.mandateId),
-      tx.pure.u8(params.newLevel),
-    ],
+    arguments: [tx.object(params.mandateId), tx.pure.u8(params.newLevel)],
   });
 
   return tx;

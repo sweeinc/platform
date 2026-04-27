@@ -15,24 +15,23 @@
  *   msg.append(bcs::to_bytes(&receipt_response_hash));     // vector<u8>: ULEB128 len + bytes
  */
 
-import { describe, it, expect } from "vitest";
-import { buildReceiptMessage } from "../../src/receipts";
+import { describe, expect, it } from 'vitest';
+import { buildReceiptMessage } from '../../src/receipts';
 
 // ── Test vectors with hand-computed expected bytes ───
 
 // Known inputs
-const BALANCE_ID = "0x" + "0a".repeat(32); // 32 bytes of 0x0a
+const BALANCE_ID = '0x' + '0a'.repeat(32); // 32 bytes of 0x0a
 const CALL_NUMBER = 5n;
 const TIMESTAMP_MS = 1709251200000n; // 2024-03-01T00:00:00Z
 const RESPONSE_HASH = new Uint8Array([
-  0xde, 0xad, 0xbe, 0xef, 0xca, 0xfe, 0xba, 0xbe, 0x01, 0x02, 0x03, 0x04,
-  0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10,
-  0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18,
+  0xde, 0xad, 0xbe, 0xef, 0xca, 0xfe, 0xba, 0xbe, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+  0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18,
 ]);
 
-describe("BCS cross-layer verification", () => {
-  describe("bcsAddress (Move bcs::to_bytes(&address))", () => {
-    it("produces exactly 32 bytes with no length prefix", () => {
+describe('BCS cross-layer verification', () => {
+  describe('bcsAddress (Move bcs::to_bytes(&address))', () => {
+    it('produces exactly 32 bytes with no length prefix', () => {
       const msg = buildReceiptMessage(BALANCE_ID, 0n, 0n, new Uint8Array(0));
       // First 32 bytes = address
       const addressBytes = msg.slice(0, 32);
@@ -43,24 +42,22 @@ describe("BCS cross-layer verification", () => {
       }
     });
 
-    it("rejects address with wrong length", () => {
-      expect(() =>
-        buildReceiptMessage("0x" + "ab".repeat(31), 0n, 0n, new Uint8Array(0)),
-      ).toThrow("Address must be 64 hex chars");
+    it('rejects address with wrong length', () => {
+      expect(() => buildReceiptMessage('0x' + 'ab'.repeat(31), 0n, 0n, new Uint8Array(0))).toThrow(
+        'Address must be 64 hex chars',
+      );
     });
   });
 
-  describe("bcsU64 (Move bcs::to_bytes(&u64))", () => {
-    it("encodes 5 as 8-byte little-endian", () => {
+  describe('bcsU64 (Move bcs::to_bytes(&u64))', () => {
+    it('encodes 5 as 8-byte little-endian', () => {
       const msg = buildReceiptMessage(BALANCE_ID, 5n, 0n, new Uint8Array(0));
       // Bytes 32-39 = call_number
       const callBytes = msg.slice(32, 40);
-      expect(callBytes).toEqual(
-        new Uint8Array([0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]),
-      );
+      expect(callBytes).toEqual(new Uint8Array([0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]));
     });
 
-    it("encodes timestamp 1709251200000 as 8-byte little-endian", () => {
+    it('encodes timestamp 1709251200000 as 8-byte little-endian', () => {
       const msg = buildReceiptMessage(BALANCE_ID, 0n, 1709251200000n, new Uint8Array(0));
       // Bytes 40-47 = timestamp_ms
       const tsBytes = msg.slice(40, 48);
@@ -72,22 +69,22 @@ describe("BCS cross-layer verification", () => {
       expect(tsBytes).toEqual(expected);
     });
 
-    it("encodes u64 max correctly", () => {
+    it('encodes u64 max correctly', () => {
       const maxU64 = 2n ** 64n - 1n; // 18446744073709551615
       const msg = buildReceiptMessage(BALANCE_ID, maxU64, 0n, new Uint8Array(0));
       const callBytes = msg.slice(32, 40);
       expect(callBytes).toEqual(new Uint8Array([0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]));
     });
 
-    it("encodes 0 as 8 zero bytes", () => {
+    it('encodes 0 as 8 zero bytes', () => {
       const msg = buildReceiptMessage(BALANCE_ID, 0n, 0n, new Uint8Array(0));
       const callBytes = msg.slice(32, 40);
       expect(callBytes).toEqual(new Uint8Array(8));
     });
   });
 
-  describe("bcsVectorU8 (Move bcs::to_bytes(&vector<u8>))", () => {
-    it("prefixes with ULEB128 length for 32-byte hash", () => {
+  describe('bcsVectorU8 (Move bcs::to_bytes(&vector<u8>))', () => {
+    it('prefixes with ULEB128 length for 32-byte hash', () => {
       const hash = new Uint8Array(32).fill(0xab);
       const msg = buildReceiptMessage(BALANCE_ID, 0n, 0n, hash);
       // Bytes 48+ = vector<u8>(response_hash)
@@ -100,14 +97,14 @@ describe("BCS cross-layer verification", () => {
       }
     });
 
-    it("handles empty vector (length prefix = 0)", () => {
+    it('handles empty vector (length prefix = 0)', () => {
       const msg = buildReceiptMessage(BALANCE_ID, 0n, 0n, new Uint8Array(0));
       // ULEB128(0) = 0x00
       expect(msg[48]).toBe(0);
       expect(msg.length).toBe(32 + 8 + 8 + 1); // 49 total
     });
 
-    it("handles 128-byte vector with 2-byte ULEB128 prefix", () => {
+    it('handles 128-byte vector with 2-byte ULEB128 prefix', () => {
       const largeHash = new Uint8Array(128).fill(0xcc);
       const msg = buildReceiptMessage(BALANCE_ID, 0n, 0n, largeHash);
       // ULEB128(128) = 0x80 0x01 (two bytes: 128 in ULEB128)
@@ -117,14 +114,9 @@ describe("BCS cross-layer verification", () => {
     });
   });
 
-  describe("full message byte-for-byte verification", () => {
-    it("matches expected BCS output for known inputs", () => {
-      const msg = buildReceiptMessage(
-        BALANCE_ID,
-        CALL_NUMBER,
-        TIMESTAMP_MS,
-        RESPONSE_HASH,
-      );
+  describe('full message byte-for-byte verification', () => {
+    it('matches expected BCS output for known inputs', () => {
+      const msg = buildReceiptMessage(BALANCE_ID, CALL_NUMBER, TIMESTAMP_MS, RESPONSE_HASH);
 
       // ── Build expected bytes manually ──
 
@@ -132,9 +124,7 @@ describe("BCS cross-layer verification", () => {
       const expectedAddress = new Uint8Array(32).fill(0x0a);
 
       // 2. u64 call_number = 5: little-endian 8 bytes
-      const expectedCall = new Uint8Array([
-        0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      ]);
+      const expectedCall = new Uint8Array([0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
 
       // 3. u64 timestamp_ms = 1709251200000: little-endian 8 bytes
       const expectedTs = new Uint8Array(8);
@@ -147,10 +137,7 @@ describe("BCS cross-layer verification", () => {
 
       // Concatenate expected
       const expected = new Uint8Array(
-        expectedAddress.length +
-          expectedCall.length +
-          expectedTs.length +
-          expectedHash.length,
+        expectedAddress.length + expectedCall.length + expectedTs.length + expectedHash.length,
       );
       let offset = 0;
       expected.set(expectedAddress, offset);
@@ -169,9 +156,9 @@ describe("BCS cross-layer verification", () => {
       expect(msg.length).toBe(81);
     });
 
-    it("field order is address → call_number → timestamp → response_hash", () => {
+    it('field order is address → call_number → timestamp → response_hash', () => {
       // Use distinct patterns in each field to verify ordering
-      const distinctId = "0x" + "11".repeat(32);
+      const distinctId = '0x' + '11'.repeat(32);
       const distinctHash = new Uint8Array(4).fill(0x44);
       const msg = buildReceiptMessage(distinctId, 0x22n, 0x33n, distinctHash);
 

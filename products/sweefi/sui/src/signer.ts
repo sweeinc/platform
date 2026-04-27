@@ -1,9 +1,9 @@
-import type { SuiJsonRpcClient, DryRunTransactionBlockResponse } from "@mysten/sui/jsonRpc";
-import type { Signer } from "@mysten/sui/cryptography";
-import type { Transaction } from "@mysten/sui/transactions";
-import { fromBase64, toBase64 } from "@mysten/sui/utils";
-import { verifyTransactionSignature } from "@mysten/sui/verify";
-import { createSuiClient } from "./utils";
+import type { Signer } from '@mysten/sui/cryptography';
+import type { DryRunTransactionBlockResponse, SuiJsonRpcClient } from '@mysten/sui/jsonRpc';
+import type { Transaction } from '@mysten/sui/transactions';
+import { fromBase64, toBase64 } from '@mysten/sui/utils';
+import { verifyTransactionSignature } from '@mysten/sui/verify';
+import { createSuiClient } from './utils';
 
 /**
  * Client-side signer for creating and signing Sui transactions.
@@ -71,7 +71,11 @@ export interface FacilitatorSuiSigner {
    * @param network - CAIP-2 network identifier
    * @returns Transaction digest
    */
-  executeTransaction(transaction: string, signature: string | string[], network: string): Promise<string>;
+  executeTransaction(
+    transaction: string,
+    signature: string | string[],
+    network: string,
+  ): Promise<string>;
 
   /**
    * Wait for transaction finality
@@ -181,9 +185,9 @@ export function toFacilitatorSuiSigner(
         },
       });
 
-      if (result.effects?.status?.status !== "success") {
+      if (result.effects?.status?.status !== 'success') {
         throw new Error(
-          `Transaction execution failed: ${result.effects?.status?.error || "unknown error"}`,
+          `Transaction execution failed: ${result.effects?.status?.error || 'unknown error'}`,
         );
       }
 

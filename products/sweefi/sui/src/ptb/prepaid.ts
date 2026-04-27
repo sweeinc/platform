@@ -1,33 +1,33 @@
-import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
+import type { Ed25519Verifier } from '../receipts';
 import type {
-  SweefiConfig,
-  PrepaidDepositParams,
   PrepaidClaimParams,
+  PrepaidDepositParams,
+  PrepaidDepositWithReceiptsParams,
+  PrepaidDisputeClaimParams,
+  PrepaidFinalizeClaimParams,
   PrepaidOpParams,
   PrepaidTopUpParams,
-  PrepaidDepositWithReceiptsParams,
-  PrepaidFinalizeClaimParams,
-  PrepaidDisputeClaimParams,
   PrepaidWithdrawDisputedParams,
-} from "./types";
-import type { Ed25519Verifier } from "../receipts";
-import { SUI_CLOCK } from "./deployments";
-import { assertFeeMicroPercent, assertPositive } from "./assert";
+  SweefiConfig,
+} from './types';
+import { coinWithBalance, Transaction } from '@mysten/sui/transactions';
+import { assertFeeMicroPercent, assertPositive } from './assert';
+import { SUI_CLOCK } from './deployments';
 
 /** u64::MAX as string — use as max_calls for unlimited prepaid balances */
-export const UNLIMITED_CALLS = "18446744073709551615";
+export const UNLIMITED_CALLS = '18446744073709551615';
 
 /** Convert hex string (with optional 0x prefix) to number array for tx.pure */
 function hexToBytes(hex: string): number[] {
-  const clean = hex.replace(/^0x/, "");
+  const clean = hex.replace(/^0x/, '');
   if (clean.length % 2 !== 0) {
     throw new Error(
       `hexToBytes: hex string has odd length (${clean.length} chars). ` +
-      "Each byte requires exactly 2 hex characters.",
+        'Each byte requires exactly 2 hex characters.',
     );
   }
   if (clean.length > 0 && !/^[0-9a-fA-F]+$/.test(clean)) {
-    throw new Error("hexToBytes: hex string contains non-hex characters.");
+    throw new Error('hexToBytes: hex string contains non-hex characters.');
   }
   const bytes: number[] = [];
   for (let i = 0; i < clean.length; i += 2) {
@@ -40,7 +40,7 @@ function requireProtocolState(config: SweefiConfig, fn: string): string {
   if (!config.protocolStateId) {
     throw new Error(
       `${fn}: SweefiConfig.protocolStateId is required for prepaid deposit/top-up. ` +
-      "Set it to the shared ProtocolState object ID from your deployment.",
+        'Set it to the shared ProtocolState object ID from your deployment.',
     );
   }
   return config.protocolStateId;
@@ -54,15 +54,12 @@ function requireProtocolState(config: SweefiConfig, fn: string): string {
  * but cannot verify that API calls actually happened. The deposit amount is the agent's
  * maximum loss.
  */
-export function buildDepositTx(
-  config: SweefiConfig,
-  params: PrepaidDepositParams,
-): Transaction {
-  assertPositive(params.amount, "amount", "buildDepositTx");
-  assertPositive(params.ratePerCall, "ratePerCall", "buildDepositTx");
-  assertFeeMicroPercent(params.feeMicroPercent, "buildDepositTx");
+export function buildDepositTx(config: SweefiConfig, params: PrepaidDepositParams): Transaction {
+  assertPositive(params.amount, 'amount', 'buildDepositTx');
+  assertPositive(params.ratePerCall, 'ratePerCall', 'buildDepositTx');
+  assertFeeMicroPercent(params.feeMicroPercent, 'buildDepositTx');
 
-  const protocolStateId = requireProtocolState(config, "buildDepositTx");
+  const protocolStateId = requireProtocolState(config, 'buildDepositTx');
   const tx = new Transaction();
   tx.setSender(params.sender);
 
@@ -95,10 +92,7 @@ export function buildDepositTx(
  * Zero-delta claims (same count as last claim) are no-ops — safe for idempotent retries.
  * Claims are allowed during pending withdrawal (provider's grace period).
  */
-export function buildClaimTx(
-  config: SweefiConfig,
-  params: PrepaidClaimParams,
-): Transaction {
+export function buildClaimTx(config: SweefiConfig, params: PrepaidClaimParams): Transaction {
   const tx = new Transaction();
   tx.setSender(params.sender);
 
@@ -130,10 +124,7 @@ export function buildRequestWithdrawalTx(
   tx.moveCall({
     target: `${config.packageId}::prepaid::request_withdrawal`,
     typeArguments: [params.coinType],
-    arguments: [
-      tx.object(params.balanceId),
-      tx.object(SUI_CLOCK),
-    ],
+    arguments: [tx.object(params.balanceId), tx.object(SUI_CLOCK)],
   });
 
   return tx;
@@ -154,10 +145,7 @@ export function buildFinalizeWithdrawalTx(
   tx.moveCall({
     target: `${config.packageId}::prepaid::finalize_withdrawal`,
     typeArguments: [params.coinType],
-    arguments: [
-      tx.object(params.balanceId),
-      tx.object(SUI_CLOCK),
-    ],
+    arguments: [tx.object(params.balanceId), tx.object(SUI_CLOCK)],
   });
 
   return tx;
@@ -177,9 +165,7 @@ export function buildCancelWithdrawalTx(
   tx.moveCall({
     target: `${config.packageId}::prepaid::cancel_withdrawal`,
     typeArguments: [params.coinType],
-    arguments: [
-      tx.object(params.balanceId),
-    ],
+    arguments: [tx.object(params.balanceId)],
   });
 
   return tx;
@@ -189,20 +175,14 @@ export function buildCancelWithdrawalTx(
  * Build a PTB for the agent to close an exhausted PrepaidBalance (0 remaining).
  * Destructures the shared object, returning the storage rebate.
  */
-export function buildAgentCloseTx(
-  config: SweefiConfig,
-  params: PrepaidOpParams,
-): Transaction {
+export function buildAgentCloseTx(config: SweefiConfig, params: PrepaidOpParams): Transaction {
   const tx = new Transaction();
   tx.setSender(params.sender);
 
   tx.moveCall({
     target: `${config.packageId}::prepaid::agent_close`,
     typeArguments: [params.coinType],
-    arguments: [
-      tx.object(params.balanceId),
-      tx.object(SUI_CLOCK),
-    ],
+    arguments: [tx.object(params.balanceId), tx.object(SUI_CLOCK)],
   });
 
   return tx;
@@ -212,20 +192,14 @@ export function buildAgentCloseTx(
  * Build a PTB for the provider to close a fully-claimed PrepaidBalance.
  * Destructures the shared object, returning the storage rebate.
  */
-export function buildProviderCloseTx(
-  config: SweefiConfig,
-  params: PrepaidOpParams,
-): Transaction {
+export function buildProviderCloseTx(config: SweefiConfig, params: PrepaidOpParams): Transaction {
   const tx = new Transaction();
   tx.setSender(params.sender);
 
   tx.moveCall({
     target: `${config.packageId}::prepaid::provider_close`,
     typeArguments: [params.coinType],
-    arguments: [
-      tx.object(params.balanceId),
-      tx.object(SUI_CLOCK),
-    ],
+    arguments: [tx.object(params.balanceId), tx.object(SUI_CLOCK)],
   });
 
   return tx;
@@ -235,12 +209,9 @@ export function buildProviderCloseTx(
  * Build a PTB for the agent to add more funds to an existing PrepaidBalance.
  * Blocked during pending withdrawal (would conflict with finalize).
  */
-export function buildTopUpTx(
-  config: SweefiConfig,
-  params: PrepaidTopUpParams,
-): Transaction {
-  assertPositive(params.amount, "amount", "buildTopUpTx");
-  const protocolStateId = requireProtocolState(config, "buildTopUpTx");
+export function buildTopUpTx(config: SweefiConfig, params: PrepaidTopUpParams): Transaction {
+  assertPositive(params.amount, 'amount', 'buildTopUpTx');
+  const protocolStateId = requireProtocolState(config, 'buildTopUpTx');
   const tx = new Transaction();
   tx.setSender(params.sender);
 
@@ -273,11 +244,11 @@ export function buildDepositWithReceiptsTx(
   config: SweefiConfig,
   params: PrepaidDepositWithReceiptsParams,
 ): Transaction {
-  assertPositive(params.amount, "amount", "buildDepositWithReceiptsTx");
-  assertPositive(params.ratePerCall, "ratePerCall", "buildDepositWithReceiptsTx");
-  assertFeeMicroPercent(params.feeMicroPercent, "buildDepositWithReceiptsTx");
+  assertPositive(params.amount, 'amount', 'buildDepositWithReceiptsTx');
+  assertPositive(params.ratePerCall, 'ratePerCall', 'buildDepositWithReceiptsTx');
+  assertFeeMicroPercent(params.feeMicroPercent, 'buildDepositWithReceiptsTx');
 
-  const protocolStateId = requireProtocolState(config, "buildDepositWithReceiptsTx");
+  const protocolStateId = requireProtocolState(config, 'buildDepositWithReceiptsTx');
   const tx = new Transaction();
   tx.setSender(params.sender);
 
@@ -294,7 +265,7 @@ export function buildDepositWithReceiptsTx(
       tx.pure.u64(params.withdrawalDelayMs),
       tx.pure.u64(params.feeMicroPercent),
       tx.pure.address(params.feeRecipient),
-      tx.pure("vector<u8>", hexToBytes(params.providerPubkey)),
+      tx.pure('vector<u8>', hexToBytes(params.providerPubkey)),
       tx.pure.u64(params.disputeWindowMs),
       tx.object(protocolStateId),
       tx.object(SUI_CLOCK),
@@ -318,10 +289,7 @@ export function buildFinalizeClaimTx(
   tx.moveCall({
     target: `${config.packageId}::prepaid::finalize_claim`,
     typeArguments: [params.coinType],
-    arguments: [
-      tx.object(params.balanceId),
-      tx.object(SUI_CLOCK),
-    ],
+    arguments: [tx.object(params.balanceId), tx.object(SUI_CLOCK)],
   });
 
   return tx;
@@ -346,8 +314,8 @@ export function buildDisputeClaimTx(
       tx.pure.address(params.receiptBalanceId),
       tx.pure.u64(params.receiptCallNumber),
       tx.pure.u64(params.receiptTimestampMs),
-      tx.pure("vector<u8>", Array.from(params.receiptResponseHash)),
-      tx.pure("vector<u8>", Array.from(params.signature)),
+      tx.pure('vector<u8>', Array.from(params.receiptResponseHash)),
+      tx.pure('vector<u8>', Array.from(params.signature)),
       tx.object(SUI_CLOCK),
     ],
   });
@@ -369,10 +337,7 @@ export function buildWithdrawDisputedTx(
   tx.moveCall({
     target: `${config.packageId}::prepaid::withdraw_disputed`,
     typeArguments: [params.coinType],
-    arguments: [
-      tx.object(params.balanceId),
-      tx.object(SUI_CLOCK),
-    ],
+    arguments: [tx.object(params.balanceId), tx.object(SUI_CLOCK)],
   });
 
   return tx;
@@ -384,7 +349,7 @@ export function buildWithdrawDisputedTx(
 
 /** Convert a Uint8Array to a hex string (no 0x prefix). Inverse of hexToBytes. */
 export function bytesToHex(bytes: Uint8Array): string {
-  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -421,10 +386,10 @@ export async function verifyProviderKey(
   challenge.set(nonce, 0);
   challenge.set(advertisedPubkey, nonce.length);
 
-  const url = `${providerUrl.replace(/\/+$/, "")}/.well-known/s402-key-proof`;
+  const url = `${providerUrl.replace(/\/+$/, '')}/.well-known/s402-key-proof`;
   const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/octet-stream" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/octet-stream' },
     body: challenge,
   });
 

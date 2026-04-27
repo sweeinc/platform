@@ -30,25 +30,25 @@
  *   sweefi doctor                            — setup diagnostics
  *   sweefi schema                            — machine-readable manifest
  */
-
-import { parseArgs } from "node:util";
-import { randomUUID } from "node:crypto";
-import { createContext, CliError, debug, sanitize, isNetworkError } from "./context.js";
-import { VERSION, outputError, createRequestContext, type RequestContext } from "./output.js";
-import { validateIdempotencyKey } from "./idempotency.js";
-import { pay } from "./commands/pay.js";
-import { pay402 } from "./commands/pay-402.js";
-import { balance } from "./commands/balance.js";
-import { receipt } from "./commands/receipt.js";
-import { prepaidDeposit, prepaidStatus, prepaidList } from "./commands/prepaid.js";
-import { mandateCreate, mandateCheck, mandateList } from "./commands/mandate.js";
-import { walletGenerate } from "./commands/wallet.js";
-import { doctor } from "./commands/doctor.js";
-import { schema } from "./commands/schema.js";
+import type { RequestContext } from './output.js';
+import { randomUUID } from 'node:crypto';
+import { parseArgs } from 'node:util';
+import { balance } from './commands/balance.js';
+import { doctor } from './commands/doctor.js';
+import { mandateCheck, mandateCreate, mandateList } from './commands/mandate.js';
+import { pay402 } from './commands/pay-402.js';
+import { pay } from './commands/pay.js';
+import { prepaidDeposit, prepaidList, prepaidStatus } from './commands/prepaid.js';
+import { receipt } from './commands/receipt.js';
+import { schema } from './commands/schema.js';
+import { walletGenerate } from './commands/wallet.js';
+import { CliError, createContext, debug, isNetworkError, sanitize } from './context.js';
+import { validateIdempotencyKey } from './idempotency.js';
+import { createRequestContext, outputError, VERSION } from './output.js';
 
 // Module-level error context — populated as main() progresses, read by the
 // .catch() handler which runs outside main()'s scope and cannot close over its locals.
-let _command: string = process.argv[2] ?? "unknown";
+let _command: string = process.argv[2] ?? 'unknown';
 let _reqCtx: RequestContext | undefined;
 let _isHuman = false;
 
@@ -58,17 +58,17 @@ async function main(): Promise<void> {
   const command = rawArgs[0];
 
   // Handle --version and --help before anything else
-  if (!command || command === "--help" || command === "-h") {
+  if (!command || command === '--help' || command === '-h') {
     printHelp();
     return;
   }
-  if (command === "--version" || command === "-v") {
+  if (command === '--version' || command === '-v') {
     process.stdout.write(`sweefi ${VERSION}\n`);
     return;
   }
 
   // Schema command emits raw JSON (not wrapped in envelope)
-  if (command === "schema") {
+  if (command === 'schema') {
     schema();
     return;
   }
@@ -76,7 +76,11 @@ async function main(): Promise<void> {
   // Determine subcommand depth
   let fullCommand = command;
   let commandArgs = rawArgs.slice(1);
-  if ((command === "prepaid" || command === "mandate" || command === "wallet") && commandArgs.length > 0 && !commandArgs[0].startsWith("-")) {
+  if (
+    (command === 'prepaid' || command === 'mandate' || command === 'wallet') &&
+    commandArgs.length > 0 &&
+    !commandArgs[0].startsWith('-')
+  ) {
     fullCommand = `${command} ${commandArgs[0]}`;
     commandArgs = commandArgs.slice(1);
   }
@@ -86,33 +90,35 @@ async function main(): Promise<void> {
   const { values: flags, positionals } = parseArgs({
     args: commandArgs,
     options: {
-      network: { type: "string", short: "n" },
-      human: { type: "boolean" },
-      coin: { type: "string" },
-      memo: { type: "string" },
-      json: { type: "boolean" },
-      "dry-run": { type: "boolean" },
-      "idempotency-key": { type: "string" },
-      url: { type: "string" },
-      method: { type: "string" },
-      body: { type: "string" },
-      header: { type: "string", multiple: true },
-      mandate: { type: "string" },
-      registry: { type: "string" },
-      rate: { type: "string" },
-      "max-calls": { type: "string" },
-      verbose: { type: "boolean" },
-      timeout: { type: "string" },
+      network: { type: 'string', short: 'n' },
+      human: { type: 'boolean' },
+      coin: { type: 'string' },
+      memo: { type: 'string' },
+      json: { type: 'boolean' },
+      'dry-run': { type: 'boolean' },
+      'idempotency-key': { type: 'string' },
+      url: { type: 'string' },
+      method: { type: 'string' },
+      body: { type: 'string' },
+      header: { type: 'string', multiple: true },
+      mandate: { type: 'string' },
+      registry: { type: 'string' },
+      rate: { type: 'string' },
+      'max-calls': { type: 'string' },
+      verbose: { type: 'boolean' },
+      timeout: { type: 'string' },
     },
     allowPositionals: true,
     strict: false,
   });
 
   // Narrow parseArgs types (strict: false returns string | boolean | undefined)
-  const str = (v: string | boolean | undefined): string | undefined => (typeof v === "string" ? v : undefined);
-  const bool = (v: string | boolean | undefined): boolean | undefined => (typeof v === "boolean" ? v : undefined);
+  const str = (v: string | boolean | undefined): string | undefined =>
+    typeof v === 'string' ? v : undefined;
+  const bool = (v: string | boolean | undefined): boolean | undefined =>
+    typeof v === 'boolean' ? v : undefined;
   const strArr = (v: (string | boolean)[] | undefined): string[] | undefined =>
-    v?.filter((x): x is string => typeof x === "string");
+    v?.filter((x): x is string => typeof x === 'string');
 
   // Resolve output mode early — needed before any outputError calls
   const isHuman = bool(flags.json) ? false : (bool(flags.human) ?? false);
@@ -121,23 +127,40 @@ async function main(): Promise<void> {
   const timeoutRaw = str(flags.timeout);
   const timeoutMs = timeoutRaw ? Number(timeoutRaw) : undefined;
   if (timeoutMs !== undefined && (Number.isNaN(timeoutMs) || timeoutMs <= 0)) {
-    outputError(_command, "INVALID_VALUE", `Invalid --timeout value: "${timeoutRaw}"`, false, "Provide a positive number in milliseconds (e.g., --timeout 30000)", false, undefined, undefined, _isHuman);
+    outputError(
+      _command,
+      'INVALID_VALUE',
+      `Invalid --timeout value: "${timeoutRaw}"`,
+      false,
+      'Provide a positive number in milliseconds (e.g., --timeout 30000)',
+      false,
+      undefined,
+      undefined,
+      _isHuman,
+    );
     process.exit(1);
   }
 
-  const ctx = createContext({ network: str(flags.network), verbose: bool(flags.verbose), timeout: timeoutMs });
+  const ctx = createContext({
+    network: str(flags.network),
+    verbose: bool(flags.verbose),
+    timeout: timeoutMs,
+  });
   const reqCtx = createRequestContext(ctx.network);
   _reqCtx = reqCtx;
 
   // Validate idempotency key if provided
-  const rawIdempotencyKey = str(flags["idempotency-key"]);
+  const rawIdempotencyKey = str(flags['idempotency-key']);
   const idempotencyKey = rawIdempotencyKey ? validateIdempotencyKey(rawIdempotencyKey) : undefined;
   const effectiveIdempotencyKey =
-    (fullCommand === "pay" || fullCommand === "pay-402") && isHuman && !idempotencyKey && !bool(flags["dry-run"])
+    (fullCommand === 'pay' || fullCommand === 'pay-402') &&
+    isHuman &&
+    !idempotencyKey &&
+    !bool(flags['dry-run'])
       ? randomUUID()
       : idempotencyKey;
 
-  debug(ctx, "command:", fullCommand, "network:", ctx.network, "timeout:", ctx.timeoutMs);
+  debug(ctx, 'command:', fullCommand, 'network:', ctx.network, 'timeout:', ctx.timeoutMs);
 
   const commonFlags = {
     human: isHuman,
@@ -145,55 +168,80 @@ async function main(): Promise<void> {
     memo: str(flags.memo),
     mandate: str(flags.mandate),
     registry: str(flags.registry),
-    dryRun: bool(flags["dry-run"]),
+    dryRun: bool(flags['dry-run']),
     idempotencyKey: effectiveIdempotencyKey,
   };
 
   switch (fullCommand) {
-    case "pay":
+    case 'pay':
       return pay(ctx, positionals, commonFlags, reqCtx);
-    case "pay-402":
-      return pay402(ctx, positionals, {
-        url: str(flags.url),
-        method: str(flags.method),
-        body: str(flags.body),
-        header: strArr(flags.header),
-        human: isHuman,
-        idempotencyKey: effectiveIdempotencyKey,
-        dryRun: bool(flags["dry-run"]),
-      }, reqCtx);
-    case "balance":
+    case 'pay-402':
+      return pay402(
+        ctx,
+        positionals,
+        {
+          url: str(flags.url),
+          method: str(flags.method),
+          body: str(flags.body),
+          header: strArr(flags.header),
+          human: isHuman,
+          idempotencyKey: effectiveIdempotencyKey,
+          dryRun: bool(flags['dry-run']),
+        },
+        reqCtx,
+      );
+    case 'balance':
       return balance(ctx, positionals, { coin: str(flags.coin), human: isHuman }, reqCtx);
-    case "receipt":
+    case 'receipt':
       return receipt(ctx, positionals, { human: isHuman }, reqCtx);
-    case "prepaid deposit":
-      return prepaidDeposit(ctx, positionals, {
-        coin: str(flags.coin),
-        rate: str(flags.rate),
-        maxCalls: str(flags["max-calls"]),
-        dryRun: bool(flags["dry-run"]),
-        human: isHuman,
-      }, reqCtx);
-    case "prepaid status":
+    case 'prepaid deposit':
+      return prepaidDeposit(
+        ctx,
+        positionals,
+        {
+          coin: str(flags.coin),
+          rate: str(flags.rate),
+          maxCalls: str(flags['max-calls']),
+          dryRun: bool(flags['dry-run']),
+          human: isHuman,
+        },
+        reqCtx,
+      );
+    case 'prepaid status':
       return prepaidStatus(ctx, positionals, { human: isHuman }, reqCtx);
-    case "prepaid list":
+    case 'prepaid list':
       return prepaidList(ctx, positionals, { human: isHuman }, reqCtx);
-    case "mandate create":
-      return mandateCreate(ctx, positionals, {
-        coin: str(flags.coin),
-        dryRun: bool(flags["dry-run"]),
-        human: isHuman,
-      }, reqCtx);
-    case "mandate check":
+    case 'mandate create':
+      return mandateCreate(
+        ctx,
+        positionals,
+        {
+          coin: str(flags.coin),
+          dryRun: bool(flags['dry-run']),
+          human: isHuman,
+        },
+        reqCtx,
+      );
+    case 'mandate check':
       return mandateCheck(ctx, positionals, { human: isHuman }, reqCtx);
-    case "mandate list":
+    case 'mandate list':
       return mandateList(ctx, positionals, { human: isHuman }, reqCtx);
-    case "wallet generate":
+    case 'wallet generate':
       return walletGenerate({ human: isHuman }, reqCtx);
-    case "doctor":
+    case 'doctor':
       return doctor(ctx, { human: isHuman }, reqCtx);
     default:
-      outputError(fullCommand, "UNKNOWN_COMMAND", `Unknown command: "${fullCommand}"`, false, "Run sweefi --help for available commands", false, reqCtx, undefined, isHuman);
+      outputError(
+        fullCommand,
+        'UNKNOWN_COMMAND',
+        `Unknown command: "${fullCommand}"`,
+        false,
+        'Run sweefi --help for available commands',
+        false,
+        reqCtx,
+        undefined,
+        isHuman,
+      );
       process.exit(1);
   }
 }
@@ -249,18 +297,48 @@ Examples:
 
 main().catch((err) => {
   if (err instanceof CliError) {
-    outputError(_command, err.code, sanitize(err.message), err.retryable, err.suggestedAction, err.requiresHumanAction, _reqCtx, undefined, _isHuman);
+    outputError(
+      _command,
+      err.code,
+      sanitize(err.message),
+      err.retryable,
+      err.suggestedAction,
+      err.requiresHumanAction,
+      _reqCtx,
+      undefined,
+      _isHuman,
+    );
     process.exit(1);
   }
 
   // Network/RPC errors — retryable, agent can self-heal
   if (isNetworkError(err)) {
-    outputError(_command, "NETWORK_ERROR", "Sui RPC is unreachable or timed out", true, "Retry in 30 seconds. If the issue persists, check SUI_RPC_URL or try a different RPC endpoint.", false, _reqCtx, 30_000, _isHuman);
+    outputError(
+      _command,
+      'NETWORK_ERROR',
+      'Sui RPC is unreachable or timed out',
+      true,
+      'Retry in 30 seconds. If the issue persists, check SUI_RPC_URL or try a different RPC endpoint.',
+      false,
+      _reqCtx,
+      30_000,
+      _isHuman,
+    );
     process.exit(1);
   }
 
   // Unexpected error — sanitize in case a dependency leaks key material
   const msg = sanitize(err instanceof Error ? err.message : String(err));
-  outputError(_command, "INTERNAL_ERROR", msg, false, "This is a bug — please report it", false, _reqCtx, undefined, _isHuman);
+  outputError(
+    _command,
+    'INTERNAL_ERROR',
+    msg,
+    false,
+    'This is a bug — please report it',
+    false,
+    _reqCtx,
+    undefined,
+    _isHuman,
+  );
   process.exit(2);
 });

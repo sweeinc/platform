@@ -1,17 +1,20 @@
-import { describe, it, expect, vi } from 'vitest';
+import type { QueryContext } from '../../src/queries/context';
+import { describe, expect, it, vi } from 'vitest';
+import { BalanceQueries } from '../../src/queries/balanceQueries';
+import { EscrowQueries, EscrowState } from '../../src/queries/escrowQueries';
+import { MandateQueries } from '../../src/queries/mandateQueries';
+import { PrepaidQueries } from '../../src/queries/prepaidQueries';
+import { ProtocolQueries } from '../../src/queries/protocolQueries';
+import { StreamQueries } from '../../src/queries/streamQueries';
 import {
-  StreamingMeterBcs, EscrowBcs, PrepaidBalanceBcs,
-  MandateBcs, ProtocolStateBcs,
+  EscrowBcs,
+  MandateBcs,
+  PrepaidBalanceBcs,
+  ProtocolStateBcs,
+  StreamingMeterBcs,
 } from '../../src/types/bcs';
 import { SweefiPluginConfig } from '../../src/utils/config';
-import { ResourceNotFoundError, ConfigurationError } from '../../src/utils/errors';
-import type { QueryContext } from '../../src/queries/context';
-import { StreamQueries } from '../../src/queries/streamQueries';
-import { EscrowQueries, EscrowState } from '../../src/queries/escrowQueries';
-import { PrepaidQueries } from '../../src/queries/prepaidQueries';
-import { MandateQueries } from '../../src/queries/mandateQueries';
-import { ProtocolQueries } from '../../src/queries/protocolQueries';
-import { BalanceQueries } from '../../src/queries/balanceQueries';
+import { ConfigurationError } from '../../src/utils/errors';
 
 // ── Test helpers ────────────────────────────────────────────────
 
@@ -22,7 +25,10 @@ const OBJECT_ID = '0x' + '01'.repeat(32);
 const PROTOCOL_STATE_ID = '0x' + '99'.repeat(32);
 
 /** Create a mock QueryContext with a stubbed core.getObject / core.getBalance */
-function createMockCtx(overrides?: { protocolState?: string }): QueryContext & { getObjectMock: ReturnType<typeof vi.fn>; getBalanceMock: ReturnType<typeof vi.fn> } {
+function createMockCtx(overrides?: { protocolState?: string }): QueryContext & {
+  getObjectMock: ReturnType<typeof vi.fn>;
+  getBalanceMock: ReturnType<typeof vi.fn>;
+} {
   const getObjectMock = vi.fn();
   const getBalanceMock = vi.fn();
   const config = new SweefiPluginConfig({
@@ -44,7 +50,10 @@ function createMockCtx(overrides?: { protocolState?: string }): QueryContext & {
 }
 
 /** Serialize a BCS struct into a mock getObject response */
-function mockObjectResponse(bcsType: { serialize: (data: any) => { toBytes: () => Uint8Array } }, data: any) {
+function mockObjectResponse(
+  bcsType: { serialize: (data: any) => { toBytes: () => Uint8Array } },
+  data: any,
+) {
   return {
     object: {
       objectId: OBJECT_ID,
@@ -148,9 +157,7 @@ describe('EscrowQueries', () => {
 
   it('maps disputed state correctly', async () => {
     const ctx = createMockCtx();
-    ctx.getObjectMock.mockResolvedValue(
-      mockObjectResponse(EscrowBcs, { ...escrowData, state: 1 }),
-    );
+    ctx.getObjectMock.mockResolvedValue(mockObjectResponse(EscrowBcs, { ...escrowData, state: 1 }));
     const queries = new EscrowQueries(ctx);
 
     const result = await queries.getEscrow(OBJECT_ID);
@@ -229,15 +236,17 @@ describe('PrepaidQueries', () => {
 describe('MandateQueries', () => {
   it('parses mandate with expiry', async () => {
     const ctx = createMockCtx();
-    ctx.getObjectMock.mockResolvedValue(mockObjectResponse(MandateBcs, {
-      id: OBJECT_ID,
-      delegator: ADDR_A,
-      delegate: ADDR_B,
-      max_per_tx: '1000000000',
-      max_total: '50000000000',
-      total_spent: '5000000000',
-      expires_at_ms: '1720000000000',
-    }));
+    ctx.getObjectMock.mockResolvedValue(
+      mockObjectResponse(MandateBcs, {
+        id: OBJECT_ID,
+        delegator: ADDR_A,
+        delegate: ADDR_B,
+        max_per_tx: '1000000000',
+        max_total: '50000000000',
+        total_spent: '5000000000',
+        expires_at_ms: '1720000000000',
+      }),
+    );
     const queries = new MandateQueries(ctx);
 
     const result = await queries.getMandate(OBJECT_ID);
@@ -252,15 +261,17 @@ describe('MandateQueries', () => {
 
   it('handles null expiry (no expiration)', async () => {
     const ctx = createMockCtx();
-    ctx.getObjectMock.mockResolvedValue(mockObjectResponse(MandateBcs, {
-      id: OBJECT_ID,
-      delegator: ADDR_A,
-      delegate: ADDR_B,
-      max_per_tx: '1000000000',
-      max_total: '0',
-      total_spent: '0',
-      expires_at_ms: null,
-    }));
+    ctx.getObjectMock.mockResolvedValue(
+      mockObjectResponse(MandateBcs, {
+        id: OBJECT_ID,
+        delegator: ADDR_A,
+        delegate: ADDR_B,
+        max_per_tx: '1000000000',
+        max_total: '0',
+        total_spent: '0',
+        expires_at_ms: null,
+      }),
+    );
     const queries = new MandateQueries(ctx);
 
     const result = await queries.getMandate(OBJECT_ID);
@@ -275,11 +286,13 @@ describe('MandateQueries', () => {
 describe('ProtocolQueries', () => {
   it('returns paused=false for unpaused protocol', async () => {
     const ctx = createMockCtx();
-    ctx.getObjectMock.mockResolvedValue(mockObjectResponse(ProtocolStateBcs, {
-      id: PROTOCOL_STATE_ID,
-      paused: false,
-      paused_at_ms: '0',
-    }));
+    ctx.getObjectMock.mockResolvedValue(
+      mockObjectResponse(ProtocolStateBcs, {
+        id: PROTOCOL_STATE_ID,
+        paused: false,
+        paused_at_ms: '0',
+      }),
+    );
     const queries = new ProtocolQueries(ctx);
 
     expect(await queries.isPaused()).toBe(false);
@@ -287,11 +300,13 @@ describe('ProtocolQueries', () => {
 
   it('returns paused=true for paused protocol', async () => {
     const ctx = createMockCtx();
-    ctx.getObjectMock.mockResolvedValue(mockObjectResponse(ProtocolStateBcs, {
-      id: PROTOCOL_STATE_ID,
-      paused: true,
-      paused_at_ms: '1710000000000',
-    }));
+    ctx.getObjectMock.mockResolvedValue(
+      mockObjectResponse(ProtocolStateBcs, {
+        id: PROTOCOL_STATE_ID,
+        paused: true,
+        paused_at_ms: '1710000000000',
+      }),
+    );
     const queries = new ProtocolQueries(ctx);
 
     expect(await queries.isPaused()).toBe(true);
@@ -299,11 +314,13 @@ describe('ProtocolQueries', () => {
 
   it('getProtocolState returns full state data', async () => {
     const ctx = createMockCtx();
-    ctx.getObjectMock.mockResolvedValue(mockObjectResponse(ProtocolStateBcs, {
-      id: PROTOCOL_STATE_ID,
-      paused: true,
-      paused_at_ms: '1710000000000',
-    }));
+    ctx.getObjectMock.mockResolvedValue(
+      mockObjectResponse(ProtocolStateBcs, {
+        id: PROTOCOL_STATE_ID,
+        paused: true,
+        paused_at_ms: '1710000000000',
+      }),
+    );
     const queries = new ProtocolQueries(ctx);
 
     const state = await queries.getProtocolState();
@@ -327,11 +344,13 @@ describe('ProtocolQueries', () => {
 
   it('uses configured protocolState object ID', async () => {
     const ctx = createMockCtx({ protocolState: PROTOCOL_STATE_ID });
-    ctx.getObjectMock.mockResolvedValue(mockObjectResponse(ProtocolStateBcs, {
-      id: PROTOCOL_STATE_ID,
-      paused: false,
-      paused_at_ms: '0',
-    }));
+    ctx.getObjectMock.mockResolvedValue(
+      mockObjectResponse(ProtocolStateBcs, {
+        id: PROTOCOL_STATE_ID,
+        paused: false,
+        paused_at_ms: '0',
+      }),
+    );
     const queries = new ProtocolQueries(ctx);
 
     await queries.isPaused();
@@ -351,7 +370,12 @@ describe('BalanceQueries', () => {
   it('returns balance as bigint', async () => {
     const ctx = createMockCtx();
     ctx.getBalanceMock.mockResolvedValue({
-      balance: { coinType: '0x2::sui::SUI', balance: '9876543210', coinBalance: '9876543210', addressBalance: '9876543210' },
+      balance: {
+        coinType: '0x2::sui::SUI',
+        balance: '9876543210',
+        coinBalance: '9876543210',
+        addressBalance: '9876543210',
+      },
     });
     const queries = new BalanceQueries(ctx);
 
@@ -395,21 +419,23 @@ describe('SweefiClient query delegates', () => {
     const { SweefiClient } = await import('../../src/extend');
 
     const mockCore = {
-      getObject: vi.fn().mockResolvedValue(mockObjectResponse(StreamingMeterBcs, {
-        id: OBJECT_ID,
-        payer: ADDR_A,
-        recipient: ADDR_B,
-        balance: { value: '1000' },
-        rate_per_second: '1',
-        budget_cap: '1000',
-        total_claimed: '0',
-        last_claim_ms: '0',
-        created_at_ms: '0',
-        active: true,
-        paused_at_ms: '0',
-        fee_micro_pct: '0',
-        fee_recipient: ADDR_C,
-      })),
+      getObject: vi.fn().mockResolvedValue(
+        mockObjectResponse(StreamingMeterBcs, {
+          id: OBJECT_ID,
+          payer: ADDR_A,
+          recipient: ADDR_B,
+          balance: { value: '1000' },
+          rate_per_second: '1',
+          budget_cap: '1000',
+          total_claimed: '0',
+          last_claim_ms: '0',
+          created_at_ms: '0',
+          active: true,
+          paused_at_ms: '0',
+          fee_micro_pct: '0',
+          fee_recipient: ADDR_C,
+        }),
+      ),
       getBalance: vi.fn().mockResolvedValue({
         balance: { balance: '42' },
       }),

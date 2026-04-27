@@ -29,14 +29,14 @@ import type {
   s402FacilitatorScheme,
   s402PaymentPayload,
   s402PaymentRequirements,
-  s402VerifyResponse,
   s402SettleResponse,
   s402UptoPayload,
+  s402VerifyResponse,
 } from 's402';
 import type { FacilitatorSuiSigner } from '../../signer.js';
-import { coinTypesEqual } from '../../utils.js';
 import { normalizeSuiAddress } from '@mysten/sui/utils';
 import { bpsToMicroPercent } from '../../ptb/assert.js';
+import { coinTypesEqual } from '../../utils.js';
 
 export class UptoSuiFacilitatorScheme implements s402FacilitatorScheme {
   readonly scheme = 'upto' as const;
@@ -53,8 +53,8 @@ export class UptoSuiFacilitatorScheme implements s402FacilitatorScheme {
   ) {
     if (!packageId) {
       throw new Error(
-        "UptoSuiFacilitatorScheme: packageId is required to prevent event spoofing. " +
-        "Set SWEEFI_PACKAGE_ID environment variable."
+        'UptoSuiFacilitatorScheme: packageId is required to prevent event spoofing. ' +
+          'Set SWEEFI_PACKAGE_ID environment variable.',
       );
     }
   }
@@ -105,7 +105,10 @@ export class UptoSuiFacilitatorScheme implements s402FacilitatorScheme {
       }
 
       // Event-based verification: UptoDepositCreated event from dry-run
-      const depositEvent = extractUptoDepositCreatedEvent(dryRunResult.events ?? [], this.packageId);
+      const depositEvent = extractUptoDepositCreatedEvent(
+        dryRunResult.events ?? [],
+        this.packageId,
+      );
 
       if (!depositEvent) {
         return {
@@ -287,8 +290,10 @@ function extractUptoDepositCreatedEvent(
   packageId?: string,
 ): UptoDepositCreatedEventData | null {
   const event = packageId
-    ? events.find(e => e.type.startsWith(`${packageId}::`) && e.type.endsWith('::UptoDepositCreated'))
-    : events.find(e => e.type.endsWith('::upto_deposit::UptoDepositCreated'));
+    ? events.find(
+        (e) => e.type.startsWith(`${packageId}::`) && e.type.endsWith('::UptoDepositCreated'),
+      )
+    : events.find((e) => e.type.endsWith('::upto_deposit::UptoDepositCreated'));
   if (!event?.parsedJson || typeof event.parsedJson !== 'object') return null;
 
   // Explicit field validation — fail fast on schema mismatch

@@ -14,11 +14,11 @@
  *   const { state, pay, confirm, reset } = useSweefiPayment();
  */
 
-import { ref, inject, onScopeDispose } from "vue";
-import type { Ref } from "vue";
-import type { PaymentController, PaymentState } from "@sweefi/ui-core";
-import type { s402PaymentRequirements } from "s402";
-import { SWEEFI_CONTROLLER_KEY } from "../plugin.js";
+import type { PaymentController, PaymentState } from '@sweefi/ui-core';
+import type { s402PaymentRequirements } from 's402';
+import type { Ref } from 'vue';
+import { inject, onScopeDispose, ref } from 'vue';
+import { SWEEFI_CONTROLLER_KEY } from '../plugin.js';
 
 export interface UseSweefiPaymentReturn {
   /** Reactive snapshot of the PaymentController state. */
@@ -38,15 +38,13 @@ export interface UseSweefiPaymentReturn {
  * @param controller - Optional explicit controller. When omitted, the composable
  *   injects the controller provided by SweefiPlugin. Throws if neither is available.
  */
-export function useSweefiPayment(
-  controller?: PaymentController
-): UseSweefiPaymentReturn {
+export function useSweefiPayment(controller?: PaymentController): UseSweefiPaymentReturn {
   const ctrl = controller ?? inject<PaymentController>(SWEEFI_CONTROLLER_KEY);
 
   if (!ctrl) {
     throw new Error(
-      "useSweefiPayment: no PaymentController found. " +
-        "Either pass one directly or install SweefiPlugin before using this composable."
+      'useSweefiPayment: no PaymentController found. ' +
+        'Either pass one directly or install SweefiPlugin before using this composable.',
     );
   }
 

@@ -15,17 +15,8 @@
  *   await controller.confirm();
  */
 
-export type {
-  PaymentAdapter,
-  SimulationResult,
-} from "./interfaces/PaymentAdapter.js";
+export type { PaymentAdapter, SimulationResult } from './interfaces/PaymentAdapter.js';
 
-export {
-  PaymentController,
-  createPaymentController,
-} from "./controllers/PaymentController.js";
+export { PaymentController, createPaymentController } from './controllers/PaymentController.js';
 
-export type {
-  PaymentStatus,
-  PaymentState,
-} from "./controllers/PaymentController.js";
+export type { PaymentStatus, PaymentState } from './controllers/PaymentController.js';

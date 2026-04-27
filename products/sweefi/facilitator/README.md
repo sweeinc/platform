@@ -73,8 +73,12 @@ npx @sweefi/facilitator start
 That's it. The server is now listening on `http://localhost:4022`. Point an s402 client at it:
 
 ```ts
-import { createS402Client } from "@sweefi/sui";
-const client = createS402Client({ facilitatorUrl: "http://localhost:4022", apiKey: process.env.API_KEYS });
+import { createS402Client } from '@sweefi/sui';
+
+const client = createS402Client({
+  facilitatorUrl: 'http://localhost:4022',
+  apiKey: process.env.API_KEYS,
+});
 ```
 
 Use `npx @sweefi/facilitator help` to see all subcommands. Use `npx @sweefi/facilitator version` to print the version.
@@ -99,8 +103,8 @@ For a fully containerized workflow, see Docker / Fly.io below.
 Skip the CLI and use the `createApp` factory directly:
 
 ```ts
-import { serve } from "@hono/node-server";
-import { createApp, loadConfig } from "@sweefi/facilitator";
+import { serve } from '@hono/node-server';
+import { createApp, loadConfig } from '@sweefi/facilitator';
 
 const { app } = createApp(loadConfig());
 serve({ fetch: app.fetch, port: 4022 });
@@ -150,16 +154,16 @@ After deployment your facilitator URL will be something like `https://swee-facil
 
 Validated at startup with Zod. The server will refuse to start if required variables are missing or malformed.
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `API_KEYS` | Yes | — | Comma-separated list of bearer token API keys. Clients must present one of these in the `Authorization` header. **Each key must be ≥ 16 characters** — shorter keys are rejected at startup. Generate with `openssl rand -hex 32`. |
-| `PORT` | No | `4022` | Port to listen on. |
-| `FEE_MICRO_PERCENT` | No | `5000` | Protocol fee in micro-percent (5000 = 0.5%, 1000000 = 100%). Included in the `/.well-known/s402.json` discovery document and passed to scheme handlers for PTB construction. |
-| `FACILITATOR_KEYPAIR` | No | — | Base64-encoded Ed25519 keypair for gas sponsorship (reserved for future use). |
-| `SUI_MAINNET_RPC` | No | Mysten default | Custom RPC URL for `sui:mainnet`. Use this to point at a dedicated node or RPC provider. |
-| `SUI_TESTNET_RPC` | No | Mysten default | Custom RPC URL for `sui:testnet`. |
-| `SWEEFI_PACKAGE_ID` | No | — | SweeFi Move package ID. When set, scheme handlers verify that on-chain events originate from this package, preventing spoofed events from attacker-deployed contracts. |
-| `LOG_LEVEL` | No | `info` | Log verbosity: `debug`, `info`, `warn`, or `error`. |
+| Variable              | Required | Default        | Description                                                                                                                                                                                                                        |
+| --------------------- | -------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `API_KEYS`            | Yes      | —              | Comma-separated list of bearer token API keys. Clients must present one of these in the `Authorization` header. **Each key must be ≥ 16 characters** — shorter keys are rejected at startup. Generate with `openssl rand -hex 32`. |
+| `PORT`                | No       | `4022`         | Port to listen on.                                                                                                                                                                                                                 |
+| `FEE_MICRO_PERCENT`   | No       | `5000`         | Protocol fee in micro-percent (5000 = 0.5%, 1000000 = 100%). Included in the `/.well-known/s402.json` discovery document and passed to scheme handlers for PTB construction.                                                       |
+| `FACILITATOR_KEYPAIR` | No       | —              | Base64-encoded Ed25519 keypair for gas sponsorship (reserved for future use).                                                                                                                                                      |
+| `SUI_MAINNET_RPC`     | No       | Mysten default | Custom RPC URL for `sui:mainnet`. Use this to point at a dedicated node or RPC provider.                                                                                                                                           |
+| `SUI_TESTNET_RPC`     | No       | Mysten default | Custom RPC URL for `sui:testnet`.                                                                                                                                                                                                  |
+| `SWEEFI_PACKAGE_ID`   | No       | —              | SweeFi Move package ID. When set, scheme handlers verify that on-chain events originate from this package, preventing spoofed events from attacker-deployed contracts.                                                             |
+| `LOG_LEVEL`           | No       | `info`         | Log verbosity: `debug`, `info`, `warn`, or `error`.                                                                                                                                                                                |
 
 ---
 
@@ -282,13 +286,13 @@ Same request body shape as `/verify`. On success, returns the Sui transaction di
 
 **Error responses**
 
-| Status | Reason |
-|--------|--------|
-| `400` | Missing or invalid fields in the request body |
-| `401` | Missing or malformed `Authorization` header |
-| `403` | Invalid API key |
-| `429` | Rate limit exceeded |
-| `500` | Sui RPC error or scheme-level failure |
+| Status | Reason                                        |
+| ------ | --------------------------------------------- |
+| `400`  | Missing or invalid fields in the request body |
+| `401`  | Missing or malformed `Authorization` header   |
+| `403`  | Invalid API key                               |
+| `429`  | Rate limit exceeded                           |
+| `500`  | Sui RPC error or scheme-level failure         |
 
 ---
 

@@ -1,4 +1,4 @@
-import type { Context, Next } from "hono";
+import type { Context, Next } from 'hono';
 
 /**
  * Token-bucket rate limiter per API key.
@@ -33,15 +33,17 @@ export class RateLimiter {
 
   middleware() {
     return async (c: Context, next: Next) => {
-      const apiKey = c.get("apiKey") as string | undefined;
+      const apiKey = c.get('apiKey') as string | undefined;
       // Use API key for authenticated routes, IP for unauthenticated
-      const key = apiKey ?? c.req.header("x-forwarded-for")?.split(",")[0]?.trim()
-        ?? c.req.header("x-real-ip")
-        ?? "unknown-ip";
+      const key =
+        apiKey ??
+        c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ??
+        c.req.header('x-real-ip') ??
+        'unknown-ip';
 
       const bucket = this.getBucket(key);
       if (!bucket.consume()) {
-        return c.json({ error: "Rate limit exceeded" }, 429);
+        return c.json({ error: 'Rate limit exceeded' }, 429);
       }
 
       await next();

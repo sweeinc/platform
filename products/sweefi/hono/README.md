@@ -10,10 +10,10 @@ Chain-agnostic s402 HTTP middleware and fetch wrapper.
 
 ## Two usage paths
 
-| Who you are | What you need | Import |
-|---|---|---|
-| Running an API that should charge per call | Gate routes with 402 | `@sweefi/hono` or `@sweefi/hono/server` |
-| Building an AI agent or client app | Wrap fetch to auto-pay 402s | `@sweefi/hono/client` |
+| Who you are                                | What you need               | Import                                  |
+| ------------------------------------------ | --------------------------- | --------------------------------------- |
+| Running an API that should charge per call | Gate routes with 402        | `@sweefi/hono` or `@sweefi/hono/server` |
+| Building an AI agent or client app         | Wrap fetch to auto-pay 402s | `@sweefi/hono/client`                   |
 
 > **Note:** For a complete Sui client with wallet signing, use [`@sweefi/sui`](https://www.npmjs.com/package/@sweefi/sui) which builds on this package and adds `createS402Client` and `adaptWallet`.
 
@@ -42,10 +42,10 @@ const app = new Hono();
 app.use(
   '/api/data',
   s402Gate({
-    price: '1000000',        // 0.001 SUI (in base units; 1 SUI = 1_000_000_000)
+    price: '1000000', // 0.001 SUI (in base units; 1 SUI = 1_000_000_000)
     network: 'sui:testnet',
     payTo: '0xYOUR_ADDRESS',
-  })
+  }),
 );
 
 app.get('/api/data', (c) => c.json({ result: 'premium data' }));
@@ -58,15 +58,15 @@ export default app;
 ```typescript
 s402Gate({
   // Required
-  price: '1000000',         // payment amount in base units
-  network: 'sui:testnet',   // 'sui:testnet' | 'sui:mainnet' | 'sui:devnet'
-  payTo: '0xYOUR_ADDRESS',  // your Sui address
+  price: '1000000', // payment amount in base units
+  network: 'sui:testnet', // 'sui:testnet' | 'sui:mainnet' | 'sui:devnet'
+  payTo: '0xYOUR_ADDRESS', // your Sui address
 
   // Optional
-  asset: '0x2::sui::SUI',   // default: SUI. Swap in a USDC coin type for stablecoin billing
-  schemes: ['exact'],        // accepted payment schemes (always includes 'exact')
+  asset: '0x2::sui::SUI', // default: SUI. Swap in a USDC coin type for stablecoin billing
+  schemes: ['exact'], // accepted payment schemes (always includes 'exact')
   facilitatorUrl: 'https://your-facilitator.example.com',
-  protocolFeeBps: 50,        // protocol fee in basis points
+  protocolFeeBps: 50, // protocol fee in basis points
 
   // Require a spending mandate (optional)
   mandate: {
@@ -87,7 +87,7 @@ s402Gate({
     // verify and settle yourself; must return an s402SettleResponse
     return { success: true, txDigest: '0xABC...' };
   },
-})
+});
 ```
 
 ### Reading the receipt downstream
@@ -149,13 +149,13 @@ const response = await paidFetch('https://api.example.com/premium/data');
 
 ## Accepted payment schemes
 
-| Scheme | When to use | Requires `packageId` |
-|---|---|---|
-| `exact` | Simple per-call payments. Always included. | No |
-| `prepaid` | Deposit-and-draw billing for high-volume callers | Yes |
-| `stream` | Rate-limited micropayment streams | Yes |
-| `escrow` | Time-locked payments with arbiter | Yes |
-| `unlock` | SEAL-based content unlocks | Yes |
+| Scheme    | When to use                                      | Requires `packageId` |
+| --------- | ------------------------------------------------ | -------------------- |
+| `exact`   | Simple per-call payments. Always included.       | No                   |
+| `prepaid` | Deposit-and-draw billing for high-volume callers | Yes                  |
+| `stream`  | Rate-limited micropayment streams                | Yes                  |
+| `escrow`  | Time-locked payments with arbiter                | Yes                  |
+| `unlock`  | SEAL-based content unlocks                       | Yes                  |
 
 ---
 
@@ -165,16 +165,13 @@ The package ships three entry points so you only bundle what you use:
 
 ```typescript
 // Root — server middleware + client fetch wrapper (no blockchain deps)
+import type { s402FetchOptions } from '@sweefi/hono/client';
+import type { s402GateConfig } from '@sweefi/hono/server';
 import { s402Gate, wrapFetchWithS402 } from '@sweefi/hono';
-
 // Client only — fetch wrapper (browser / agent / edge safe, no blockchain deps)
 import { wrapFetchWithS402 } from '@sweefi/hono/client';
-import type { s402FetchOptions } from '@sweefi/hono/client';
-
 // Server only — Hono middleware (Node.js and edge runtimes)
 import { s402Gate } from '@sweefi/hono/server';
-import type { s402GateConfig } from '@sweefi/hono/server';
-
 // Wallet adapting is in @sweefi/sui (not here — keeps this package chain-agnostic)
 import { adaptWallet } from '@sweefi/sui';
 ```
@@ -183,9 +180,9 @@ import { adaptWallet } from '@sweefi/sui';
 
 ## Peer dependencies
 
-| Package | Required | Notes |
-|---|---|---|
-| `hono` | No (server only) | `>=4.0.0`. Only needed if you use `s402Gate`. |
+| Package | Required         | Notes                                         |
+| ------- | ---------------- | --------------------------------------------- |
+| `hono`  | No (server only) | `>=4.0.0`. Only needed if you use `s402Gate`. |
 
 This package has **no blockchain peer dependencies** — chain-specific logic lives in `@sweefi/sui` (or future chain adapters).
 
@@ -193,12 +190,12 @@ This package has **no blockchain peer dependencies** — chain-specific logic li
 
 ## Ecosystem
 
-| Package | Purpose |
-|---|---|
-| [`@sweefi/hono`](https://www.npmjs.com/package/@sweefi/hono) | This package — chain-agnostic HTTP middleware + fetch wrapper |
-| [`@sweefi/sui`](https://www.npmjs.com/package/@sweefi/sui) | Full Sui client: `createS402Client`, $extend() plugin + contract classes, `SuiPaymentAdapter` |
-| [`@sweefi/ui-core`](https://www.npmjs.com/package/@sweefi/ui-core) | Framework-agnostic payment state machine + `PaymentAdapter` interface |
-| [`@sweefi/mcp`](https://www.npmjs.com/package/@sweefi/mcp) | 35 payment tools for Claude, Cursor, and any MCP-compatible AI (30 default + 5 opt-in) |
+| Package                                                            | Purpose                                                                                       |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| [`@sweefi/hono`](https://www.npmjs.com/package/@sweefi/hono)       | This package — chain-agnostic HTTP middleware + fetch wrapper                                 |
+| [`@sweefi/sui`](https://www.npmjs.com/package/@sweefi/sui)         | Full Sui client: `createS402Client`, $extend() plugin + contract classes, `SuiPaymentAdapter` |
+| [`@sweefi/ui-core`](https://www.npmjs.com/package/@sweefi/ui-core) | Framework-agnostic payment state machine + `PaymentAdapter` interface                         |
+| [`@sweefi/mcp`](https://www.npmjs.com/package/@sweefi/mcp)         | 35 payment tools for Claude, Cursor, and any MCP-compatible AI (30 default + 5 opt-in)        |
 
 ---
 

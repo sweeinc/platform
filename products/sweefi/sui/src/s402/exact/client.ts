@@ -17,17 +17,17 @@
  * hold funds. The actual payment uses the exact scheme's coinWithBalance pattern.
  */
 
-import { Transaction, coinWithBalance } from '@mysten/sui/transactions';
 import type {
   s402ClientScheme,
-  s402PaymentRequirements,
   s402ExactPayload,
   s402PaymentPayload,
-  s402SettleResponse,
+  s402PaymentRequirements,
   s402SettlementVerification,
+  s402SettleResponse,
 } from 's402';
-import { S402_VERSION, getExtensionData } from 's402';
 import type { ClientSuiSigner } from '../../signer.js';
+import { coinWithBalance, Transaction } from '@mysten/sui/transactions';
+import { getExtensionData, S402_VERSION } from 's402';
 import { SUI_CLOCK } from '../../ptb/deployments.js';
 import { verifySuiSettlement } from '../verify.js';
 
@@ -54,9 +54,7 @@ export class ExactSuiClientScheme implements s402ClientScheme {
     private readonly packageId?: string,
   ) {}
 
-  async createPayment(
-    requirements: s402PaymentRequirements,
-  ): Promise<s402ExactPayload> {
+  async createPayment(requirements: s402PaymentRequirements): Promise<s402ExactPayload> {
     const { amount, asset, payTo, protocolFeeBps, protocolFeeAddress } = requirements;
 
     // Read memo from requirements.extensions (set by s402Fetch wrapper).
@@ -69,7 +67,8 @@ export class ExactSuiClientScheme implements s402ClientScheme {
     // Gas sponsorship: if server advertises a gas station, set gasOwner so
     // the facilitator co-signs and pays gas on behalf of the client.
     const gasStation = getExtensionData<{ sponsorAddress: string; maxBudget?: string }>(
-      requirements.extensions, 'gasStation',
+      requirements.extensions,
+      'gasStation',
     );
     if (gasStation?.sponsorAddress) {
       tx.setGasOwner(gasStation.sponsorAddress);
@@ -83,7 +82,7 @@ export class ExactSuiClientScheme implements s402ClientScheme {
       if (!this.mandateConfig) {
         throw new Error(
           'Server requires mandate authorization but no mandate is configured. ' +
-          'Pass mandateConfig to ExactSuiClientScheme constructor.',
+            'Pass mandateConfig to ExactSuiClientScheme constructor.',
         );
       }
       const { mandateId, registryId, packageId } = this.mandateConfig;
@@ -101,7 +100,7 @@ export class ExactSuiClientScheme implements s402ClientScheme {
 
     const totalAmount = BigInt(amount);
     if (totalAmount <= 0n) {
-      throw new Error("ExactSuiClientScheme: payment amount must be positive");
+      throw new Error('ExactSuiClientScheme: payment amount must be positive');
     }
 
     // Resolve the effective package ID for Move calls (memo-bearing payments
@@ -112,7 +111,9 @@ export class ExactSuiClientScheme implements s402ClientScheme {
     // to create an on-chain PaymentReceipt with the memo in its vector<u8> field.
     // Without packageId, the memo cannot be written on-chain — warn the caller.
     if (memo && !effectivePackageId) {
-      console.warn("[sweefi/sui] Warning: memo provided but packageId not configured — memo will not be written on-chain. Idempotency keys require packageId.");
+      console.warn(
+        '[sweefi/sui] Warning: memo provided but packageId not configured — memo will not be written on-chain. Idempotency keys require packageId.',
+      );
     }
     if (memo && effectivePackageId) {
       const memoBytes = new TextEncoder().encode(memo);

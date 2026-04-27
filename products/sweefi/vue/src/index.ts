@@ -19,6 +19,6 @@
  *   const { state, pay, confirm } = useSweefiPayment(controller);
  */
 
-export { SweefiPlugin, useSweefiController, SWEEFI_CONTROLLER_KEY } from "./plugin.js";
-export { useSweefiPayment } from "./composables/useSweefiPayment.js";
-export type { UseSweefiPaymentReturn } from "./composables/useSweefiPayment.js";
+export { SweefiPlugin, useSweefiController, SWEEFI_CONTROLLER_KEY } from './plugin.js';
+export { useSweefiPayment } from './composables/useSweefiPayment.js';
+export type { UseSweefiPaymentReturn } from './composables/useSweefiPayment.js';

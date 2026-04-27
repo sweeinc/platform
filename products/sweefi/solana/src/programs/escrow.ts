@@ -8,16 +8,16 @@
  */
 
 import {
-  PublicKey,
-  TransactionInstruction,
-  SystemProgram,
-  SYSVAR_RENT_PUBKEY,
-} from '@solana/web3.js';
-import {
-  TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getAssociatedTokenAddress,
+  TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
+import {
+  PublicKey,
+  SystemProgram,
+  SYSVAR_RENT_PUBKEY,
+  TransactionInstruction,
+} from '@solana/web3.js';
 
 // ─── Program Constants ───────────────────────────────────────────────────────
 
@@ -132,9 +132,12 @@ export async function buildCreateEscrowIx(
   const argsBuffer = Buffer.alloc(8 + 8 + 2 + 8);
   let offset = 0;
 
-  argsBuffer.writeBigUInt64LE(params.amount, offset); offset += 8;
-  argsBuffer.writeBigInt64LE(params.deadline, offset); offset += 8;
-  argsBuffer.writeUInt16LE(params.feeBps, offset); offset += 2;
+  argsBuffer.writeBigUInt64LE(params.amount, offset);
+  offset += 8;
+  argsBuffer.writeBigInt64LE(params.deadline, offset);
+  offset += 8;
+  argsBuffer.writeUInt16LE(params.feeBps, offset);
+  offset += 2;
   argsBuffer.writeBigUInt64LE(params.nonce, offset);
 
   const data = Buffer.concat([discriminator, argsBuffer]);

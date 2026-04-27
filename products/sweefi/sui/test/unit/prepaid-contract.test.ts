@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
 import { Transaction } from '@mysten/sui/transactions';
+import { describe, expect, it } from 'vitest';
 import { PrepaidContract } from '../../src/transactions/prepaid';
 import { SweefiPluginConfig } from '../../src/utils/config';
 
@@ -20,9 +20,7 @@ const contract = new PrepaidContract(config);
 
 function expectMoveCall(tx: Transaction, module: string, fn: string) {
   const data = tx.getData();
-  const moveCall = data.commands.find(
-    (c: any) => c.$kind === 'MoveCall',
-  );
+  const moveCall = data.commands.find((c: any) => c.$kind === 'MoveCall');
   expect(moveCall, `expected a MoveCall for ${module}::${fn}`).toBeDefined();
   expect(moveCall!.MoveCall.module).toBe(module);
   expect(moveCall!.MoveCall.function).toBe(fn);

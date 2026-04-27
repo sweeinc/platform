@@ -2,10 +2,10 @@ import { bcs } from '@mysten/sui/bcs';
 
 /** Matches `stream::StreamingMeter<T>` (contracts/sources/stream.move:77-91) */
 export const StreamingMeterBcs = bcs.struct('StreamingMeter', {
-  id: bcs.Address,  // UID serializes as address
+  id: bcs.Address, // UID serializes as address
   payer: bcs.Address,
   recipient: bcs.Address,
-  balance: bcs.struct('Balance', { value: bcs.u64() }),  // Balance<T> is a struct, not bare u64
+  balance: bcs.struct('Balance', { value: bcs.u64() }), // Balance<T> is a struct, not bare u64
   rate_per_second: bcs.u64(),
   budget_cap: bcs.u64(),
   total_claimed: bcs.u64(),
@@ -23,10 +23,10 @@ export const EscrowBcs = bcs.struct('Escrow', {
   buyer: bcs.Address,
   seller: bcs.Address,
   arbiter: bcs.Address,
-  balance: bcs.struct('Balance', { value: bcs.u64() }),  // Balance<T>
+  balance: bcs.struct('Balance', { value: bcs.u64() }), // Balance<T>
   amount: bcs.u64(),
   deadline_ms: bcs.u64(),
-  state: bcs.u8(),       // 0=Active, 1=Released, 2=Refunded, 3=Disputed
+  state: bcs.u8(), // 0=Active, 1=Released, 2=Refunded, 3=Disputed
   fee_micro_pct: bcs.u64(),
   fee_recipient: bcs.Address,
   created_at_ms: bcs.u64(),
@@ -38,7 +38,7 @@ export const PrepaidBalanceBcs = bcs.struct('PrepaidBalance', {
   id: bcs.Address,
   agent: bcs.Address,
   provider: bcs.Address,
-  deposited: bcs.struct('Balance', { value: bcs.u64() }),  // Balance<T>
+  deposited: bcs.struct('Balance', { value: bcs.u64() }), // Balance<T>
   rate_per_call: bcs.u64(),
   claimed_calls: bcs.u64(),
   max_calls: bcs.u64(),
@@ -90,11 +90,11 @@ export const UptoDepositBcs = bcs.struct('UptoDeposit', {
   id: bcs.Address,
   payer: bcs.Address,
   recipient: bcs.Address,
-  balance: bcs.struct('Balance', { value: bcs.u64() }),  // Balance<T>
+  balance: bcs.struct('Balance', { value: bcs.u64() }), // Balance<T>
   max_amount: bcs.u64(),
   settlement_ceiling: bcs.u64(),
   settlement_deadline_ms: bcs.u64(),
-  state: bcs.u8(),       // 0=Pending, 1=Settled, 2=Expired
+  state: bcs.u8(), // 0=Pending, 1=Settled, 2=Expired
   fee_micro_pct: bcs.u64(),
   fee_recipient: bcs.Address,
   created_at_ms: bcs.u64(),

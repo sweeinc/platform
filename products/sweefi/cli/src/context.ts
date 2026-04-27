@@ -8,14 +8,14 @@
  * Context is intentionally self-contained — no cross-package shared context needed.
  */
 
-import { SuiJsonRpcClient, getJsonRpcFullnodeUrl } from "@mysten/sui/jsonRpc";
-import type { Keypair } from "@mysten/sui/cryptography";
-import { decodeSuiPrivateKey } from "@mysten/sui/cryptography";
-import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
-import { TESTNET_PACKAGE_ID, TESTNET_PROTOCOL_STATE } from "@sweefi/sui/ptb";
-import type { SweefiConfig } from "@sweefi/sui/ptb";
+import type { Keypair } from '@mysten/sui/cryptography';
+import type { SweefiConfig } from '@sweefi/sui/ptb';
+import { decodeSuiPrivateKey } from '@mysten/sui/cryptography';
+import { getJsonRpcFullnodeUrl, SuiJsonRpcClient } from '@mysten/sui/jsonRpc';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+import { TESTNET_PACKAGE_ID, TESTNET_PROTOCOL_STATE } from '@sweefi/sui/ptb';
 
-export type SuiNetwork = "testnet" | "mainnet" | "devnet";
+export type SuiNetwork = 'testnet' | 'mainnet' | 'devnet';
 
 export interface CliContext {
   suiClient: SuiJsonRpcClient;
@@ -30,14 +30,23 @@ export interface CliContext {
  * Create context from env vars + optional CLI flag overrides.
  * Flags always win over env vars (12-factor app convention).
  */
-const VALID_NETWORKS = new Set<string>(["testnet", "mainnet", "devnet"]);
+const VALID_NETWORKS = new Set<string>(['testnet', 'mainnet', 'devnet']);
 
 const DEFAULT_TIMEOUT_MS = 30_000;
 
-export function createContext(overrides?: { network?: string; verbose?: boolean; timeout?: number }): CliContext {
-  const raw = overrides?.network ?? process.env.SUI_NETWORK ?? "testnet";
+export function createContext(overrides?: {
+  network?: string;
+  verbose?: boolean;
+  timeout?: number;
+}): CliContext {
+  const raw = overrides?.network ?? process.env.SUI_NETWORK ?? 'testnet';
   if (!VALID_NETWORKS.has(raw)) {
-    throw new CliError("INVALID_NETWORK", `Unknown network: "${raw}"`, false, "Use testnet, mainnet, or devnet");
+    throw new CliError(
+      'INVALID_NETWORK',
+      `Unknown network: "${raw}"`,
+      false,
+      'Use testnet, mainnet, or devnet',
+    );
   }
   const network = raw as SuiNetwork;
   const rpcUrl = process.env.SUI_RPC_URL;
@@ -56,7 +65,7 @@ export function createContext(overrides?: { network?: string; verbose?: boolean;
   if (privateKey) {
     try {
       const { scheme, secretKey } = decodeSuiPrivateKey(privateKey);
-      if (scheme === "ED25519") {
+      if (scheme === 'ED25519') {
         signer = Ed25519Keypair.fromSecretKey(secretKey);
       }
     } catch {
@@ -82,7 +91,7 @@ export function createContext(overrides?: { network?: string; verbose?: boolean;
 export function debug(ctx: CliContext, ...args: unknown[]): void {
   if (!ctx.verbose) return;
   const timestamp = new Date().toISOString();
-  const msg = args.map((a) => (typeof a === "string" ? a : JSON.stringify(a))).join(" ");
+  const msg = args.map((a) => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ');
   process.stderr.write(`[sweefi ${timestamp}] ${msg}\n`);
 }
 
@@ -90,11 +99,26 @@ export function debug(ctx: CliContext, ...args: unknown[]): void {
  * Wrap a promise with the context's timeout. Throws CliError on timeout.
  * Use this around any RPC call to enforce --timeout globally.
  */
-export async function withTimeout<T>(ctx: CliContext, promise: Promise<T>, label = "RPC call"): Promise<T> {
+export async function withTimeout<T>(
+  ctx: CliContext,
+  promise: Promise<T>,
+  label = 'RPC call',
+): Promise<T> {
   if (ctx.timeoutMs <= 0 || ctx.timeoutMs === Infinity) return promise;
   let timer: ReturnType<typeof setTimeout>;
   const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new CliError("TIMEOUT", `${label} timed out after ${ctx.timeoutMs}ms`, true, `Increase --timeout or check RPC connectivity`)), ctx.timeoutMs);
+    timer = setTimeout(
+      () =>
+        reject(
+          new CliError(
+            'TIMEOUT',
+            `${label} timed out after ${ctx.timeoutMs}ms`,
+            true,
+            `Increase --timeout or check RPC connectivity`,
+          ),
+        ),
+      ctx.timeoutMs,
+    );
   });
   try {
     return await Promise.race([promise, timeout]);
@@ -107,10 +131,10 @@ export async function withTimeout<T>(ctx: CliContext, promise: Promise<T>, label
 export function requireSigner(ctx: CliContext): Keypair {
   if (!ctx.signer) {
     throw new CliError(
-      "NO_WALLET",
-      "SUI_PRIVATE_KEY environment variable is not set",
+      'NO_WALLET',
+      'SUI_PRIVATE_KEY environment variable is not set',
       false,
-      "Export SUI_PRIVATE_KEY=suiprivkey1... to enable transactions",
+      'Export SUI_PRIVATE_KEY=suiprivkey1... to enable transactions',
     );
   }
   return ctx.signer;
@@ -127,22 +151,28 @@ export class CliError extends Error {
     public readonly requiresHumanAction: boolean = false,
   ) {
     super(message);
-    this.name = "CliError";
+    this.name = 'CliError';
   }
 }
 
 /** Strip anything that could be key material from error messages before output. */
 export function sanitize(msg: string): string {
-  return msg
-    .replace(/suiprivkey1[a-z0-9]{50,}/gi, "[REDACTED]")
-    // 40+ base64 chars covers Ed25519 raw keys (32 bytes → 44 chars) and larger secrets.
-    // Previous threshold of 60 missed Ed25519 base64-encoded private keys entirely.
-    .replace(/[A-Za-z0-9+/]{40,}={0,2}/g, "[REDACTED]");
+  return (
+    msg
+      .replace(/suiprivkey1[a-z0-9]{50,}/gi, '[REDACTED]')
+      // 40+ base64 chars covers Ed25519 raw keys (32 bytes → 44 chars) and larger secrets.
+      // Previous threshold of 60 missed Ed25519 base64-encoded private keys entirely.
+      .replace(/[A-Za-z0-9+/]{40,}={0,2}/g, '[REDACTED]')
+  );
 }
 
 /** Detect network/RPC errors from the Sui client — these are retryable. */
 export function isNetworkError(err: unknown): boolean {
-  if (err instanceof TypeError && (err.message.includes("fetch") || err.message.includes("network"))) return true;
+  if (
+    err instanceof TypeError &&
+    (err.message.includes('fetch') || err.message.includes('network'))
+  )
+    return true;
   const msg = err instanceof Error ? err.message : String(err);
   return /ECONNREFUSED|ETIMEDOUT|ENOTFOUND|socket hang up|fetch failed|NetworkError/i.test(msg);
 }

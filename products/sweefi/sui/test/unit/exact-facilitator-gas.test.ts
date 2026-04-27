@@ -8,21 +8,24 @@
  *   - Graceful fallback when sponsor not configured
  */
 
-import { describe, it, expect, vi, afterEach } from "vitest";
-import { ExactSuiFacilitatorScheme, DEFAULT_MAX_SPONSOR_GAS_BUDGET } from "../../src/s402/exact/facilitator";
-import { Transaction } from "@mysten/sui/transactions";
-import type { FacilitatorSuiSigner } from "../../src/signer";
-import type { DryRunTransactionBlockResponse } from "@mysten/sui/jsonRpc";
-import type { s402PaymentRequirements, s402ExactPayload } from "s402";
+import type { DryRunTransactionBlockResponse } from '@mysten/sui/jsonRpc';
+import type { s402ExactPayload, s402PaymentRequirements } from 's402';
+import type { FacilitatorSuiSigner } from '../../src/signer';
+import { Transaction } from '@mysten/sui/transactions';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  DEFAULT_MAX_SPONSOR_GAS_BUDGET,
+  ExactSuiFacilitatorScheme,
+} from '../../src/s402/exact/facilitator';
 
 // ─────────────────────────────────────────────────
 // Constants
 // ─────────────────────────────────────────────────
 
-const MOCK_PAYER = "0x" + "a".repeat(64);
-const MOCK_MERCHANT = "0x" + "b".repeat(64);
-const MOCK_SPONSOR = "0x" + "d".repeat(64);
-const COIN_TYPE = "0x2::sui::SUI";
+const MOCK_PAYER = '0x' + 'a'.repeat(64);
+const MOCK_MERCHANT = '0x' + 'b'.repeat(64);
+const MOCK_SPONSOR = '0x' + 'd'.repeat(64);
+const COIN_TYPE = '0x2::sui::SUI';
 
 // ─────────────────────────────────────────────────
 // Helpers
@@ -36,7 +39,7 @@ function makeDryRunResult(
   balanceChanges: Array<{ owner: unknown; coinType: string; amount: string }>,
 ): DryRunTransactionBlockResponse {
   return {
-    effects: { status: { status: "success" } },
+    effects: { status: { status: 'success' } },
     balanceChanges,
     events: [],
     objectChanges: [],
@@ -44,13 +47,15 @@ function makeDryRunResult(
   } as unknown as DryRunTransactionBlockResponse;
 }
 
-function makeRequirements(overrides: Partial<s402PaymentRequirements> = {}): s402PaymentRequirements {
+function makeRequirements(
+  overrides: Partial<s402PaymentRequirements> = {},
+): s402PaymentRequirements {
   return {
-    s402Version: "1",
-    accepts: ["exact"],
-    network: "sui:testnet",
+    s402Version: '1',
+    accepts: ['exact'],
+    network: 'sui:testnet',
     asset: COIN_TYPE,
-    amount: "10000",
+    amount: '10000',
     payTo: MOCK_MERCHANT,
     ...overrides,
   };
@@ -58,9 +63,9 @@ function makeRequirements(overrides: Partial<s402PaymentRequirements> = {}): s40
 
 function makePayload(): s402ExactPayload {
   return {
-    s402Version: "1",
-    scheme: "exact",
-    payload: { transaction: "dHg=", signature: "c2ln" },
+    s402Version: '1',
+    scheme: 'exact',
+    payload: { transaction: 'dHg=', signature: 'c2ln' },
   };
 }
 
@@ -73,9 +78,9 @@ function makeSponsorSigner(
     getAddresses: () => [sponsorAddress],
     verifySignature: async () => MOCK_PAYER,
     simulateTransaction: async () => dryRunResult,
-    executeTransaction: vi.fn(async () => "mock-digest"),
+    executeTransaction: vi.fn(async () => 'mock-digest'),
     waitForTransaction: async () => {},
-    sponsorSign: vi.fn(async () => "sponsor-sig-base64"),
+    sponsorSign: vi.fn(async () => 'sponsor-sig-base64'),
   };
 }
 
@@ -85,7 +90,7 @@ function makeBasicSigner(dryRunResult: DryRunTransactionBlockResponse): Facilita
     getAddresses: () => [],
     verifySignature: async () => MOCK_PAYER,
     simulateTransaction: async () => dryRunResult,
-    executeTransaction: vi.fn(async () => "mock-digest"),
+    executeTransaction: vi.fn(async () => 'mock-digest'),
     waitForTransaction: async () => {},
   };
 }
@@ -97,10 +102,10 @@ function makeBasicSigner(dryRunResult: DryRunTransactionBlockResponse): Facilita
  */
 function mockTransactionFrom(
   gasOwner: string | null,
-  gasBudget: string | number = "10000000",
+  gasBudget: string | number = '10000000',
   commands: Array<{ $kind: string; [key: string]: unknown }> = [],
 ) {
-  return vi.spyOn(Transaction, "from").mockReturnValue({
+  return vi.spyOn(Transaction, 'from').mockReturnValue({
     getData: () => ({
       commands,
       gasData: {
@@ -115,46 +120,46 @@ function mockTransactionFrom(
 // Tests
 // ─────────────────────────────────────────────────
 
-describe("ExactSuiFacilitatorScheme.settle() — gas sponsorship", () => {
+describe('ExactSuiFacilitatorScheme.settle() — gas sponsorship', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it("co-signs and returns gasSponsored=true when gasOwner matches sponsor", async () => {
+  it('co-signs and returns gasSponsored=true when gasOwner matches sponsor', async () => {
     const dryRun = makeDryRunResult([
-      makeBalanceChange(MOCK_MERCHANT, "10000"),
-      makeBalanceChange(MOCK_PAYER, "-10000"),
+      makeBalanceChange(MOCK_MERCHANT, '10000'),
+      makeBalanceChange(MOCK_PAYER, '-10000'),
     ]);
     const signer = makeSponsorSigner(dryRun);
     const scheme = new ExactSuiFacilitatorScheme(signer);
 
     // Mock Transaction.from to return gasOwner matching sponsor
-    mockTransactionFrom(MOCK_SPONSOR, "5000000");
+    mockTransactionFrom(MOCK_SPONSOR, '5000000');
 
     const result = await scheme.settle(makePayload(), makeRequirements());
 
     expect(result.success).toBe(true);
     expect((result as any).gasSponsored).toBe(true);
-    expect(signer.sponsorSign).toHaveBeenCalledWith("dHg=");
+    expect(signer.sponsorSign).toHaveBeenCalledWith('dHg=');
     // executeTransaction receives [clientSig, sponsorSig]
     expect(signer.executeTransaction).toHaveBeenCalledWith(
-      "dHg=",
-      ["c2ln", "sponsor-sig-base64"],
-      "sui:testnet",
+      'dHg=',
+      ['c2ln', 'sponsor-sig-base64'],
+      'sui:testnet',
     );
   });
 
-  it("uses single signature when gasOwner does NOT match sponsor", async () => {
+  it('uses single signature when gasOwner does NOT match sponsor', async () => {
     const dryRun = makeDryRunResult([
-      makeBalanceChange(MOCK_MERCHANT, "10000"),
-      makeBalanceChange(MOCK_PAYER, "-10000"),
+      makeBalanceChange(MOCK_MERCHANT, '10000'),
+      makeBalanceChange(MOCK_PAYER, '-10000'),
     ]);
     const signer = makeSponsorSigner(dryRun);
     const scheme = new ExactSuiFacilitatorScheme(signer);
 
     // gasOwner is some other address
-    const otherAddr = "0x" + "e".repeat(64);
-    mockTransactionFrom(otherAddr, "5000000");
+    const otherAddr = '0x' + 'e'.repeat(64);
+    mockTransactionFrom(otherAddr, '5000000');
 
     const result = await scheme.settle(makePayload(), makeRequirements());
 
@@ -162,17 +167,13 @@ describe("ExactSuiFacilitatorScheme.settle() — gas sponsorship", () => {
     expect((result as any).gasSponsored).toBe(false);
     expect(signer.sponsorSign).not.toHaveBeenCalled();
     // executeTransaction receives single string (not array)
-    expect(signer.executeTransaction).toHaveBeenCalledWith(
-      "dHg=",
-      "c2ln",
-      "sui:testnet",
-    );
+    expect(signer.executeTransaction).toHaveBeenCalledWith('dHg=', 'c2ln', 'sui:testnet');
   });
 
-  it("uses single signature when sponsor is not configured", async () => {
+  it('uses single signature when sponsor is not configured', async () => {
     const dryRun = makeDryRunResult([
-      makeBalanceChange(MOCK_MERCHANT, "10000"),
-      makeBalanceChange(MOCK_PAYER, "-10000"),
+      makeBalanceChange(MOCK_MERCHANT, '10000'),
+      makeBalanceChange(MOCK_PAYER, '-10000'),
     ]);
     const signer = makeBasicSigner(dryRun);
     const scheme = new ExactSuiFacilitatorScheme(signer);
@@ -184,84 +185,84 @@ describe("ExactSuiFacilitatorScheme.settle() — gas sponsorship", () => {
     expect((result as any).gasSponsored).toBe(false);
   });
 
-  it("rejects when gas budget exceeds sponsor cap", async () => {
+  it('rejects when gas budget exceeds sponsor cap', async () => {
     const dryRun = makeDryRunResult([
-      makeBalanceChange(MOCK_MERCHANT, "10000"),
-      makeBalanceChange(MOCK_PAYER, "-10000"),
+      makeBalanceChange(MOCK_MERCHANT, '10000'),
+      makeBalanceChange(MOCK_PAYER, '-10000'),
     ]);
     const signer = makeSponsorSigner(dryRun);
     // Set cap to 5M MIST
     const scheme = new ExactSuiFacilitatorScheme(signer, 5_000_000n);
 
     // Client requests 10M budget, which exceeds 5M cap
-    mockTransactionFrom(MOCK_SPONSOR, "10000000");
+    mockTransactionFrom(MOCK_SPONSOR, '10000000');
 
     const result = await scheme.settle(makePayload(), makeRequirements());
 
     expect(result.success).toBe(false);
-    expect(result.error).toContain("exceeds sponsor limit");
+    expect(result.error).toContain('exceeds sponsor limit');
     expect(signer.sponsorSign).not.toHaveBeenCalled();
   });
 
-  it("rejects zero gas budget (zero-budget bypass defense)", async () => {
+  it('rejects zero gas budget (zero-budget bypass defense)', async () => {
     const dryRun = makeDryRunResult([
-      makeBalanceChange(MOCK_MERCHANT, "10000"),
-      makeBalanceChange(MOCK_PAYER, "-10000"),
+      makeBalanceChange(MOCK_MERCHANT, '10000'),
+      makeBalanceChange(MOCK_PAYER, '-10000'),
     ]);
     const signer = makeSponsorSigner(dryRun);
     const scheme = new ExactSuiFacilitatorScheme(signer);
 
     // Attacker sets budget to 0 to bypass cap check
-    mockTransactionFrom(MOCK_SPONSOR, "0");
+    mockTransactionFrom(MOCK_SPONSOR, '0');
 
     const result = await scheme.settle(makePayload(), makeRequirements());
 
     expect(result.success).toBe(false);
-    expect(result.error).toContain("zero or missing");
+    expect(result.error).toContain('zero or missing');
     expect(signer.sponsorSign).not.toHaveBeenCalled();
   });
 
-  it("propagates error when sponsorSign throws", async () => {
+  it('propagates error when sponsorSign throws', async () => {
     const dryRun = makeDryRunResult([
-      makeBalanceChange(MOCK_MERCHANT, "10000"),
-      makeBalanceChange(MOCK_PAYER, "-10000"),
+      makeBalanceChange(MOCK_MERCHANT, '10000'),
+      makeBalanceChange(MOCK_PAYER, '-10000'),
     ]);
     const signer = makeSponsorSigner(dryRun);
     (signer.sponsorSign as ReturnType<typeof vi.fn>).mockRejectedValue(
-      new Error("Keypair signing failed"),
+      new Error('Keypair signing failed'),
     );
     const scheme = new ExactSuiFacilitatorScheme(signer);
 
-    mockTransactionFrom(MOCK_SPONSOR, "5000000");
+    mockTransactionFrom(MOCK_SPONSOR, '5000000');
 
     const result = await scheme.settle(makePayload(), makeRequirements());
 
     expect(result.success).toBe(false);
-    expect(result.error).toBe("Keypair signing failed");
+    expect(result.error).toBe('Keypair signing failed');
   });
 
-  it("rejects sponsored tx that references GasCoin (drain prevention)", async () => {
+  it('rejects sponsored tx that references GasCoin (drain prevention)', async () => {
     const dryRun = makeDryRunResult([
-      makeBalanceChange(MOCK_MERCHANT, "10000"),
-      makeBalanceChange(MOCK_PAYER, "-10000"),
+      makeBalanceChange(MOCK_MERCHANT, '10000'),
+      makeBalanceChange(MOCK_PAYER, '-10000'),
     ]);
     const signer = makeSponsorSigner(dryRun);
     const scheme = new ExactSuiFacilitatorScheme(signer);
 
     // Simulate attacker crafting SplitCoins(GasCoin, [amount]) to drain sponsor's coin
-    mockTransactionFrom(MOCK_SPONSOR, "5000000", [
+    mockTransactionFrom(MOCK_SPONSOR, '5000000', [
       {
-        $kind: "SplitCoins",
+        $kind: 'SplitCoins',
         SplitCoins: {
-          coin: { $kind: "GasCoin" },
-          amounts: [{ $kind: "Input", Input: 0 }],
+          coin: { $kind: 'GasCoin' },
+          amounts: [{ $kind: 'Input', Input: 0 }],
         },
       },
       {
-        $kind: "TransferObjects",
+        $kind: 'TransferObjects',
         TransferObjects: {
-          objects: [{ $kind: "Result", Result: 0 }],
-          address: { $kind: "Input", Input: 1 },
+          objects: [{ $kind: 'Result', Result: 0 }],
+          address: { $kind: 'Input', Input: 1 },
         },
       },
     ]);
@@ -269,33 +270,33 @@ describe("ExactSuiFacilitatorScheme.settle() — gas sponsorship", () => {
     const result = await scheme.settle(makePayload(), makeRequirements());
 
     expect(result.success).toBe(false);
-    expect(result.error).toContain("GasCoin");
-    expect(result.error).toContain("not allowed");
+    expect(result.error).toContain('GasCoin');
+    expect(result.error).toContain('not allowed');
     expect(signer.sponsorSign).not.toHaveBeenCalled();
   });
 
-  it("allows sponsored tx with no GasCoin references (normal payment)", async () => {
+  it('allows sponsored tx with no GasCoin references (normal payment)', async () => {
     const dryRun = makeDryRunResult([
-      makeBalanceChange(MOCK_MERCHANT, "10000"),
-      makeBalanceChange(MOCK_PAYER, "-10000"),
+      makeBalanceChange(MOCK_MERCHANT, '10000'),
+      makeBalanceChange(MOCK_PAYER, '-10000'),
     ]);
     const signer = makeSponsorSigner(dryRun);
     const scheme = new ExactSuiFacilitatorScheme(signer);
 
     // Normal payment: SplitCoins on an Input coin, not GasCoin
-    mockTransactionFrom(MOCK_SPONSOR, "5000000", [
+    mockTransactionFrom(MOCK_SPONSOR, '5000000', [
       {
-        $kind: "SplitCoins",
+        $kind: 'SplitCoins',
         SplitCoins: {
-          coin: { $kind: "Input", Input: 0 },
-          amounts: [{ $kind: "Input", Input: 1 }],
+          coin: { $kind: 'Input', Input: 0 },
+          amounts: [{ $kind: 'Input', Input: 1 }],
         },
       },
       {
-        $kind: "TransferObjects",
+        $kind: 'TransferObjects',
         TransferObjects: {
-          objects: [{ $kind: "Result", Result: 0 }],
-          address: { $kind: "Input", Input: 2 },
+          objects: [{ $kind: 'Result', Result: 0 }],
+          address: { $kind: 'Input', Input: 2 },
         },
       },
     ]);
@@ -308,12 +309,12 @@ describe("ExactSuiFacilitatorScheme.settle() — gas sponsorship", () => {
   });
 });
 
-describe("ExactSuiFacilitatorScheme — DEFAULT_MAX_SPONSOR_GAS_BUDGET", () => {
-  it("exports the default as 10M MIST (0.01 SUI)", () => {
+describe('ExactSuiFacilitatorScheme — DEFAULT_MAX_SPONSOR_GAS_BUDGET', () => {
+  it('exports the default as 10M MIST (0.01 SUI)', () => {
     expect(DEFAULT_MAX_SPONSOR_GAS_BUDGET).toBe(10_000_000n);
   });
 
-  it("uses the default when no cap is provided to constructor", () => {
+  it('uses the default when no cap is provided to constructor', () => {
     const dryRun = makeDryRunResult([]);
     const signer = makeBasicSigner(dryRun);
     const scheme = new ExactSuiFacilitatorScheme(signer);
@@ -321,7 +322,7 @@ describe("ExactSuiFacilitatorScheme — DEFAULT_MAX_SPONSOR_GAS_BUDGET", () => {
     expect((scheme as any).maxSponsorGasBudget).toBe(DEFAULT_MAX_SPONSOR_GAS_BUDGET);
   });
 
-  it("respects custom cap when provided", () => {
+  it('respects custom cap when provided', () => {
     const dryRun = makeDryRunResult([]);
     const signer = makeBasicSigner(dryRun);
     const customCap = 50_000_000n;

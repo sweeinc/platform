@@ -23,13 +23,13 @@ import type {
   s402FacilitatorScheme,
   s402PaymentPayload,
   s402PaymentRequirements,
-  s402VerifyResponse,
-  s402SettleResponse,
   s402PrepaidPayload,
+  s402SettleResponse,
+  s402VerifyResponse,
 } from 's402';
-import type { FacilitatorSolanaSigner } from '../../signer.js';
 import type { SolanaNetwork } from '../../constants.js';
-import { SWEEFI_PREPAID_PROGRAM_ID, isSolanaNetwork } from '../../constants.js';
+import type { FacilitatorSolanaSigner } from '../../signer.js';
+import { isSolanaNetwork, SWEEFI_PREPAID_PROGRAM_ID } from '../../constants.js';
 import { extractPrepaidDepositedEvent } from '../../utils/anchor-events.js';
 
 export class PrepaidSolanaFacilitatorScheme implements s402FacilitatorScheme {
@@ -163,7 +163,10 @@ export class PrepaidSolanaFacilitatorScheme implements s402FacilitatorScheme {
       }
 
       // Verify maxCalls if specified (use !== undefined, not truthy, because 0 is meaningful)
-      if (reqPrepaid.maxCalls !== undefined && depositEvent.maxCalls !== BigInt(reqPrepaid.maxCalls)) {
+      if (
+        reqPrepaid.maxCalls !== undefined &&
+        depositEvent.maxCalls !== BigInt(reqPrepaid.maxCalls)
+      ) {
         return {
           valid: false,
           invalidReason: `MaxCalls mismatch: event=${depositEvent.maxCalls}, required=${reqPrepaid.maxCalls}`,

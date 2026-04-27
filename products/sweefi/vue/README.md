@@ -23,16 +23,18 @@ Install the plugin once at the app level and use the composable anywhere:
 ```typescript
 // main.ts
 import { createApp } from 'vue';
-import { SweefiPlugin } from '@sweefi/vue';
 import { SuiPaymentAdapter } from '@sweefi/sui';
 import { createPaymentController } from '@sweefi/ui-core';
+import { SweefiPlugin } from '@sweefi/vue';
 
-const adapter = new SuiPaymentAdapter({ wallet: currentWallet, client: suiClient, network: 'sui:testnet' });
+const adapter = new SuiPaymentAdapter({
+  wallet: currentWallet,
+  client: suiClient,
+  network: 'sui:testnet',
+});
 const controller = createPaymentController(adapter);
 
-createApp(App)
-  .use(SweefiPlugin, controller)
-  .mount('#app');
+createApp(App).use(SweefiPlugin, controller).mount('#app');
 ```
 
 ```vue
@@ -44,7 +46,10 @@ const { state, pay } = useSweefiPayment(); // controller injected from plugin
 </script>
 
 <template>
-  <button :disabled="state.status !== 'idle'" @click="pay('https://api.example.com/premium', { requirements })">
+  <button
+    :disabled="state.status !== 'idle'"
+    @click="pay('https://api.example.com/premium', { requirements })"
+  >
     {{ state.status === 'idle' ? 'Pay' : state.status }}
   </button>
 </template>
@@ -71,12 +76,12 @@ const { state, pay, reset } = useSweefiPayment(props.controller);
 const { state, pay, confirm, reset } = useSweefiPayment(controller?);
 ```
 
-| Return value | Type | Description |
-|---|---|---|
-| `state` | `Ref<PaymentState>` | Reactive current state |
-| `pay(url, options?)` | function | Start a payment flow for the given URL |
-| `confirm()` | function | Confirm a pending payment (if applicable) |
-| `reset()` | function | Reset to `idle` state |
+| Return value         | Type                | Description                               |
+| -------------------- | ------------------- | ----------------------------------------- |
+| `state`              | `Ref<PaymentState>` | Reactive current state                    |
+| `pay(url, options?)` | function            | Start a payment flow for the given URL    |
+| `confirm()`          | function            | Confirm a pending payment (if applicable) |
+| `reset()`            | function            | Reset to `idle` state                     |
 
 ---
 
@@ -88,12 +93,12 @@ Subscriptions are cleaned up automatically via `onScopeDispose` (compatible with
 
 ## Ecosystem
 
-| Package | Purpose |
-|---------|---------|
+| Package                                                            | Purpose                                              |
+| ------------------------------------------------------------------ | ---------------------------------------------------- |
 | [`@sweefi/ui-core`](https://www.npmjs.com/package/@sweefi/ui-core) | Framework-agnostic state machine + adapter interface |
-| [`@sweefi/sui`](https://www.npmjs.com/package/@sweefi/sui) | Sui adapter + PTB builders + `createS402Client` |
-| [`@sweefi/vue`](https://www.npmjs.com/package/@sweefi/vue) | This package |
-| [`@sweefi/react`](https://www.npmjs.com/package/@sweefi/react) | React equivalent |
+| [`@sweefi/sui`](https://www.npmjs.com/package/@sweefi/sui)         | Sui adapter + PTB builders + `createS402Client`      |
+| [`@sweefi/vue`](https://www.npmjs.com/package/@sweefi/vue)         | This package                                         |
+| [`@sweefi/react`](https://www.npmjs.com/package/@sweefi/react)     | React equivalent                                     |
 
 ---
 

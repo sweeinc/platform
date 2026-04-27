@@ -1,8 +1,7 @@
-import { describe, it, expect } from 'vitest';
 import { Transaction } from '@mysten/sui/transactions';
+import { describe, expect, it } from 'vitest';
 import { EscrowContract } from '../../src/transactions/escrow';
 import { SweefiPluginConfig } from '../../src/utils/config';
-import type { CreateEscrowParams, EscrowOpParams } from '../../src/ptb/escrow';
 
 const PACKAGE_ID = '0x' + 'ab'.repeat(32);
 const SENDER = '0x' + '11'.repeat(32);
@@ -22,9 +21,7 @@ const contract = new EscrowContract(config);
 
 function expectMoveCall(tx: Transaction, module: string, fn: string) {
   const data = tx.getData();
-  const moveCall = data.commands.find(
-    (c: any) => c.$kind === 'MoveCall',
-  );
+  const moveCall = data.commands.find((c: any) => c.$kind === 'MoveCall');
   expect(moveCall, `expected a MoveCall for ${module}::${fn}`).toBeDefined();
   expect(moveCall!.MoveCall.module).toBe(module);
   expect(moveCall!.MoveCall.function).toBe(fn);

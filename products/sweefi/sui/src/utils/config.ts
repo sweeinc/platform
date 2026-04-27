@@ -1,10 +1,10 @@
 import type { SuiClientTypes } from '@mysten/sui/client';
-import { ConfigurationError, SweefiErrorCode, ErrorMessages, ValidationError } from './errors.js';
 import {
+  TESTNET_ADMIN_CAP,
   TESTNET_PACKAGE_ID,
   TESTNET_PROTOCOL_STATE,
-  TESTNET_ADMIN_CAP,
 } from '../ptb/deployments.js';
+import { ConfigurationError, ErrorMessages, SweefiErrorCode, ValidationError } from './errors.js';
 
 interface NetworkDefaults {
   packageId: string;
@@ -121,7 +121,9 @@ export class SweefiPluginConfig implements TransactionBuilderConfig {
     const config = this.#coinTypes[coinType];
     if (config) return config.decimals;
     if (coinType.includes('sui::SUI')) return 9;
-    throw new ValidationError(`Unknown coin decimals for ${coinType} — configure via coinTypes option`);
+    throw new ValidationError(
+      `Unknown coin decimals for ${coinType} — configure via coinTypes option`,
+    );
   }
 
   requireProtocolState(): string {

@@ -1,6 +1,6 @@
 import type { QueryContext } from './context.js';
-import { ResourceNotFoundError } from '../utils/errors.js';
 import { UptoDepositBcs } from '../types/bcs.js';
+import { ResourceNotFoundError } from '../utils/errors.js';
 
 /** Must match upto_deposit.move constants: STATE_PENDING=0, STATE_SETTLED=1, STATE_EXPIRED=2 */
 export const UptoDepositState = {
@@ -8,7 +8,7 @@ export const UptoDepositState = {
   Settled: 1,
   Expired: 2,
 } as const;
-export type UptoDepositStateValue = typeof UptoDepositState[keyof typeof UptoDepositState];
+export type UptoDepositStateValue = (typeof UptoDepositState)[keyof typeof UptoDepositState];
 
 export interface UptoDepositData {
   payer: string;

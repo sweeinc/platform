@@ -1,9 +1,8 @@
-import { describe, it, expect } from 'vitest';
-import { Transaction } from '@mysten/sui/transactions';
-
-import { buildAgentMandateFromIntent, buildInvoiceFromCart } from '../src/bridge';
 import type { SweefiConfig } from '@sweefi/sui/ptb';
-import type { MandateDefaults, InvoiceDefaults } from '../src/types';
+import type { InvoiceDefaults, MandateDefaults } from '../src/types';
+import { Transaction } from '@mysten/sui/transactions';
+import { describe, expect, it } from 'vitest';
+import { buildAgentMandateFromIntent, buildInvoiceFromCart } from '../src/bridge';
 
 // ══════════════════════════════════════════════════════════════
 // Test fixtures
@@ -75,23 +74,19 @@ describe('buildAgentMandateFromIntent', () => {
 
   it('throws ZodError on invalid intent JSON', () => {
     const badJson = { not: 'an intent' };
-    expect(() =>
-      buildAgentMandateFromIntent(badJson, mandateDefaults, sweefiConfig),
-    ).toThrow();
+    expect(() => buildAgentMandateFromIntent(badJson, mandateDefaults, sweefiConfig)).toThrow();
   });
 
   it('throws on invalid intent_expiry (Zod catches before mapper)', () => {
     const badExpiry = { ...validIntentJson, intent_expiry: 'garbage-date' };
-    expect(() =>
-      buildAgentMandateFromIntent(badExpiry, mandateDefaults, sweefiConfig),
-    ).toThrow('Must be a valid ISO 8601 date string');
+    expect(() => buildAgentMandateFromIntent(badExpiry, mandateDefaults, sweefiConfig)).toThrow(
+      'Must be a valid ISO 8601 date string',
+    );
   });
 
   it('throws on missing required fields', () => {
     const missing = { intent_expiry: '2026-06-15T00:00:00Z' };
-    expect(() =>
-      buildAgentMandateFromIntent(missing, mandateDefaults, sweefiConfig),
-    ).toThrow();
+    expect(() => buildAgentMandateFromIntent(missing, mandateDefaults, sweefiConfig)).toThrow();
   });
 });
 
@@ -107,9 +102,7 @@ describe('buildInvoiceFromCart', () => {
 
   it('throws ZodError on invalid cart JSON', () => {
     const badJson = { contents: 'not valid' };
-    expect(() =>
-      buildInvoiceFromCart(badJson, invoiceDefaults, sweefiConfig),
-    ).toThrow();
+    expect(() => buildInvoiceFromCart(badJson, invoiceDefaults, sweefiConfig)).toThrow();
   });
 
   it('throws on non-USD currency (mapper error)', () => {
@@ -123,9 +116,9 @@ describe('buildInvoiceFromCart', () => {
         },
       },
     };
-    expect(() =>
-      buildInvoiceFromCart(euroCart, invoiceDefaults, sweefiConfig),
-    ).toThrow('Unsupported currency: EUR');
+    expect(() => buildInvoiceFromCart(euroCart, invoiceDefaults, sweefiConfig)).toThrow(
+      'Unsupported currency: EUR',
+    );
   });
 
   it('throws on zero amount (mapper error)', () => {
@@ -139,8 +132,8 @@ describe('buildInvoiceFromCart', () => {
         },
       },
     };
-    expect(() =>
-      buildInvoiceFromCart(zeroCart, invoiceDefaults, sweefiConfig),
-    ).toThrow('Cart total must be positive');
+    expect(() => buildInvoiceFromCart(zeroCart, invoiceDefaults, sweefiConfig)).toThrow(
+      'Cart total must be positive',
+    );
   });
 });

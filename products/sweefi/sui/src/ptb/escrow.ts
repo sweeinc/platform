@@ -1,13 +1,13 @@
-import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
-import type { SweefiConfig } from "./types";
-import { SUI_CLOCK } from "./deployments";
-import { assertFeeMicroPercent, assertPositive } from "./assert";
+import type { SweefiConfig } from './types';
+import { coinWithBalance, Transaction } from '@mysten/sui/transactions';
+import { assertFeeMicroPercent, assertPositive } from './assert';
+import { SUI_CLOCK } from './deployments';
 
 function requireProtocolState(config: SweefiConfig): string {
   if (!config.protocolStateId) {
     throw new Error(
-      "buildCreateEscrowTx: SweefiConfig.protocolStateId is required for escrow creation. " +
-      "Set it to the shared ProtocolState object ID from your deployment.",
+      'buildCreateEscrowTx: SweefiConfig.protocolStateId is required for escrow creation. ' +
+        'Set it to the shared ProtocolState object ID from your deployment.',
     );
   }
   return config.protocolStateId;
@@ -61,20 +61,18 @@ export interface EscrowOpParams {
  * SEAL integration: the Escrow object ID serves as the SEAL access condition.
  * Seller encrypts deliverables → buyer decrypts after release.
  */
-export function buildCreateEscrowTx(
-  config: SweefiConfig,
-  params: CreateEscrowParams,
-): Transaction {
-  assertPositive(params.depositAmount, "depositAmount", "buildCreateEscrowTx");
-  assertFeeMicroPercent(params.feeMicroPercent, "buildCreateEscrowTx");
+export function buildCreateEscrowTx(config: SweefiConfig, params: CreateEscrowParams): Transaction {
+  assertPositive(params.depositAmount, 'depositAmount', 'buildCreateEscrowTx');
+  assertFeeMicroPercent(params.feeMicroPercent, 'buildCreateEscrowTx');
 
   const protocolStateId = requireProtocolState(config);
   const tx = new Transaction();
   tx.setSender(params.sender);
 
-  const memo = typeof params.memo === "string"
-    ? new TextEncoder().encode(params.memo)
-    : params.memo ?? new Uint8Array();
+  const memo =
+    typeof params.memo === 'string'
+      ? new TextEncoder().encode(params.memo)
+      : (params.memo ?? new Uint8Array());
 
   const deposit = coinWithBalance({ type: params.coinType, balance: params.depositAmount });
 
@@ -88,7 +86,7 @@ export function buildCreateEscrowTx(
       tx.pure.u64(params.deadlineMs),
       tx.pure.u64(params.feeMicroPercent),
       tx.pure.address(params.feeRecipient),
-      tx.pure.vector("u8", Array.from(memo)),
+      tx.pure.vector('u8', Array.from(memo)),
       tx.object(protocolStateId),
       tx.object(SUI_CLOCK),
     ],
@@ -103,20 +101,14 @@ export function buildCreateEscrowTx(
  * Fees are deducted on release (no fee on refund).
  * The Escrow object is consumed.
  */
-export function buildReleaseEscrowTx(
-  config: SweefiConfig,
-  params: EscrowOpParams,
-): Transaction {
+export function buildReleaseEscrowTx(config: SweefiConfig, params: EscrowOpParams): Transaction {
   const tx = new Transaction();
   tx.setSender(params.sender);
 
   tx.moveCall({
     target: `${config.packageId}::escrow::release_and_keep`,
     typeArguments: [params.coinType],
-    arguments: [
-      tx.object(params.escrowId),
-      tx.object(SUI_CLOCK),
-    ],
+    arguments: [tx.object(params.escrowId), tx.object(SUI_CLOCK)],
   });
 
   return tx;
@@ -132,20 +124,14 @@ export function buildReleaseEscrowTx(
  *
  * @returns Object with `tx` and `receipt` (TransactionResult for the EscrowReceipt)
  */
-export function buildReleaseEscrowComposableTx(
-  config: SweefiConfig,
-  params: EscrowOpParams,
-) {
+export function buildReleaseEscrowComposableTx(config: SweefiConfig, params: EscrowOpParams) {
   const tx = new Transaction();
   tx.setSender(params.sender);
 
   const receipt = tx.moveCall({
     target: `${config.packageId}::escrow::release`,
     typeArguments: [params.coinType],
-    arguments: [
-      tx.object(params.escrowId),
-      tx.object(SUI_CLOCK),
-    ],
+    arguments: [tx.object(params.escrowId), tx.object(SUI_CLOCK)],
   });
 
   return { tx, receipt };
@@ -157,20 +143,14 @@ export function buildReleaseEscrowComposableTx(
  * or ANYONE after deadline (permissionless timeout — prevents key-loss lockup).
  * The Escrow object is consumed. No fee charged on refund.
  */
-export function buildRefundEscrowTx(
-  config: SweefiConfig,
-  params: EscrowOpParams,
-): Transaction {
+export function buildRefundEscrowTx(config: SweefiConfig, params: EscrowOpParams): Transaction {
   const tx = new Transaction();
   tx.setSender(params.sender);
 
   tx.moveCall({
     target: `${config.packageId}::escrow::refund`,
     typeArguments: [params.coinType],
-    arguments: [
-      tx.object(params.escrowId),
-      tx.object(SUI_CLOCK),
-    ],
+    arguments: [tx.object(params.escrowId), tx.object(SUI_CLOCK)],
   });
 
   return tx;
@@ -182,20 +162,14 @@ export function buildRefundEscrowTx(
  * Once disputed, only the arbiter can release or refund (or timeout triggers auto-refund).
  * The Escrow object is mutated (not consumed).
  */
-export function buildDisputeEscrowTx(
-  config: SweefiConfig,
-  params: EscrowOpParams,
-): Transaction {
+export function buildDisputeEscrowTx(config: SweefiConfig, params: EscrowOpParams): Transaction {
   const tx = new Transaction();
   tx.setSender(params.sender);
 
   tx.moveCall({
     target: `${config.packageId}::escrow::dispute`,
     typeArguments: [params.coinType],
-    arguments: [
-      tx.object(params.escrowId),
-      tx.object(SUI_CLOCK),
-    ],
+    arguments: [tx.object(params.escrowId), tx.object(SUI_CLOCK)],
   });
 
   return tx;

@@ -4,31 +4,31 @@
  * Tests invariants across randomized inputs without fast-check dependency.
  * Uses manual random generation with 1000 iterations per property.
  */
-import { describe, it, expect } from "vitest";
-import { Transaction } from "@mysten/sui/transactions";
+import type {
+  CreateEscrowParams,
+  CreateStreamParams,
+  PayParams,
+  PrepaidDepositParams,
+  SweefiConfig,
+} from '../../src/ptb';
+import { Transaction } from '@mysten/sui/transactions';
+import { describe, expect, it } from 'vitest';
+import { SUI_ADDRESS_REGEX } from '../../src/constants';
 import {
-  assertFeeMicroPercent,
-  bpsToMicroPercent,
-  assertPositive,
-} from "../../src/ptb/assert";
-import {
-  buildPayTx,
-  buildCreateStreamTx,
   buildCreateEscrowTx,
+  buildCreateStreamTx,
+  buildPayTx,
   buildPrepaidDepositTx,
-} from "../../src/ptb";
-import type { SweefiConfig, PayParams, CreateStreamParams, CreateEscrowParams, PrepaidDepositParams } from "../../src/ptb";
-import { validateSuiAddress, convertToTokenAmount } from "../../src/utils";
-import { SUI_ADDRESS_REGEX } from "../../src/constants";
+} from '../../src/ptb';
+import { assertFeeMicroPercent, assertPositive, bpsToMicroPercent } from '../../src/ptb/assert';
+import { convertToTokenAmount, validateSuiAddress } from '../../src/utils';
 
 // ══════════════════════════════════════════════════════════════
 // Random generators
 // ══════════════════════════════════════════════════════════════
 
 function randomHex(length: number): string {
-  return Array.from({ length }, () =>
-    Math.floor(Math.random() * 16).toString(16),
-  ).join("");
+  return Array.from({ length }, () => Math.floor(Math.random() * 16).toString(16)).join('');
 }
 
 function randomSuiAddress(): string {
@@ -45,16 +45,16 @@ function randomBigInt(min: bigint, max: bigint): bigint {
   const hexLen = Math.ceil(bits / 4);
   let result: bigint;
   do {
-    result = BigInt("0x" + randomHex(Math.max(1, hexLen))) % (range + 1n);
+    result = BigInt('0x' + randomHex(Math.max(1, hexLen))) % (range + 1n);
   } while (result > range);
   return min + result;
 }
 
 const ITERATIONS = 1000;
 
-const PACKAGE_ID = "0x" + "ab".repeat(32);
-const PROTOCOL_STATE_ID = "0x" + "99".repeat(32);
-const SUI_COIN_TYPE = "0x2::sui::SUI";
+const PACKAGE_ID = '0x' + 'ab'.repeat(32);
+const PROTOCOL_STATE_ID = '0x' + '99'.repeat(32);
+const SUI_COIN_TYPE = '0x2::sui::SUI';
 
 const config: SweefiConfig = { packageId: PACKAGE_ID };
 const fullConfig: SweefiConfig = {
@@ -66,46 +66,46 @@ const fullConfig: SweefiConfig = {
 // 1. Fee Validation Invariant
 // ══════════════════════════════════════════════════════════════
 
-describe("PBT: assertFeeMicroPercent", () => {
-  it("accepts all integers in [0, 1_000_000]", () => {
+describe('PBT: assertFeeMicroPercent', () => {
+  it('accepts all integers in [0, 1_000_000]', () => {
     for (let i = 0; i < ITERATIONS; i++) {
       const fee = randomInt(0, 1_000_000);
-      expect(() => assertFeeMicroPercent(fee, "test")).not.toThrow();
+      expect(() => assertFeeMicroPercent(fee, 'test')).not.toThrow();
     }
   });
 
-  it("accepts boundary values 0 and 1_000_000", () => {
-    expect(() => assertFeeMicroPercent(0, "test")).not.toThrow();
-    expect(() => assertFeeMicroPercent(1_000_000, "test")).not.toThrow();
+  it('accepts boundary values 0 and 1_000_000', () => {
+    expect(() => assertFeeMicroPercent(0, 'test')).not.toThrow();
+    expect(() => assertFeeMicroPercent(1_000_000, 'test')).not.toThrow();
   });
 
-  it("rejects all integers > 1_000_000", () => {
+  it('rejects all integers > 1_000_000', () => {
     for (let i = 0; i < ITERATIONS; i++) {
       const fee = randomInt(1_000_001, 100_000_000);
-      expect(() => assertFeeMicroPercent(fee, "test")).toThrow(/feeMicroPercent/);
+      expect(() => assertFeeMicroPercent(fee, 'test')).toThrow(/feeMicroPercent/);
     }
   });
 
-  it("rejects all negative integers", () => {
+  it('rejects all negative integers', () => {
     for (let i = 0; i < ITERATIONS; i++) {
       const fee = -randomInt(1, 100_000_000);
-      expect(() => assertFeeMicroPercent(fee, "test")).toThrow(/feeMicroPercent/);
+      expect(() => assertFeeMicroPercent(fee, 'test')).toThrow(/feeMicroPercent/);
     }
   });
 
-  it("rejects non-integer numbers", () => {
+  it('rejects non-integer numbers', () => {
     for (let i = 0; i < ITERATIONS; i++) {
       // Generate a float that is NOT an integer
       const fee = Math.random() * 1_000_000;
       if (Number.isInteger(fee)) continue; // skip the rare exact integer
-      expect(() => assertFeeMicroPercent(fee, "test")).toThrow(/feeMicroPercent/);
+      expect(() => assertFeeMicroPercent(fee, 'test')).toThrow(/feeMicroPercent/);
     }
   });
 
-  it("rejects NaN and Infinity", () => {
-    expect(() => assertFeeMicroPercent(NaN, "test")).toThrow(/feeMicroPercent/);
-    expect(() => assertFeeMicroPercent(Infinity, "test")).toThrow(/feeMicroPercent/);
-    expect(() => assertFeeMicroPercent(-Infinity, "test")).toThrow(/feeMicroPercent/);
+  it('rejects NaN and Infinity', () => {
+    expect(() => assertFeeMicroPercent(NaN, 'test')).toThrow(/feeMicroPercent/);
+    expect(() => assertFeeMicroPercent(Infinity, 'test')).toThrow(/feeMicroPercent/);
+    expect(() => assertFeeMicroPercent(-Infinity, 'test')).toThrow(/feeMicroPercent/);
   });
 });
 
@@ -113,8 +113,8 @@ describe("PBT: assertFeeMicroPercent", () => {
 // 2. PTB Builder Safety
 // ══════════════════════════════════════════════════════════════
 
-describe("PBT: PTB builders never throw for valid inputs", () => {
-  it("buildPayTx produces a Transaction for random valid params", () => {
+describe('PBT: PTB builders never throw for valid inputs', () => {
+  it('buildPayTx produces a Transaction for random valid params', () => {
     for (let i = 0; i < ITERATIONS; i++) {
       const params: PayParams = {
         coinType: SUI_COIN_TYPE,
@@ -129,7 +129,7 @@ describe("PBT: PTB builders never throw for valid inputs", () => {
     }
   });
 
-  it("buildCreateStreamTx produces a Transaction for random valid params", () => {
+  it('buildCreateStreamTx produces a Transaction for random valid params', () => {
     for (let i = 0; i < ITERATIONS; i++) {
       const params: CreateStreamParams = {
         coinType: SUI_COIN_TYPE,
@@ -146,7 +146,7 @@ describe("PBT: PTB builders never throw for valid inputs", () => {
     }
   });
 
-  it("buildCreateEscrowTx produces a Transaction for random valid params", () => {
+  it('buildCreateEscrowTx produces a Transaction for random valid params', () => {
     for (let i = 0; i < ITERATIONS; i++) {
       const params: CreateEscrowParams = {
         coinType: SUI_COIN_TYPE,
@@ -163,7 +163,7 @@ describe("PBT: PTB builders never throw for valid inputs", () => {
     }
   });
 
-  it("buildPrepaidDepositTx produces a Transaction for random valid params", () => {
+  it('buildPrepaidDepositTx produces a Transaction for random valid params', () => {
     for (let i = 0; i < ITERATIONS; i++) {
       const params: PrepaidDepositParams = {
         coinType: SUI_COIN_TYPE,
@@ -185,8 +185,8 @@ describe("PBT: PTB builders never throw for valid inputs", () => {
 // 3. Address Validation Consistency
 // ══════════════════════════════════════════════════════════════
 
-describe("PBT: Address validation", () => {
-  it("accepts all 0x + 64 random hex chars", () => {
+describe('PBT: Address validation', () => {
+  it('accepts all 0x + 64 random hex chars', () => {
     for (let i = 0; i < ITERATIONS; i++) {
       const addr = randomSuiAddress();
       expect(validateSuiAddress(addr)).toBe(true);
@@ -194,34 +194,34 @@ describe("PBT: Address validation", () => {
     }
   });
 
-  it("rejects 0x + 63 hex chars (too short)", () => {
+  it('rejects 0x + 63 hex chars (too short)', () => {
     for (let i = 0; i < ITERATIONS; i++) {
       const addr = `0x${randomHex(63)}`;
       expect(validateSuiAddress(addr)).toBe(false);
     }
   });
 
-  it("rejects 0x + 65 hex chars (too long)", () => {
+  it('rejects 0x + 65 hex chars (too long)', () => {
     for (let i = 0; i < ITERATIONS; i++) {
       const addr = `0x${randomHex(65)}`;
       expect(validateSuiAddress(addr)).toBe(false);
     }
   });
 
-  it("rejects non-hex characters in address", () => {
+  it('rejects non-hex characters in address', () => {
     const nonHexChars = "ghijklmnopqrstuvwxyz!@#$%^&*()_+-=[]{}|;:',.<>?/~`";
     for (let i = 0; i < ITERATIONS; i++) {
       // Replace one random position with a non-hex char
-      const hex = randomHex(64).split("");
+      const hex = randomHex(64).split('');
       const pos = randomInt(0, 63);
       const charIdx = randomInt(0, nonHexChars.length - 1);
       hex[pos] = nonHexChars[charIdx];
-      const addr = `0x${hex.join("")}`;
+      const addr = `0x${hex.join('')}`;
       expect(validateSuiAddress(addr)).toBe(false);
     }
   });
 
-  it("rejects addresses without 0x prefix", () => {
+  it('rejects addresses without 0x prefix', () => {
     for (let i = 0; i < ITERATIONS; i++) {
       const addr = randomHex(64);
       expect(validateSuiAddress(addr)).toBe(false);
@@ -233,23 +233,23 @@ describe("PBT: Address validation", () => {
 // 4. bpsToMicroPercent Conversion
 // ══════════════════════════════════════════════════════════════
 
-describe("PBT: bpsToMicroPercent", () => {
-  it("bpsToMicroPercent(bps) == bps * 100 for all bps in [0, 10_000]", () => {
+describe('PBT: bpsToMicroPercent', () => {
+  it('bpsToMicroPercent(bps) == bps * 100 for all bps in [0, 10_000]', () => {
     // Exhaustive — only 10,001 values
     for (let bps = 0; bps <= 10_000; bps++) {
       expect(bpsToMicroPercent(bps)).toBe(bps * 100);
     }
   });
 
-  it("bpsToMicroPercent(10_000) == 1_000_000 (100% = 100%)", () => {
+  it('bpsToMicroPercent(10_000) == 1_000_000 (100% = 100%)', () => {
     expect(bpsToMicroPercent(10_000)).toBe(1_000_000);
   });
 
-  it("bpsToMicroPercent(0) == 0", () => {
+  it('bpsToMicroPercent(0) == 0', () => {
     expect(bpsToMicroPercent(0)).toBe(0);
   });
 
-  it("round-trip: Math.floor(bpsToMicroPercent(x) / 100) == x for all x in [0, 10_000]", () => {
+  it('round-trip: Math.floor(bpsToMicroPercent(x) / 100) == x for all x in [0, 10_000]', () => {
     // Since there's no microPercentToBps, verify the inverse manually
     for (let bps = 0; bps <= 10_000; bps++) {
       const micro = bpsToMicroPercent(bps);
@@ -257,7 +257,7 @@ describe("PBT: bpsToMicroPercent", () => {
     }
   });
 
-  it("output is always divisible by 100 for integer bps input", () => {
+  it('output is always divisible by 100 for integer bps input', () => {
     for (let i = 0; i < ITERATIONS; i++) {
       const bps = randomInt(0, 10_000);
       expect(bpsToMicroPercent(bps) % 100).toBe(0);
@@ -269,16 +269,16 @@ describe("PBT: bpsToMicroPercent", () => {
 // 5. Amount Boundary Safety
 // ══════════════════════════════════════════════════════════════
 
-describe("PBT: Amount boundary safety", () => {
+describe('PBT: Amount boundary safety', () => {
   const baseParams = {
     coinType: SUI_COIN_TYPE,
-    sender: "0x" + "11".repeat(32),
-    recipient: "0x" + "22".repeat(32),
+    sender: '0x' + '11'.repeat(32),
+    recipient: '0x' + '22'.repeat(32),
     feeMicroPercent: 5_000,
-    feeRecipient: "0x" + "33".repeat(32),
+    feeRecipient: '0x' + '33'.repeat(32),
   };
 
-  it("buildPayTx succeeds for random amounts in [1, 2^64-1]", () => {
+  it('buildPayTx succeeds for random amounts in [1, 2^64-1]', () => {
     for (let i = 0; i < ITERATIONS; i++) {
       const amount = randomBigInt(1n, (1n << 64n) - 1n);
       const tx = buildPayTx(config, { ...baseParams, amount });
@@ -286,29 +286,25 @@ describe("PBT: Amount boundary safety", () => {
     }
   });
 
-  it("buildPayTx throws for amount = 0n", () => {
-    expect(() =>
-      buildPayTx(config, { ...baseParams, amount: 0n }),
-    ).toThrow(/must be > 0/);
+  it('buildPayTx throws for amount = 0n', () => {
+    expect(() => buildPayTx(config, { ...baseParams, amount: 0n })).toThrow(/must be > 0/);
   });
 
-  it("buildPayTx throws for negative amounts", () => {
+  it('buildPayTx throws for negative amounts', () => {
     for (let i = 0; i < 100; i++) {
       const amount = -randomBigInt(1n, (1n << 64n) - 1n);
-      expect(() =>
-        buildPayTx(config, { ...baseParams, amount }),
-      ).toThrow(/must be > 0/);
+      expect(() => buildPayTx(config, { ...baseParams, amount })).toThrow(/must be > 0/);
     }
   });
 
-  it("assertPositive rejects 0n", () => {
-    expect(() => assertPositive(0n, "amount", "test")).toThrow(/must be > 0/);
+  it('assertPositive rejects 0n', () => {
+    expect(() => assertPositive(0n, 'amount', 'test')).toThrow(/must be > 0/);
   });
 
-  it("assertPositive accepts any bigint > 0", () => {
+  it('assertPositive accepts any bigint > 0', () => {
     for (let i = 0; i < ITERATIONS; i++) {
       const value = randomBigInt(1n, (1n << 128n) - 1n);
-      expect(() => assertPositive(value, "amount", "test")).not.toThrow();
+      expect(() => assertPositive(value, 'amount', 'test')).not.toThrow();
     }
   });
 });
@@ -317,10 +313,10 @@ describe("PBT: Amount boundary safety", () => {
 // 6. Error Type Consistency
 // ══════════════════════════════════════════════════════════════
 
-describe("PBT: Error type consistency", () => {
+describe('PBT: Error type consistency', () => {
   const builders = [
     {
-      name: "buildPayTx",
+      name: 'buildPayTx',
       trigger: () =>
         buildPayTx(config, {
           coinType: SUI_COIN_TYPE,
@@ -332,7 +328,7 @@ describe("PBT: Error type consistency", () => {
         }),
     },
     {
-      name: "buildPayTx (bad fee)",
+      name: 'buildPayTx (bad fee)',
       trigger: () =>
         buildPayTx(config, {
           coinType: SUI_COIN_TYPE,
@@ -344,7 +340,7 @@ describe("PBT: Error type consistency", () => {
         }),
     },
     {
-      name: "buildCreateStreamTx (no protocolState)",
+      name: 'buildCreateStreamTx (no protocolState)',
       trigger: () =>
         buildCreateStreamTx(config, {
           coinType: SUI_COIN_TYPE,
@@ -358,7 +354,7 @@ describe("PBT: Error type consistency", () => {
         }),
     },
     {
-      name: "buildCreateStreamTx (zero deposit)",
+      name: 'buildCreateStreamTx (zero deposit)',
       trigger: () =>
         buildCreateStreamTx(fullConfig, {
           coinType: SUI_COIN_TYPE,
@@ -372,7 +368,7 @@ describe("PBT: Error type consistency", () => {
         }),
     },
     {
-      name: "buildCreateEscrowTx (zero deposit)",
+      name: 'buildCreateEscrowTx (zero deposit)',
       trigger: () =>
         buildCreateEscrowTx(fullConfig, {
           coinType: SUI_COIN_TYPE,
@@ -386,7 +382,7 @@ describe("PBT: Error type consistency", () => {
         }),
     },
     {
-      name: "buildPrepaidDepositTx (zero amount)",
+      name: 'buildPrepaidDepositTx (zero amount)',
       trigger: () =>
         buildPrepaidDepositTx(fullConfig, {
           coinType: SUI_COIN_TYPE,
@@ -414,12 +410,12 @@ describe("PBT: Error type consistency", () => {
     });
   }
 
-  it("all fee validation errors include the function name", () => {
-    const fns = ["buildPayTx", "buildCreateStreamTx", "buildCreateEscrowTx"];
+  it('all fee validation errors include the function name', () => {
+    const fns = ['buildPayTx', 'buildCreateStreamTx', 'buildCreateEscrowTx'];
     for (const fn of fns) {
       try {
         assertFeeMicroPercent(-1, fn);
-        expect.unreachable("should throw");
+        expect.unreachable('should throw');
       } catch (e) {
         expect(e).toBeInstanceOf(Error);
         expect((e as Error).message).toContain(fn);
@@ -432,8 +428,8 @@ describe("PBT: Error type consistency", () => {
 // 7. convertToTokenAmount safety
 // ══════════════════════════════════════════════════════════════
 
-describe("PBT: convertToTokenAmount", () => {
-  it("integer amounts produce correct base units for any decimal count", () => {
+describe('PBT: convertToTokenAmount', () => {
+  it('integer amounts produce correct base units for any decimal count', () => {
     for (let i = 0; i < ITERATIONS; i++) {
       const intPart = randomInt(0, 999_999);
       const decimals = randomInt(0, 18);
@@ -443,15 +439,15 @@ describe("PBT: convertToTokenAmount", () => {
     }
   });
 
-  it("rejects negative amounts", () => {
+  it('rejects negative amounts', () => {
     for (let i = 0; i < 100; i++) {
       const amount = `-${randomInt(1, 999_999)}`;
       expect(() => convertToTokenAmount(amount, 6)).toThrow(/Negative/);
     }
   });
 
-  it("rejects non-numeric strings", () => {
-    const badInputs = ["abc", "12.34.56", "0x123", "", " ", "1e5", "1,000"];
+  it('rejects non-numeric strings', () => {
+    const badInputs = ['abc', '12.34.56', '0x123', '', ' ', '1e5', '1,000'];
     for (const input of badInputs) {
       expect(() => convertToTokenAmount(input, 6)).toThrow();
     }

@@ -4,22 +4,19 @@
  * Creates time-locked escrow with arbiter dispute resolution.
  */
 
-import { Transaction, PublicKey } from '@solana/web3.js';
 import type { Connection } from '@solana/web3.js';
 import type {
   s402ClientScheme,
-  s402PaymentRequirements,
-  s402PaymentPayload,
   s402EscrowPayload,
-  s402SettleResponse,
+  s402PaymentPayload,
+  s402PaymentRequirements,
   s402SettlementVerification,
+  s402SettleResponse,
 } from 's402';
-import { S402_VERSION } from 's402';
 import type { ClientSolanaSigner } from '../../signer.js';
-import {
-  buildCreateEscrowIx,
-  deriveEscrowPda,
-} from '../../programs/escrow.js';
+import { PublicKey, Transaction } from '@solana/web3.js';
+import { S402_VERSION } from 's402';
+import { buildCreateEscrowIx, deriveEscrowPda } from '../../programs/escrow.js';
 
 export class EscrowSolanaClientScheme implements s402ClientScheme {
   readonly scheme = 'escrow' as const;
@@ -46,12 +43,10 @@ export class EscrowSolanaClientScheme implements s402ClientScheme {
     const feeBps = protocolFeeBps ?? 0;
 
     // Arbiter is optional
-    const arbiter = escrow.arbiter
-      ? new PublicKey(escrow.arbiter)
-      : buyer; // Self-arbiter if none specified
+    const arbiter = escrow.arbiter ? new PublicKey(escrow.arbiter) : buyer; // Self-arbiter if none specified
 
     const nonce = BigInt(Date.now());
-    const [escrowPda] = deriveEscrowPda(buyer, seller, nonce);
+    const [_escrowPda] = deriveEscrowPda(buyer, seller, nonce);
 
     const tx = new Transaction();
 

@@ -23,13 +23,13 @@ import type {
   s402FacilitatorScheme,
   s402PaymentPayload,
   s402PaymentRequirements,
-  s402VerifyResponse,
   s402SettleResponse,
   s402StreamPayload,
+  s402VerifyResponse,
 } from 's402';
-import type { FacilitatorSolanaSigner } from '../../signer.js';
 import type { SolanaNetwork } from '../../constants.js';
-import { SWEEFI_STREAM_PROGRAM_ID, isSolanaNetwork } from '../../constants.js';
+import type { FacilitatorSolanaSigner } from '../../signer.js';
+import { isSolanaNetwork, SWEEFI_STREAM_PROGRAM_ID } from '../../constants.js';
 import { extractStreamCreatedEvent } from '../../utils/anchor-events.js';
 
 export class StreamSolanaFacilitatorScheme implements s402FacilitatorScheme {

@@ -23,29 +23,29 @@
  * Auditor: Claude Opus 4.6 (hardening sprint)
  */
 
-import { describe, it, expect } from "vitest";
-import { Transaction } from "@mysten/sui/transactions";
-import type { SweefiConfig } from "../../src/ptb/types";
+import type { SweefiConfig } from '../../src/ptb/types';
+import { Transaction } from '@mysten/sui/transactions';
+import { describe, expect, it } from 'vitest';
 import {
   buildCreateEscrowTx,
-  buildReleaseEscrowTx,
-  buildReleaseEscrowComposableTx,
-  buildRefundEscrowTx,
   buildDisputeEscrowTx,
-} from "../../src/ptb";
+  buildRefundEscrowTx,
+  buildReleaseEscrowComposableTx,
+  buildReleaseEscrowTx,
+} from '../../src/ptb';
 
 // ══════════════════════════════════════════════════════════════
 // Test fixtures
 // ══════════════════════════════════════════════════════════════
 
-const PKG = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-const PROTOCOL_STATE = "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
-const BUYER = "0x1111111111111111111111111111111111111111111111111111111111111111";
-const SELLER = "0x2222222222222222222222222222222222222222222222222222222222222222";
-const ARBITER = "0x3333333333333333333333333333333333333333333333333333333333333333";
-const FEE_RECIPIENT = "0x4444444444444444444444444444444444444444444444444444444444444444";
-const ESCROW_ID = "0x5555555555555555555555555555555555555555555555555555555555555555";
-const SUI_TYPE = "0x2::sui::SUI";
+const PKG = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+const PROTOCOL_STATE = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
+const BUYER = '0x1111111111111111111111111111111111111111111111111111111111111111';
+const SELLER = '0x2222222222222222222222222222222222222222222222222222222222222222';
+const ARBITER = '0x3333333333333333333333333333333333333333333333333333333333333333';
+const FEE_RECIPIENT = '0x4444444444444444444444444444444444444444444444444444444444444444';
+const ESCROW_ID = '0x5555555555555555555555555555555555555555555555555555555555555555';
+const SUI_TYPE = '0x2::sui::SUI';
 
 const config: SweefiConfig = { packageId: PKG, protocolStateId: PROTOCOL_STATE };
 
@@ -57,18 +57,17 @@ const config: SweefiConfig = { packageId: PKG, protocolStateId: PROTOCOL_STATE }
 const STATE = {
   ACTIVE: 0,
   DISPUTED: 1,
-  RELEASED: 2,  // terminal
-  REFUNDED: 3,  // terminal
+  RELEASED: 2, // terminal
+  REFUNDED: 3, // terminal
 } as const;
 
-describe("Escrow State Machine Transitions", () => {
-
+describe('Escrow State Machine Transitions', () => {
   // ──────────────────────────────────────────────────────────
   // INITIAL → ACTIVE (creation)
   // ──────────────────────────────────────────────────────────
 
-  describe("Creation (→ ACTIVE)", () => {
-    it("creates escrow with valid params → enters ACTIVE state", () => {
+  describe('Creation (→ ACTIVE)', () => {
+    it('creates escrow with valid params → enters ACTIVE state', () => {
       const tx = buildCreateEscrowTx(config, {
         coinType: SUI_TYPE,
         sender: BUYER,
@@ -82,32 +81,36 @@ describe("Escrow State Machine Transitions", () => {
       expect(tx).toBeInstanceOf(Transaction);
     });
 
-    it("validates minimum deposit (MIN_DEPOSIT = 1_000_000)", () => {
+    it('validates minimum deposit (MIN_DEPOSIT = 1_000_000)', () => {
       // TS builder validates via assertPositive (> 0)
       // Move contract enforces >= MIN_DEPOSIT on-chain
-      expect(() => buildCreateEscrowTx(config, {
-        coinType: SUI_TYPE,
-        sender: BUYER,
-        seller: SELLER,
-        arbiter: ARBITER,
-        depositAmount: 0n,
-        deadlineMs: BigInt(Date.now() + 86_400_000),
-        feeMicroPercent: 5000,
-        feeRecipient: FEE_RECIPIENT,
-      })).toThrow(/must be > 0/);
+      expect(() =>
+        buildCreateEscrowTx(config, {
+          coinType: SUI_TYPE,
+          sender: BUYER,
+          seller: SELLER,
+          arbiter: ARBITER,
+          depositAmount: 0n,
+          deadlineMs: BigInt(Date.now() + 86_400_000),
+          feeMicroPercent: 5000,
+          feeRecipient: FEE_RECIPIENT,
+        }),
+      ).toThrow(/must be > 0/);
     });
 
-    it("validates fee micro percent", () => {
-      expect(() => buildCreateEscrowTx(config, {
-        coinType: SUI_TYPE,
-        sender: BUYER,
-        seller: SELLER,
-        arbiter: ARBITER,
-        depositAmount: 1_000_000n,
-        deadlineMs: BigInt(Date.now() + 86_400_000),
-        feeMicroPercent: 1_000_001,
-        feeRecipient: FEE_RECIPIENT,
-      })).toThrow(/feeMicroPercent/);
+    it('validates fee micro percent', () => {
+      expect(() =>
+        buildCreateEscrowTx(config, {
+          coinType: SUI_TYPE,
+          sender: BUYER,
+          seller: SELLER,
+          arbiter: ARBITER,
+          depositAmount: 1_000_000n,
+          deadlineMs: BigInt(Date.now() + 86_400_000),
+          feeMicroPercent: 1_000_001,
+          feeRecipient: FEE_RECIPIENT,
+        }),
+      ).toThrow(/feeMicroPercent/);
     });
   });
 
@@ -115,8 +118,8 @@ describe("Escrow State Machine Transitions", () => {
   // ACTIVE → RELEASED (buyer releases)
   // ──────────────────────────────────────────────────────────
 
-  describe("ACTIVE → RELEASED", () => {
-    it("buyer can release (delivery confirmed) → entry function", () => {
+  describe('ACTIVE → RELEASED', () => {
+    it('buyer can release (delivery confirmed) → entry function', () => {
       // Move: release_and_keep<T>(escrow: Escrow<T>, clock: &Clock, ctx)
       // Authorization: sender == buyer when state == ACTIVE
       const tx = buildReleaseEscrowTx(config, {
@@ -127,7 +130,7 @@ describe("Escrow State Machine Transitions", () => {
       expect(tx).toBeInstanceOf(Transaction);
     });
 
-    it("buyer can release (delivery confirmed) → composable function", () => {
+    it('buyer can release (delivery confirmed) → composable function', () => {
       // Move: release<T>(escrow: Escrow<T>, clock: &Clock, ctx)
       // Returns EscrowReceipt for SEAL integration
       const { tx, receipt } = buildReleaseEscrowComposableTx(config, {
@@ -144,8 +147,8 @@ describe("Escrow State Machine Transitions", () => {
   // ACTIVE → REFUNDED (deadline passes, anyone refunds)
   // ──────────────────────────────────────────────────────────
 
-  describe("ACTIVE → REFUNDED", () => {
-    it("anyone can refund after deadline (permissionless timeout)", () => {
+  describe('ACTIVE → REFUNDED', () => {
+    it('anyone can refund after deadline (permissionless timeout)', () => {
       // Move: refund<T>(escrow: Escrow<T>, clock: &Clock, ctx)
       // Authorization: now_ms >= deadline_ms → anyone can call
       // This is the safety valve — prevents permanent fund lockup
@@ -160,7 +163,7 @@ describe("Escrow State Machine Transitions", () => {
       const tx2 = buildRefundEscrowTx(config, {
         coinType: SUI_TYPE,
         escrowId: ESCROW_ID,
-        sender: "0x7777777777777777777777777777777777777777777777777777777777777777",
+        sender: '0x7777777777777777777777777777777777777777777777777777777777777777',
       });
       expect(tx2).toBeInstanceOf(Transaction);
     });
@@ -170,8 +173,8 @@ describe("Escrow State Machine Transitions", () => {
   // ACTIVE → DISPUTED (buyer or seller disputes)
   // ──────────────────────────────────────────────────────────
 
-  describe("ACTIVE → DISPUTED", () => {
-    it("buyer can dispute (delivery not as expected)", () => {
+  describe('ACTIVE → DISPUTED', () => {
+    it('buyer can dispute (delivery not as expected)', () => {
       // Move: dispute<T>(escrow: &mut Escrow<T>, clock: &Clock, ctx)
       // Authorization: sender == buyer || sender == seller
       // State requirement: state == ACTIVE
@@ -198,8 +201,8 @@ describe("Escrow State Machine Transitions", () => {
   // DISPUTED → RELEASED (arbiter decides for seller)
   // ──────────────────────────────────────────────────────────
 
-  describe("DISPUTED → RELEASED", () => {
-    it("arbiter can release disputed escrow (resolves in seller favor)", () => {
+  describe('DISPUTED → RELEASED', () => {
+    it('arbiter can release disputed escrow (resolves in seller favor)', () => {
       // Move: release<T>(escrow: Escrow<T>, clock: &Clock, ctx)
       // Authorization: sender == arbiter when state == DISPUTED
       const tx = buildReleaseEscrowTx(config, {
@@ -215,8 +218,8 @@ describe("Escrow State Machine Transitions", () => {
   // DISPUTED → REFUNDED (arbiter decides for buyer, or deadline)
   // ──────────────────────────────────────────────────────────
 
-  describe("DISPUTED → REFUNDED", () => {
-    it("arbiter can refund disputed escrow (resolves in buyer favor)", () => {
+  describe('DISPUTED → REFUNDED', () => {
+    it('arbiter can refund disputed escrow (resolves in buyer favor)', () => {
       // Move: refund<T>(escrow: Escrow<T>, clock: &Clock, ctx)
       // Authorization: sender == arbiter when state == DISPUTED, before deadline
       const tx = buildRefundEscrowTx(config, {
@@ -227,13 +230,13 @@ describe("Escrow State Machine Transitions", () => {
       expect(tx).toBeInstanceOf(Transaction);
     });
 
-    it("anyone can refund disputed escrow after deadline (arbiter griefing protection)", () => {
+    it('anyone can refund disputed escrow after deadline (arbiter griefing protection)', () => {
       // This prevents an arbiter from refusing to act — after the extended
       // deadline (with grace period), anyone can trigger the refund.
       const tx = buildRefundEscrowTx(config, {
         coinType: SUI_TYPE,
         escrowId: ESCROW_ID,
-        sender: "0x9999999999999999999999999999999999999999999999999999999999999999",
+        sender: '0x9999999999999999999999999999999999999999999999999999999999999999',
       });
       expect(tx).toBeInstanceOf(Transaction);
     });
@@ -243,7 +246,7 @@ describe("Escrow State Machine Transitions", () => {
   // Terminal states: RELEASED and REFUNDED are terminal
   // ──────────────────────────────────────────────────────────
 
-  describe("Terminal states (documented invariants)", () => {
+  describe('Terminal states (documented invariants)', () => {
     /**
      * Move contract invariant:
      *   assert!(state == STATE_ACTIVE || state == STATE_DISPUTED, EAlreadyResolved);
@@ -260,7 +263,7 @@ describe("Escrow State Machine Transitions", () => {
      * but we document it here for completeness.
      */
 
-    it("RELEASED is terminal — Escrow object is consumed (Move linear types)", () => {
+    it('RELEASED is terminal — Escrow object is consumed (Move linear types)', () => {
       // The release() function takes `escrow: Escrow<T>` by value (not &mut),
       // consuming the object. After release, the Escrow UID is deleted.
       // Any subsequent transaction referencing this object ID will fail with
@@ -268,7 +271,7 @@ describe("Escrow State Machine Transitions", () => {
       expect(STATE.RELEASED).toBe(2);
     });
 
-    it("REFUNDED is terminal — Escrow object is consumed (Move linear types)", () => {
+    it('REFUNDED is terminal — Escrow object is consumed (Move linear types)', () => {
       // Same as release — refund() takes `escrow: Escrow<T>` by value.
       expect(STATE.REFUNDED).toBe(3);
     });
@@ -278,45 +281,45 @@ describe("Escrow State Machine Transitions", () => {
   // Invalid transitions (on-chain enforcement)
   // ──────────────────────────────────────────────────────────
 
-  describe("Invalid transitions (on-chain enforcement documentation)", () => {
+  describe('Invalid transitions (on-chain enforcement documentation)', () => {
     /**
      * These transitions are blocked by Move contract logic.
      * PTB builders cannot enforce them (they don't know on-chain state),
      * but we document the Move error codes for each invalid transition.
      */
 
-    it("ACTIVE → RELEASED by seller: blocked (ENotBuyer=200)", () => {
+    it('ACTIVE → RELEASED by seller: blocked (ENotBuyer=200)', () => {
       // Move checks: sender == buyer when ACTIVE
       // Seller can only release when DISPUTED (not ACTIVE)
       // Error: ENotBuyer (200)
       expect(true).toBe(true); // documented
     });
 
-    it("ACTIVE → RELEASED by arbiter: blocked (ENotBuyer=200)", () => {
+    it('ACTIVE → RELEASED by arbiter: blocked (ENotBuyer=200)', () => {
       // Move checks: sender == buyer when ACTIVE, sender == arbiter when DISPUTED
       // Arbiter cannot release when ACTIVE
       expect(true).toBe(true); // documented
     });
 
-    it("ACTIVE → REFUNDED by arbiter before deadline: blocked (EDeadlineNotReached=205)", () => {
+    it('ACTIVE → REFUNDED by arbiter before deadline: blocked (EDeadlineNotReached=205)', () => {
       // Arbiter can only refund DISPUTED escrows
       // ACTIVE escrow before deadline requires buyer action or deadline passage
       expect(true).toBe(true); // documented
     });
 
-    it("DISPUTED → DISPUTED: blocked (EAlreadyDisputed=208)", () => {
+    it('DISPUTED → DISPUTED: blocked (EAlreadyDisputed=208)', () => {
       // dispute() checks: state == STATE_ACTIVE
       // Cannot dispute an already-disputed escrow
       expect(true).toBe(true); // documented
     });
 
-    it("DISPUTED → RELEASED by buyer: blocked (ENotArbiter=202)", () => {
+    it('DISPUTED → RELEASED by buyer: blocked (ENotArbiter=202)', () => {
       // Only arbiter can release DISPUTED escrows
       // Buyer can only release ACTIVE escrows
       expect(true).toBe(true); // documented
     });
 
-    it("dispute after deadline: blocked (EDeadlineReached=215, M-01 fix)", () => {
+    it('dispute after deadline: blocked (EDeadlineReached=215, M-01 fix)', () => {
       // M-01 security fix: dispute() asserts now_ms < deadline_ms
       // Without this, seller could dispute post-deadline and extend lockup
       // via grace period, enabling arbiter-seller collusion
@@ -328,7 +331,7 @@ describe("Escrow State Machine Transitions", () => {
   // Grace period documentation
   // ──────────────────────────────────────────────────────────
 
-  describe("Dispute grace period (proportional extension)", () => {
+  describe('Dispute grace period (proportional extension)', () => {
     /**
      * When dispute() is called, the deadline may be extended to give
      * the arbiter time to investigate:
@@ -346,32 +349,32 @@ describe("Escrow State Machine Transitions", () => {
      *   - Seller from extending lockup indefinitely (cap at 30 days)
      */
 
-    it("grace period constants match escrow.move", () => {
+    it('grace period constants match escrow.move', () => {
       // Cross-reference with contracts/sources/escrow.move
-      const GRACE_RATIO = 500_000;     // 50%
-      const GRACE_FLOOR_MS = 604_800_000;  // 7 days
-      const GRACE_CAP_MS = 2_592_000_000;  // 30 days
+      const GRACE_RATIO = 500_000; // 50%
+      const GRACE_FLOOR_MS = 604_800_000; // 7 days
+      const GRACE_CAP_MS = 2_592_000_000; // 30 days
 
       expect(GRACE_RATIO).toBe(500_000);
       expect(GRACE_FLOOR_MS).toBe(7 * 24 * 60 * 60 * 1000);
       expect(GRACE_CAP_MS).toBe(30 * 24 * 60 * 60 * 1000);
     });
 
-    it("short escrow (1 day) gets floor grace (7 days)", () => {
+    it('short escrow (1 day) gets floor grace (7 days)', () => {
       const duration = 86_400_000; // 1 day
       const proportional = Math.floor((duration * 500_000) / 1_000_000);
       const grace = Math.max(proportional, 604_800_000);
       expect(grace).toBe(604_800_000); // 7 days (floor kicks in)
     });
 
-    it("medium escrow (60 days) gets proportional grace (30 days)", () => {
+    it('medium escrow (60 days) gets proportional grace (30 days)', () => {
       const duration = 60 * 86_400_000; // 60 days
       const proportional = Math.floor((duration * 500_000) / 1_000_000);
       const grace = Math.min(Math.max(proportional, 604_800_000), 2_592_000_000);
       expect(grace).toBe(2_592_000_000); // 30 days (cap kicks in)
     });
 
-    it("standard escrow (30 days) gets proportional grace (15 days)", () => {
+    it('standard escrow (30 days) gets proportional grace (15 days)', () => {
       const duration = 30 * 86_400_000; // 30 days
       const proportional = Math.floor((duration * 500_000) / 1_000_000);
       const grace = Math.min(Math.max(proportional, 604_800_000), 2_592_000_000);
@@ -383,8 +386,8 @@ describe("Escrow State Machine Transitions", () => {
   // Full lifecycle: creation → release → receipt
   // ──────────────────────────────────────────────────────────
 
-  describe("Full lifecycle PTB construction", () => {
-    it("creates escrow and releases in separate transactions", () => {
+  describe('Full lifecycle PTB construction', () => {
+    it('creates escrow and releases in separate transactions', () => {
       // Step 1: Buyer creates escrow
       const createTx = buildCreateEscrowTx(config, {
         coinType: SUI_TYPE,
@@ -395,7 +398,7 @@ describe("Escrow State Machine Transitions", () => {
         deadlineMs: BigInt(Date.now() + 7 * 86_400_000),
         feeMicroPercent: 5000, // 0.5%
         feeRecipient: FEE_RECIPIENT,
-        memo: "Web3 freelance payment",
+        memo: 'Web3 freelance payment',
       });
       expect(createTx).toBeInstanceOf(Transaction);
 
@@ -410,7 +413,7 @@ describe("Escrow State Machine Transitions", () => {
       // Receipt can be used as SEAL access condition in the same PTB
     });
 
-    it("creates escrow, disputes, and arbiter resolves", () => {
+    it('creates escrow, disputes, and arbiter resolves', () => {
       // Step 1: Create
       const createTx = buildCreateEscrowTx(config, {
         coinType: SUI_TYPE,
@@ -454,7 +457,7 @@ describe("Escrow State Machine Transitions", () => {
   // Edge cases: role separation enforcement
   // ──────────────────────────────────────────────────────────
 
-  describe("Role separation (on-chain enforcement)", () => {
+  describe('Role separation (on-chain enforcement)', () => {
     /**
      * escrow.move enforces:
      *   - arbiter != seller (EArbiterIsSeller = 212)
@@ -466,14 +469,14 @@ describe("Escrow State Machine Transitions", () => {
      * but we document them here.
      */
 
-    it("three distinct roles required: buyer, seller, arbiter", () => {
+    it('three distinct roles required: buyer, seller, arbiter', () => {
       // All three addresses must be different
       expect(BUYER).not.toBe(SELLER);
       expect(BUYER).not.toBe(ARBITER);
       expect(SELLER).not.toBe(ARBITER);
     });
 
-    it("builder accepts same address (on-chain rejects)", () => {
+    it('builder accepts same address (on-chain rejects)', () => {
       // Builder does NOT check role separation — that's Move's job
       // This is intentional: the TS layer validates data format,
       // the Move layer validates business rules.

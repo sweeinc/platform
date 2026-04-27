@@ -4,22 +4,19 @@
  * Creates per-second streaming micropayments with on-chain budget caps.
  */
 
-import { Transaction, PublicKey } from '@solana/web3.js';
 import type { Connection } from '@solana/web3.js';
 import type {
   s402ClientScheme,
-  s402PaymentRequirements,
   s402PaymentPayload,
-  s402StreamPayload,
-  s402SettleResponse,
+  s402PaymentRequirements,
   s402SettlementVerification,
+  s402SettleResponse,
+  s402StreamPayload,
 } from 's402';
-import { S402_VERSION } from 's402';
 import type { ClientSolanaSigner } from '../../signer.js';
-import {
-  buildCreateStreamIx,
-  deriveStreamMeterPda,
-} from '../../programs/stream.js';
+import { PublicKey, Transaction } from '@solana/web3.js';
+import { S402_VERSION } from 's402';
+import { buildCreateStreamIx, deriveStreamMeterPda } from '../../programs/stream.js';
 
 export class StreamSolanaClientScheme implements s402ClientScheme {
   readonly scheme = 'stream' as const;
@@ -47,7 +44,7 @@ export class StreamSolanaClientScheme implements s402ClientScheme {
     const feeBps = protocolFeeBps ?? 0;
 
     const nonce = BigInt(Date.now());
-    const [meterPda] = deriveStreamMeterPda(payer, recipient, nonce);
+    const [_meterPda] = deriveStreamMeterPda(payer, recipient, nonce);
 
     const tx = new Transaction();
 

@@ -13,16 +13,16 @@
 
 import type {
   s402ClientScheme,
-  s402PaymentRequirements,
-  s402UnlockPayload,
   s402PaymentPayload,
-  s402SettleResponse,
+  s402PaymentRequirements,
   s402SettlementVerification,
+  s402SettleResponse,
+  s402UnlockPayload,
 } from 's402';
-import { S402_VERSION } from 's402';
-import { Transaction } from '@mysten/sui/transactions';
-import type { ClientSuiSigner } from '../../signer.js';
 import type { SweefiConfig } from '../../ptb/types.js';
+import type { ClientSuiSigner } from '../../signer.js';
+import { Transaction } from '@mysten/sui/transactions';
+import { S402_VERSION } from 's402';
 import { bpsToMicroPercent } from '../../ptb/assert.js';
 import { EscrowContract } from '../../transactions/escrow.js';
 import { createBuilderConfig } from '../../utils/config.js';
@@ -36,15 +36,15 @@ export class UnlockSuiClientScheme implements s402ClientScheme {
     private readonly signer: ClientSuiSigner,
     config: SweefiConfig,
   ) {
-    this.#contract = new EscrowContract(createBuilderConfig({
-      packageId: config.packageId,
-      protocolState: config.protocolStateId,
-    }));
+    this.#contract = new EscrowContract(
+      createBuilderConfig({
+        packageId: config.packageId,
+        protocolState: config.protocolStateId,
+      }),
+    );
   }
 
-  async createPayment(
-    requirements: s402PaymentRequirements,
-  ): Promise<s402UnlockPayload> {
+  async createPayment(requirements: s402PaymentRequirements): Promise<s402UnlockPayload> {
     const unlock = requirements.unlock;
     if (!unlock) {
       throw new Error('Unlock requirements missing from s402PaymentRequirements');
@@ -58,8 +58,8 @@ export class UnlockSuiClientScheme implements s402ClientScheme {
     if (!escrow?.arbiter) {
       throw new Error(
         'Unlock requires an arbiter distinct from the seller. ' +
-        'The Move contract rejects arbiter == seller (EArbiterIsSeller). ' +
-        'Provide an explicit escrow.arbiter in s402PaymentRequirements.',
+          'The Move contract rejects arbiter == seller (EArbiterIsSeller). ' +
+          'Provide an explicit escrow.arbiter in s402PaymentRequirements.',
       );
     }
 

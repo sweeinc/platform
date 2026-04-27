@@ -36,45 +36,45 @@ const DISCRIMINATORS = {
 // ─── Event data structures ───────────────────────────────────────────────────
 
 export interface PrepaidDepositedEvent {
-  balance: string;     // Pubkey (base58)
-  agent: string;       // Pubkey
-  provider: string;    // Pubkey
-  amount: bigint;      // u64
+  balance: string; // Pubkey (base58)
+  agent: string; // Pubkey
+  provider: string; // Pubkey
+  amount: bigint; // u64
   ratePerCall: bigint; // u64
-  maxCalls: bigint;    // u64
-  timestamp: bigint;   // i64
+  maxCalls: bigint; // u64
+  timestamp: bigint; // i64
 }
 
 export interface StreamCreatedEvent {
-  meter: string;         // Pubkey
-  payer: string;         // Pubkey
-  recipient: string;     // Pubkey
-  deposit: bigint;       // u64
+  meter: string; // Pubkey
+  payer: string; // Pubkey
+  recipient: string; // Pubkey
+  deposit: bigint; // u64
   ratePerSecond: bigint; // u64
-  budgetCap: bigint;     // u64
-  timestamp: bigint;     // i64
+  budgetCap: bigint; // u64
+  timestamp: bigint; // i64
 }
 
 export interface EscrowCreatedEvent {
-  escrow: string;    // Pubkey
-  buyer: string;     // Pubkey
-  seller: string;    // Pubkey
-  arbiter: string;   // Pubkey
-  amount: bigint;    // u64
-  deadline: bigint;  // i64
+  escrow: string; // Pubkey
+  buyer: string; // Pubkey
+  seller: string; // Pubkey
+  arbiter: string; // Pubkey
+  amount: bigint; // u64
+  deadline: bigint; // i64
   timestamp: bigint; // i64
 }
 
 export interface UptoDepositCreatedEvent {
-  deposit: string;           // Pubkey
-  payer: string;             // Pubkey
-  recipient: string;         // Pubkey
-  mint: string;              // Pubkey
-  maxAmount: bigint;         // u64
+  deposit: string; // Pubkey
+  payer: string; // Pubkey
+  recipient: string; // Pubkey
+  mint: string; // Pubkey
+  maxAmount: bigint; // u64
   settlementCeiling: bigint; // u64
   settlementDeadline: bigint; // i64
-  feeBps: number;            // u16
-  timestamp: bigint;         // i64
+  feeBps: number; // u16
+  timestamp: bigint; // i64
 }
 
 // ─── Log parsing helpers ─────────────────────────────────────────────────────
@@ -161,7 +161,7 @@ class BorshReader {
     if (this.offset + n > this.data.length) {
       throw new Error(
         `Truncated event: reading ${fieldName} requires ${n} bytes at offset ${this.offset}, ` +
-        `but data is only ${this.data.length} bytes`
+          `but data is only ${this.data.length} bytes`,
       );
     }
   }

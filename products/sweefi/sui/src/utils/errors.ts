@@ -9,12 +9,14 @@ export const SweefiErrorCode = {
   VALIDATION_FAILED: 'VALIDATION_FAILED',
   EXTENSION_FAILED: 'EXTENSION_FAILED',
 } as const;
-export type SweefiErrorCode = typeof SweefiErrorCode[keyof typeof SweefiErrorCode];
+export type SweefiErrorCode = (typeof SweefiErrorCode)[keyof typeof SweefiErrorCode];
 
 export const ErrorMessages: Record<string, string> = {
-  [SweefiErrorCode.PACKAGE_ID_REQUIRED]: 'packageId is required for custom networks (auto-fills for testnet/mainnet)',
+  [SweefiErrorCode.PACKAGE_ID_REQUIRED]:
+    'packageId is required for custom networks (auto-fills for testnet/mainnet)',
   [SweefiErrorCode.ADMIN_CAP_NOT_SET]: 'adminCap not configured — required for admin operations',
-  [SweefiErrorCode.PROTOCOL_STATE_NOT_SET]: 'protocolState not configured — required for stream/escrow/prepaid',
+  [SweefiErrorCode.PROTOCOL_STATE_NOT_SET]:
+    'protocolState not configured — required for stream/escrow/prepaid',
 };
 
 export class SweefiError extends Error {

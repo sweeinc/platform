@@ -26,17 +26,17 @@
  */
 
 import type {
+  s402EscrowPayload,
   s402FacilitatorScheme,
   s402PaymentPayload,
   s402PaymentRequirements,
-  s402VerifyResponse,
   s402SettleResponse,
-  s402EscrowPayload,
+  s402VerifyResponse,
 } from 's402';
 import type { FacilitatorSuiSigner } from '../../signer.js';
-import { coinTypesEqual } from '../../utils.js';
 import { normalizeSuiAddress } from '@mysten/sui/utils';
 import { bpsToMicroPercent } from '../../ptb/assert.js';
+import { coinTypesEqual } from '../../utils.js';
 
 export class EscrowSuiFacilitatorScheme implements s402FacilitatorScheme {
   readonly scheme = 'escrow' as const;
@@ -54,8 +54,8 @@ export class EscrowSuiFacilitatorScheme implements s402FacilitatorScheme {
   ) {
     if (!packageId) {
       throw new Error(
-        "EscrowSuiFacilitatorScheme: packageId is required to prevent event spoofing. " +
-        "Set SWEEFI_PACKAGE_ID environment variable."
+        'EscrowSuiFacilitatorScheme: packageId is required to prevent event spoofing. ' +
+          'Set SWEEFI_PACKAGE_ID environment variable.',
       );
     }
   }
@@ -158,7 +158,10 @@ export class EscrowSuiFacilitatorScheme implements s402FacilitatorScheme {
       }
 
       // Verify arbiter if specified in requirements
-      if (reqEscrow.arbiter && normalizeSuiAddress(escrowEvent.arbiter) !== normalizeSuiAddress(reqEscrow.arbiter)) {
+      if (
+        reqEscrow.arbiter &&
+        normalizeSuiAddress(escrowEvent.arbiter) !== normalizeSuiAddress(reqEscrow.arbiter)
+      ) {
         return {
           valid: false,
           invalidReason: `Arbiter mismatch: event=${escrowEvent.arbiter}, required=${reqEscrow.arbiter}`,
@@ -272,8 +275,8 @@ function extractEscrowCreatedEvent(
   packageId?: string,
 ): EscrowCreatedEventData | null {
   const event = packageId
-    ? events.find(e => e.type.startsWith(`${packageId}::`) && e.type.endsWith('::EscrowCreated'))
-    : events.find(e => e.type.endsWith('::escrow::EscrowCreated'));
+    ? events.find((e) => e.type.startsWith(`${packageId}::`) && e.type.endsWith('::EscrowCreated'))
+    : events.find((e) => e.type.endsWith('::escrow::EscrowCreated'));
   if (!event?.parsedJson || typeof event.parsedJson !== 'object') return null;
 
   // Explicit field validation — fail fast on schema mismatch

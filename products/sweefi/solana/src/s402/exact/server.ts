@@ -15,7 +15,7 @@
  * Anchor programs that do not yet exist for Solana.
  */
 
-import type { s402ServerScheme, s402PaymentRequirements, s402RouteConfig } from 's402';
+import type { s402PaymentRequirements, s402RouteConfig, s402ServerScheme } from 's402';
 import { S402_VERSION } from 's402';
 import { getDefaultUsdcMint } from '../../utils/connection.js';
 

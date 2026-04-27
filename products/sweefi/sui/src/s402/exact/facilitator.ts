@@ -12,15 +12,15 @@
  */
 
 import type {
+  s402ExactPayload,
   s402FacilitatorScheme,
   s402PaymentPayload,
   s402PaymentRequirements,
-  s402VerifyResponse,
   s402SettleResponse,
-  s402ExactPayload,
+  s402VerifyResponse,
 } from 's402';
-import { Transaction } from '@mysten/sui/transactions';
 import type { FacilitatorSuiSigner } from '../../signer.js';
+import { Transaction } from '@mysten/sui/transactions';
 import { coinTypesEqual } from '../../utils.js';
 
 /** Default max gas budget a sponsor will co-sign (0.01 SUI = 10M MIST) */
@@ -73,55 +73,94 @@ export class ExactSuiFacilitatorScheme implements s402FacilitatorScheme {
       const { protocolFeeBps, protocolFeeAddress } = requirements;
 
       // Defense-in-depth: reject invalid feeBps from untrusted requirements
-      if (protocolFeeBps !== undefined && (!Number.isInteger(protocolFeeBps) || protocolFeeBps < 0 || protocolFeeBps > 10000)) {
-        return { valid: false, invalidReason: `protocolFeeBps out of range: ${protocolFeeBps}`, payerAddress };
+      if (
+        protocolFeeBps !== undefined &&
+        (!Number.isInteger(protocolFeeBps) || protocolFeeBps < 0 || protocolFeeBps > 10000)
+      ) {
+        return {
+          valid: false,
+          invalidReason: `protocolFeeBps out of range: ${protocolFeeBps}`,
+          payerAddress,
+        };
       }
 
-      if (protocolFeeBps && protocolFeeBps > 0 && protocolFeeAddress && protocolFeeAddress !== requirements.payTo) {
+      if (
+        protocolFeeBps &&
+        protocolFeeBps > 0 &&
+        protocolFeeAddress &&
+        protocolFeeAddress !== requirements.payTo
+      ) {
         // FEE SPLIT MODE: merchant gets (amount - fee), fee address gets fee
         const totalAmount = BigInt(requirements.amount);
         const feeAmount = (totalAmount * BigInt(protocolFeeBps)) / 10000n;
         const merchantAmount = totalAmount - feeAmount;
 
         const merchantChange = balanceChanges.find(
-          bc => extractAddress(bc.owner) === requirements.payTo &&
-                coinTypesEqual(bc.coinType, requirements.asset),
+          (bc) =>
+            extractAddress(bc.owner) === requirements.payTo &&
+            coinTypesEqual(bc.coinType, requirements.asset),
         );
         if (!merchantChange) {
-          return { valid: false, invalidReason: 'Merchant did not receive expected coin type', payerAddress };
+          return {
+            valid: false,
+            invalidReason: 'Merchant did not receive expected coin type',
+            payerAddress,
+          };
         }
         const merchantReceived = BigInt(merchantChange.amount);
         if (merchantReceived < merchantAmount) {
-          return { valid: false, invalidReason: `Merchant amount ${merchantReceived} below required ${merchantAmount}`, payerAddress };
+          return {
+            valid: false,
+            invalidReason: `Merchant amount ${merchantReceived} below required ${merchantAmount}`,
+            payerAddress,
+          };
         }
 
         // Check fee recipient received enough (skip when fee rounds to zero)
         if (feeAmount > 0n) {
           const feeChange = balanceChanges.find(
-            bc => extractAddress(bc.owner) === protocolFeeAddress &&
-                  coinTypesEqual(bc.coinType, requirements.asset),
+            (bc) =>
+              extractAddress(bc.owner) === protocolFeeAddress &&
+              coinTypesEqual(bc.coinType, requirements.asset),
           );
           if (!feeChange) {
-            return { valid: false, invalidReason: 'Fee recipient did not receive expected coin type', payerAddress };
+            return {
+              valid: false,
+              invalidReason: 'Fee recipient did not receive expected coin type',
+              payerAddress,
+            };
           }
           const feeReceived = BigInt(feeChange.amount);
           if (feeReceived < feeAmount) {
-            return { valid: false, invalidReason: `Protocol fee ${feeReceived} below required ${feeAmount}`, payerAddress };
+            return {
+              valid: false,
+              invalidReason: `Protocol fee ${feeReceived} below required ${feeAmount}`,
+              payerAddress,
+            };
           }
         }
       } else {
         // NO FEE SPLIT: payTo gets full amount (fee address absent, same as payTo, or feeBps=0)
         const recipientChange = balanceChanges.find(
-          bc => extractAddress(bc.owner) === requirements.payTo &&
-                coinTypesEqual(bc.coinType, requirements.asset),
+          (bc) =>
+            extractAddress(bc.owner) === requirements.payTo &&
+            coinTypesEqual(bc.coinType, requirements.asset),
         );
         if (!recipientChange) {
-          return { valid: false, invalidReason: 'Recipient did not receive expected coin type', payerAddress };
+          return {
+            valid: false,
+            invalidReason: 'Recipient did not receive expected coin type',
+            payerAddress,
+          };
         }
         const received = BigInt(recipientChange.amount);
         const required = BigInt(requirements.amount);
         if (received < required) {
-          return { valid: false, invalidReason: `Amount ${received} below required ${required}`, payerAddress };
+          return {
+            valid: false,
+            invalidReason: `Amount ${received} below required ${required}`,
+            payerAddress,
+          };
         }
       }
 
@@ -172,7 +211,8 @@ export class ExactSuiFacilitatorScheme implements s402FacilitatorScheme {
             if (commandsReferenceGasCoin(tx.getData().commands)) {
               return {
                 success: false,
-                error: 'Transaction commands reference GasCoin — gas coin manipulation is not allowed in sponsored transactions',
+                error:
+                  'Transaction commands reference GasCoin — gas coin manipulation is not allowed in sponsored transactions',
               };
             }
 
@@ -181,9 +221,10 @@ export class ExactSuiFacilitatorScheme implements s402FacilitatorScheme {
             if (gasBudget === 0n || gasBudget > this.maxSponsorGasBudget) {
               return {
                 success: false,
-                error: gasBudget === 0n
-                  ? 'Gas budget is zero or missing — sponsor requires a declared budget'
-                  : `Gas budget ${gasBudget} exceeds sponsor limit ${this.maxSponsorGasBudget}`,
+                error:
+                  gasBudget === 0n
+                    ? 'Gas budget is zero or missing — sponsor requires a declared budget'
+                    : `Gas budget ${gasBudget} exceeds sponsor limit ${this.maxSponsorGasBudget}`,
               };
             }
 

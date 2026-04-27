@@ -25,19 +25,25 @@ This re-aligns implementation with the original DAN-411 §16 decision.
 ## Alternatives Considered
 
 ### Option A: Stay on Moon (status quo at time of ADR)
+
 **Why not:**
+
 - Moon is too new (~2K stars vs Turbo's ~26K) and too small to bet a multi-monorepo build pipeline on. Smaller maintainer pool = real abandonment risk.
 - Zero overlap with the ecosystem of trusted reference implementations (Mysten ts-sdks, Vue, Anthropic SDK, viem, Vercel itself — all Turbo).
 - Auto-id strategy bit us once and would keep biting as products multiply with conventional `packages/`, `contracts/`, `apps/`, `move/` subdirs.
 - Fixing Moon's id strategy requires writing `moon.yml` per project (~30 files across both repos) — pure config debt.
 
 ### Option B: Adopt Moon everywhere with explicit `moon.yml` per project
+
 **Why not:**
+
 - Even if config debt is paid, the ecosystem-alignment cost remains. Future agents and contributors will arrive expecting Turbo (because Mysten + Vue + Anthropic SDK use it) and have to ramp on Moon-specific concepts (toolchain, tasks, project graph syntax) instead.
 - Moon's killer feature is multi-language project graphs (Rust + TS in one DAG). The current monorepos have Rust (`vault/sweesense/`) but it lives in its own Cargo workspace and is not a bottleneck. Paying Moon's ecosystem cost for a feature we are not using is a bad trade.
 
 ### Option C (chosen): Migrate everything to Turbo
+
 **Why this:**
+
 - Convergent adoption — same tool as Mysten ts-sdks, Vue ecosystem, Anthropic SDK, viem, Vercel. Future hires and AI agents land in familiar territory.
 - Vendor-capture risk on Turbo is real but slow-moving (5-year horizon, not 12-month). Migration is symmetric — if Vercel does something hostile (e.g., Remote Cache requires Vercel account, BSL relicense), we revisit.
 - Aligns lab tooling with platform tooling — one mental model across both repos. DAN-411 §11 invariant ("workspace alignment") gets stronger.
@@ -46,6 +52,7 @@ This re-aligns implementation with the original DAN-411 §16 decision.
 ## Consequences
 
 ### Positive
+
 - One mental model for build/test/typecheck across both repos.
 - Aligns with the trusted reference ecosystem (Mysten et al.).
 - Removes Moon's brittle auto-id strategy (the bug source).
@@ -53,6 +60,7 @@ This re-aligns implementation with the original DAN-411 §16 decision.
 - Future agents arrive with prior Turbo knowledge instead of having to learn Moon.
 
 ### Negative
+
 - Vendor-capture risk on Turbo is real (Vercel-owned). Must be monitored.
 - Loses Moon's multi-language graph capability — if cross-language orchestration becomes needed later, we may need to revisit.
 - Migration cost: drop Moon plumbing in both repos, add `turbo.json`, update root scripts, update CI.

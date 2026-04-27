@@ -8,16 +8,16 @@
 
 import type {
   s402ClientScheme,
-  s402PaymentRequirements,
-  s402StreamPayload,
   s402PaymentPayload,
-  s402SettleResponse,
+  s402PaymentRequirements,
   s402SettlementVerification,
+  s402SettleResponse,
+  s402StreamPayload,
 } from 's402';
-import { S402_VERSION } from 's402';
-import { Transaction } from '@mysten/sui/transactions';
-import type { ClientSuiSigner } from '../../signer.js';
 import type { SweefiConfig } from '../../ptb/types.js';
+import type { ClientSuiSigner } from '../../signer.js';
+import { Transaction } from '@mysten/sui/transactions';
+import { S402_VERSION } from 's402';
 import { bpsToMicroPercent } from '../../ptb/assert.js';
 import { StreamContract } from '../../transactions/stream.js';
 import { createBuilderConfig } from '../../utils/config.js';
@@ -31,15 +31,15 @@ export class StreamSuiClientScheme implements s402ClientScheme {
     private readonly signer: ClientSuiSigner,
     config: SweefiConfig,
   ) {
-    this.#contract = new StreamContract(createBuilderConfig({
-      packageId: config.packageId,
-      protocolState: config.protocolStateId,
-    }));
+    this.#contract = new StreamContract(
+      createBuilderConfig({
+        packageId: config.packageId,
+        protocolState: config.protocolStateId,
+      }),
+    );
   }
 
-  async createPayment(
-    requirements: s402PaymentRequirements,
-  ): Promise<s402StreamPayload> {
+  async createPayment(requirements: s402PaymentRequirements): Promise<s402StreamPayload> {
     const stream = requirements.stream;
     if (!stream) {
       throw new Error('Stream requirements missing from s402PaymentRequirements');

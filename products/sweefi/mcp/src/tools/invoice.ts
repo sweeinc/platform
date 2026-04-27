@@ -1,38 +1,49 @@
-import { z } from "zod";
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { SuiObjectChange } from "@mysten/sui/jsonRpc";
-import { Transaction } from "@mysten/sui/transactions";
-import { PaymentContract, createBuilderConfig } from "@sweefi/sui";
-import type { SweefiContext } from "../context.js";
-import { requireSigner, checkSpendingLimit, recordSpend } from "../context.js";
-import { resolveCoinType, formatBalance, parseAmount, assertTxSuccess, ZERO_ADDRESS, suiAddress, suiObjectId, optionalSuiAddress } from "../utils/format.js";
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { SuiObjectChange } from '@mysten/sui/jsonRpc';
+import type { SweefiContext } from '../context.js';
+import { Transaction } from '@mysten/sui/transactions';
+import { z } from 'zod';
+import { createBuilderConfig, PaymentContract } from '@sweefi/sui';
+import { checkSpendingLimit, recordSpend, requireSigner } from '../context.js';
+import {
+  assertTxSuccess,
+  formatBalance,
+  optionalSuiAddress,
+  parseAmount,
+  resolveCoinType,
+  suiAddress,
+  suiObjectId,
+  ZERO_ADDRESS,
+} from '../utils/format.js';
 
 export function registerInvoiceTools(server: McpServer, ctx: SweefiContext) {
-  const payment = new PaymentContract(createBuilderConfig({
-    packageId: ctx.config.packageId,
-    protocolState: ctx.config.protocolStateId,
-  }));
+  const payment = new PaymentContract(
+    createBuilderConfig({
+      packageId: ctx.config.packageId,
+      protocolState: ctx.config.protocolStateId,
+    }),
+  );
 
   server.registerTool(
-    "sweefi_create_invoice",
+    'sweefi_create_invoice',
     {
-      title: "Create Invoice",
+      title: 'Create Invoice',
       description:
-        "Create a payment invoice NFT on Sui. The invoice specifies an expected amount " +
-        "and recipient. When paid, the invoice is consumed on-chain (replay protection). " +
-        "Optionally send the invoice to a specific address. Requires a configured wallet.",
+        'Create a payment invoice NFT on Sui. The invoice specifies an expected amount ' +
+        'and recipient. When paid, the invoice is consumed on-chain (replay protection). ' +
+        'Optionally send the invoice to a specific address. Requires a configured wallet.',
       inputSchema: {
-        recipient: suiAddress("Recipient"),
-        amount: z.string().describe("Expected payment amount in base units"),
+        recipient: suiAddress('Recipient'),
+        amount: z.string().describe('Expected payment amount in base units'),
         feeMicroPercent: z
           .number()
           .int()
           .min(0)
           .max(1_000_000)
           .optional()
-          .describe("Fee in micro-percent (0-1000000, where 1000000 = 100%). Default 0."),
-        feeRecipient: optionalSuiAddress("Fee recipient"),
-        sendTo: optionalSuiAddress("Invoice destination"),
+          .describe('Fee in micro-percent (0-1000000, where 1000000 = 100%). Default 0.'),
+        feeRecipient: optionalSuiAddress('Fee recipient'),
+        sendTo: optionalSuiAddress('Invoice destination'),
       },
     },
     async ({ recipient, amount, feeMicroPercent, feeRecipient, sendTo }) => {
@@ -56,14 +67,14 @@ export function registerInvoiceTools(server: McpServer, ctx: SweefiContext) {
       assertTxSuccess(result);
 
       const invoiceObj = result.objectChanges?.find(
-        (c: SuiObjectChange) => c.type === "created" && c.objectType?.includes("Invoice"),
+        (c: SuiObjectChange) => c.type === 'created' && c.objectType?.includes('Invoice'),
       );
-      const invoiceId = invoiceObj && "objectId" in invoiceObj ? invoiceObj.objectId : "unknown";
+      const invoiceId = invoiceObj && 'objectId' in invoiceObj ? invoiceObj.objectId : 'unknown';
 
       return {
         content: [
           {
-            type: "text" as const,
+            type: 'text' as const,
             text: `Invoice created!\n\nInvoice ID: ${invoiceId}\nExpected Amount: ${amount}\nRecipient: ${recipient}\nTX Digest: ${result.digest}\nNetwork: ${ctx.network}`,
           },
         ],
@@ -72,20 +83,17 @@ export function registerInvoiceTools(server: McpServer, ctx: SweefiContext) {
   );
 
   server.registerTool(
-    "sweefi_pay_invoice",
+    'sweefi_pay_invoice',
     {
-      title: "Pay Invoice",
+      title: 'Pay Invoice',
       description:
-        "Pay an existing invoice on Sui. The invoice NFT is consumed on-chain " +
-        "(prevents replay). A PaymentReceipt is minted and sent to the payer. " +
-        "Requires a configured wallet.",
+        'Pay an existing invoice on Sui. The invoice NFT is consumed on-chain ' +
+        '(prevents replay). A PaymentReceipt is minted and sent to the payer. ' +
+        'Requires a configured wallet.',
       inputSchema: {
-        invoiceId: suiObjectId("Invoice"),
-        amount: z.string().describe("Amount to send (must be >= invoice expected amount)"),
-        coinType: z
-          .string()
-          .optional()
-          .describe('Token to pay with. Defaults to "SUI".'),
+        invoiceId: suiObjectId('Invoice'),
+        amount: z.string().describe('Amount to send (must be >= invoice expected amount)'),
+        coinType: z.string().optional().describe('Token to pay with. Defaults to "SUI".'),
       },
     },
     async ({ invoiceId, amount, coinType }) => {
@@ -111,15 +119,15 @@ export function registerInvoiceTools(server: McpServer, ctx: SweefiContext) {
       recordSpend(ctx, amountBigint);
 
       const receiptObj = result.objectChanges?.find(
-        (c: SuiObjectChange) => c.type === "created" && c.objectType?.includes("PaymentReceipt"),
+        (c: SuiObjectChange) => c.type === 'created' && c.objectType?.includes('PaymentReceipt'),
       );
-      const receiptId = receiptObj && "objectId" in receiptObj ? receiptObj.objectId : "unknown";
+      const receiptId = receiptObj && 'objectId' in receiptObj ? receiptObj.objectId : 'unknown';
       const formatted = formatBalance(amount, resolvedType);
 
       return {
         content: [
           {
-            type: "text" as const,
+            type: 'text' as const,
             text: `Invoice paid!\n\nInvoice: ${invoiceId}\nAmount: ${formatted}\nReceipt ID: ${receiptId}\nTX Digest: ${result.digest}\nNetwork: ${ctx.network}`,
           },
         ],

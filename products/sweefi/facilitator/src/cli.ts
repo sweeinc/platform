@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-import { parseArgs } from "node:util";
-import { createRequire } from "node:module";
-import { serve } from "@hono/node-server";
-import { createApp } from "./app";
-import { loadConfig } from "./config";
+import { createRequire } from 'node:module';
+import { parseArgs } from 'node:util';
+import { serve } from '@hono/node-server';
+import { createApp } from './app';
+import { loadConfig } from './config';
 
 const require = createRequire(import.meta.url);
-const pkg = require("../package.json") as { version: string };
+const pkg = require('../package.json') as { version: string };
 
 const HELP = `@sweefi/facilitator — s402 payment verification & settlement service
 
@@ -36,8 +36,10 @@ async function start(): Promise<void> {
 
   if (gasSponsorService) {
     gasSponsorService.initialize().catch((err) => {
-      console.error("[gas-service] Failed to initialize gas sponsor pool:", err);
-      console.error("[gas-service] Gas sponsorship will be unavailable. Fix the sponsor keypair/balance and restart.");
+      console.error('[gas-service] Failed to initialize gas sponsor pool:', err);
+      console.error(
+        '[gas-service] Gas sponsorship will be unavailable. Fix the sponsor keypair/balance and restart.',
+      );
     });
   }
 
@@ -46,7 +48,7 @@ async function start(): Promise<void> {
   });
 
   const shutdown = async (): Promise<void> => {
-    console.log("@sweefi/facilitator shutting down...");
+    console.log('@sweefi/facilitator shutting down...');
     if (gasSponsorService) {
       await gasSponsorService.close();
     }
@@ -54,8 +56,8 @@ async function start(): Promise<void> {
     setTimeout(() => process.exit(1), 10_000).unref();
   };
 
-  process.on("SIGTERM", shutdown);
-  process.on("SIGINT", shutdown);
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
 }
 
 async function main(): Promise<void> {
@@ -65,20 +67,20 @@ async function main(): Promise<void> {
     strict: false,
   });
 
-  const command = positionals[0] ?? "start";
+  const command = positionals[0] ?? 'start';
 
   switch (command) {
-    case "start":
+    case 'start':
       await start();
       return;
-    case "version":
-    case "--version":
-    case "-v":
+    case 'version':
+    case '--version':
+    case '-v':
       console.log(pkg.version);
       return;
-    case "help":
-    case "--help":
-    case "-h":
+    case 'help':
+    case '--help':
+    case '-h':
       console.log(HELP);
       return;
     default:
@@ -89,6 +91,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
-  console.error("[facilitator] fatal:", err);
+  console.error('[facilitator] fatal:', err);
   process.exit(1);
 });

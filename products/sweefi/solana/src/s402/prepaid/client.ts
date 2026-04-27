@@ -4,22 +4,19 @@
  * Agent deposits funds, provider claims via cumulative call count.
  */
 
-import { Transaction, PublicKey } from '@solana/web3.js';
 import type { Connection } from '@solana/web3.js';
 import type {
   s402ClientScheme,
-  s402PaymentRequirements,
   s402PaymentPayload,
+  s402PaymentRequirements,
   s402PrepaidPayload,
-  s402SettleResponse,
   s402SettlementVerification,
+  s402SettleResponse,
 } from 's402';
-import { S402_VERSION } from 's402';
 import type { ClientSolanaSigner } from '../../signer.js';
-import {
-  buildCreatePrepaidIx,
-  derivePrepaidBalancePda,
-} from '../../programs/prepaid.js';
+import { PublicKey, Transaction } from '@solana/web3.js';
+import { S402_VERSION } from 's402';
+import { buildCreatePrepaidIx, derivePrepaidBalancePda } from '../../programs/prepaid.js';
 
 export class PrepaidSolanaClientScheme implements s402ClientScheme {
   readonly scheme = 'prepaid' as const;
@@ -48,7 +45,7 @@ export class PrepaidSolanaClientScheme implements s402ClientScheme {
     const feeBps = protocolFeeBps ?? 0;
 
     const nonce = BigInt(Date.now());
-    const [balancePda] = derivePrepaidBalancePda(agent, provider, nonce);
+    const [_balancePda] = derivePrepaidBalancePda(agent, provider, nonce);
 
     const tx = new Transaction();
 

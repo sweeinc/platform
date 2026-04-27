@@ -1,12 +1,12 @@
-import { describe, it, expect } from 'vitest';
-import { sweefi, SweefiClient } from '../../src/extend';
-import { PaymentContract } from '../../src/transactions/payment';
-import { StreamContract } from '../../src/transactions/stream';
-import { EscrowContract } from '../../src/transactions/escrow';
-import { PrepaidContract } from '../../src/transactions/prepaid';
-import { MandateContract } from '../../src/transactions/mandate';
-import { AgentMandateContract } from '../../src/transactions/agentMandate';
+import { describe, expect, it } from 'vitest';
+import { sweefi } from '../../src/extend';
 import { AdminContract } from '../../src/transactions/admin';
+import { AgentMandateContract } from '../../src/transactions/agentMandate';
+import { EscrowContract } from '../../src/transactions/escrow';
+import { MandateContract } from '../../src/transactions/mandate';
+import { PaymentContract } from '../../src/transactions/payment';
+import { PrepaidContract } from '../../src/transactions/prepaid';
+import { StreamContract } from '../../src/transactions/stream';
 import { SweefiPluginConfig } from '../../src/utils/config';
 import { ConfigurationError, SweefiErrorCode } from '../../src/utils/errors';
 
@@ -82,8 +82,7 @@ describe('SweefiPluginConfig', () => {
   });
 
   it('throws PACKAGE_ID_REQUIRED for unknown network', () => {
-    expect(() => new SweefiPluginConfig({ network: 'localnet' }))
-      .toThrow(ConfigurationError);
+    expect(() => new SweefiPluginConfig({ network: 'localnet' })).toThrow(ConfigurationError);
 
     try {
       new SweefiPluginConfig({ network: 'localnet' });
@@ -123,8 +122,7 @@ describe('SweefiPluginConfig', () => {
 
   it('getCoinDecimals throws for unknown coin', () => {
     const config = new SweefiPluginConfig({ network: 'testnet' });
-    expect(() => config.getCoinDecimals('0xunknown::foo::BAR'))
-      .toThrow(/Unknown coin decimals/);
+    expect(() => config.getCoinDecimals('0xunknown::foo::BAR')).toThrow(/Unknown coin decimals/);
   });
 });
 

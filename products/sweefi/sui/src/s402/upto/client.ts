@@ -15,16 +15,16 @@
 
 import type {
   s402ClientScheme,
-  s402PaymentRequirements,
-  s402UptoPayload,
   s402PaymentPayload,
-  s402SettleResponse,
+  s402PaymentRequirements,
   s402SettlementVerification,
+  s402SettleResponse,
+  s402UptoPayload,
 } from 's402';
-import { S402_VERSION } from 's402';
-import { Transaction } from '@mysten/sui/transactions';
-import type { ClientSuiSigner } from '../../signer.js';
 import type { SweefiConfig } from '../../ptb/types.js';
+import type { ClientSuiSigner } from '../../signer.js';
+import { Transaction } from '@mysten/sui/transactions';
+import { S402_VERSION } from 's402';
 import { bpsToMicroPercent } from '../../ptb/assert.js';
 import { UptoContract } from '../../transactions/upto.js';
 import { createBuilderConfig } from '../../utils/config.js';
@@ -42,15 +42,15 @@ export class UptoSuiClientScheme implements s402ClientScheme {
     private readonly signer: ClientSuiSigner,
     config: SweefiConfig,
   ) {
-    this.#contract = new UptoContract(createBuilderConfig({
-      packageId: config.packageId,
-      protocolState: config.protocolStateId,
-    }));
+    this.#contract = new UptoContract(
+      createBuilderConfig({
+        packageId: config.packageId,
+        protocolState: config.protocolStateId,
+      }),
+    );
   }
 
-  async createPayment(
-    requirements: s402PaymentRequirements,
-  ): Promise<s402UptoPayload> {
+  async createPayment(requirements: s402PaymentRequirements): Promise<s402UptoPayload> {
     const upto = requirements.upto;
     if (!upto) {
       throw new Error('Upto requirements missing from s402PaymentRequirements');
@@ -76,7 +76,7 @@ export class UptoSuiClientScheme implements s402ClientScheme {
       if (settlementCeiling < estimated) {
         throw new Error(
           `Settlement ceiling ${settlementCeiling} is below estimatedAmount ${estimated}. ` +
-          `The facilitator will reject this deposit. Increase ceiling or remove the override.`,
+            `The facilitator will reject this deposit. Increase ceiling or remove the override.`,
         );
       }
     }
@@ -104,7 +104,9 @@ export class UptoSuiClientScheme implements s402ClientScheme {
         transaction: bytes,
         signature,
         maxAmount: upto.maxAmount,
-        ...(settlementCeiling !== undefined ? { settlementCeiling: settlementCeiling.toString() } : {}),
+        ...(settlementCeiling !== undefined
+          ? { settlementCeiling: settlementCeiling.toString() }
+          : {}),
       },
     };
   }

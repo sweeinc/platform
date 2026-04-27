@@ -1,11 +1,11 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { createContext } from "./context.js";
-import { registerAllTools } from "./tools/index.js";
-import type { SweefiMcpConfig, SweefiContext } from "./context.js";
+import type { SweefiContext, SweefiMcpConfig } from './context.js';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { createContext } from './context.js';
+import { registerAllTools } from './tools/index.js';
 
 // Single source of truth for the version reported to MCP clients.
 // Must match package.json — prepublishOnly script catches drift.
-const VERSION = "0.1.0";
+const VERSION = '0.1.0';
 
 /**
  * Create a configured SweeFi MCP server with all payment tools registered.
@@ -28,7 +28,7 @@ export function createSweefiMcpServer(config?: SweefiMcpConfig): {
 
   const server = new McpServer(
     {
-      name: "@sweefi/mcp",
+      name: '@sweefi/mcp',
       version: VERSION,
     },
     {
@@ -38,25 +38,25 @@ export function createSweefiMcpServer(config?: SweefiMcpConfig): {
     },
   );
 
-  const enableAdminTools = config?.enableAdminTools
-    ?? process.env.MCP_ENABLE_ADMIN_TOOLS === "true";
-  const enableProviderTools = config?.enableProviderTools
-    ?? process.env.MCP_ENABLE_PROVIDER_TOOLS === "true";
+  const enableAdminTools =
+    config?.enableAdminTools ?? process.env.MCP_ENABLE_ADMIN_TOOLS === 'true';
+  const enableProviderTools =
+    config?.enableProviderTools ?? process.env.MCP_ENABLE_PROVIDER_TOOLS === 'true';
 
   // D-04: Warn loudly when admin tools are enabled — these can pause the protocol
   // or irreversibly burn the AdminCap. Operators should ensure this is intentional.
   if (enableAdminTools) {
     console.warn(
-      "[sweefi-mcp] ⚠️  Admin tools ENABLED (pause, unpause, burn AdminCap). " +
-      "These are destructive operations. Set MCP_ENABLE_ADMIN_TOOLS=false or " +
-      "omit it to disable."
+      '[sweefi-mcp] ⚠️  Admin tools ENABLED (pause, unpause, burn AdminCap). ' +
+        'These are destructive operations. Set MCP_ENABLE_ADMIN_TOOLS=false or ' +
+        'omit it to disable.',
     );
   }
 
   if (enableProviderTools) {
     console.warn(
-      "[sweefi-mcp] Provider tools ENABLED (prepaid claim). " +
-      "Only enable this when running as a provider, not a consumer agent."
+      '[sweefi-mcp] Provider tools ENABLED (prepaid claim). ' +
+        'Only enable this when running as a provider, not a consumer agent.',
     );
   }
 
@@ -65,16 +65,16 @@ export function createSweefiMcpServer(config?: SweefiMcpConfig): {
   // transaction tools are disabled anyway. If limits are already set,
   // the operator has explicitly opted in.
   if (
-    context.network === "mainnet" &&
+    context.network === 'mainnet' &&
     context.signer !== null &&
     context.spendingLimits.maxPerTx === 0n &&
     context.spendingLimits.maxPerSession === 0n
   ) {
     console.warn(
-      "[sweefi-mcp] ⚠️  Running on MAINNET with NO spending limits. " +
-      "Set MCP_MAX_PER_TX and MCP_MAX_PER_SESSION (or maxAmountPerTx/maxAmountPerSession " +
-      "in config) to guard against LLM misbehavior. On-chain Mandates provide the " +
-      "real security boundary, but MCP-level limits catch mistakes early."
+      '[sweefi-mcp] ⚠️  Running on MAINNET with NO spending limits. ' +
+        'Set MCP_MAX_PER_TX and MCP_MAX_PER_SESSION (or maxAmountPerTx/maxAmountPerSession ' +
+        'in config) to guard against LLM misbehavior. On-chain Mandates provide the ' +
+        'real security boundary, but MCP-level limits catch mistakes early.',
     );
   }
 

@@ -1,7 +1,7 @@
-import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
-import type { SweefiConfig, PayParams } from "./types";
-import { SUI_CLOCK } from "./deployments";
-import { assertFeeMicroPercent, assertPositive } from "./assert";
+import type { PayParams, SweefiConfig } from './types';
+import { coinWithBalance, Transaction } from '@mysten/sui/transactions';
+import { assertFeeMicroPercent, assertPositive } from './assert';
+import { SUI_CLOCK } from './deployments';
 
 // ══════════════════════════════════════════════════════════════
 // Mandate types
@@ -74,7 +74,7 @@ export function buildCreateMandateTx(
       tx.pure.address(params.delegate),
       tx.pure.u64(params.maxPerTx),
       tx.pure.u64(params.maxTotal),
-      tx.pure.option("u64", params.expiresAtMs),
+      tx.pure.option('u64', params.expiresAtMs),
       tx.object(SUI_CLOCK),
     ],
   });
@@ -91,12 +91,9 @@ export function buildCreateMandateTx(
  *
  * Called by the delegate (agent). They pass the mandate they own.
  */
-export function buildMandatedPayTx(
-  config: SweefiConfig,
-  params: MandatedPayParams,
-): Transaction {
-  assertFeeMicroPercent(params.feeMicroPercent, "buildMandatedPayTx");
-  assertPositive(params.amount, "amount", "buildMandatedPayTx");
+export function buildMandatedPayTx(config: SweefiConfig, params: MandatedPayParams): Transaction {
+  assertFeeMicroPercent(params.feeMicroPercent, 'buildMandatedPayTx');
+  assertPositive(params.amount, 'amount', 'buildMandatedPayTx');
 
   const tx = new Transaction();
   tx.setSender(params.sender);
@@ -114,9 +111,10 @@ export function buildMandatedPayTx(
   });
 
   // Step 2: Execute the payment
-  const memo = typeof params.memo === "string"
-    ? new TextEncoder().encode(params.memo)
-    : params.memo ?? new Uint8Array();
+  const memo =
+    typeof params.memo === 'string'
+      ? new TextEncoder().encode(params.memo)
+      : (params.memo ?? new Uint8Array());
 
   const coin = coinWithBalance({ type: params.coinType, balance: params.amount });
 
@@ -129,7 +127,7 @@ export function buildMandatedPayTx(
       tx.pure.u64(params.amount),
       tx.pure.u64(params.feeMicroPercent),
       tx.pure.address(params.feeRecipient),
-      tx.pure.vector("u8", Array.from(memo)),
+      tx.pure.vector('u8', Array.from(memo)),
       tx.object(SUI_CLOCK),
     ],
   });
@@ -171,10 +169,7 @@ export function buildRevokeMandateTx(
   tx.moveCall({
     target: `${config.packageId}::mandate::revoke`,
     typeArguments: [params.coinType],
-    arguments: [
-      tx.object(params.registryId),
-      tx.pure.id(params.mandateId),
-    ],
+    arguments: [tx.object(params.registryId), tx.pure.id(params.mandateId)],
   });
 
   return tx;

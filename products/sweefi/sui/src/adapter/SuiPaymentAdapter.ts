@@ -17,15 +17,15 @@
  *   const controller = createPaymentController(adapter);
  */
 
-import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
-import { toBase64 } from "@mysten/sui/utils";
-import type { SuiJsonRpcClient } from "@mysten/sui/jsonRpc";
-import type { Signer } from "@mysten/sui/cryptography";
-import type { PaymentAdapter, SimulationResult } from "@sweefi/ui-core";
-import type { s402PaymentRequirements } from "s402";
-import { toClientSuiSigner } from "../signer.js";
-import { ExactSuiClientScheme } from "../s402/exact/client.js";
-import type { SuiNetwork } from "../client/s402-types.js";
+import type { Signer } from '@mysten/sui/cryptography';
+import type { SuiJsonRpcClient } from '@mysten/sui/jsonRpc';
+import type { PaymentAdapter, SimulationResult } from '@sweefi/ui-core';
+import type { s402PaymentRequirements } from 's402';
+import type { SuiNetwork } from '../client/s402-types.js';
+import { coinWithBalance, Transaction } from '@mysten/sui/transactions';
+import { toBase64 } from '@mysten/sui/utils';
+import { ExactSuiClientScheme } from '../s402/exact/client.js';
+import { toClientSuiSigner } from '../signer.js';
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
@@ -67,12 +67,12 @@ export class SuiPaymentAdapter implements PaymentAdapter {
    */
   async simulate(reqs: s402PaymentRequirements): Promise<SimulationResult> {
     // Guard: only 'exact' is supported in this adapter
-    if (!reqs.accepts.includes("exact")) {
+    if (!reqs.accepts.includes('exact')) {
       return {
         success: false,
         error: {
-          code: "UNSUPPORTED_SCHEME",
-          message: `SuiPaymentAdapter supports 'exact' only. Requested: ${reqs.accepts.join(", ")}`,
+          code: 'UNSUPPORTED_SCHEME',
+          message: `SuiPaymentAdapter supports 'exact' only. Requested: ${reqs.accepts.join(', ')}`,
         },
       };
     }
@@ -104,8 +104,8 @@ export class SuiPaymentAdapter implements PaymentAdapter {
         transactionBlock: toBase64(bytes),
       });
 
-      if (dryRun.effects.status.status !== "success") {
-        const rawError = dryRun.effects.status.error ?? "Simulation failed";
+      if (dryRun.effects.status.status !== 'success') {
+        const rawError = dryRun.effects.status.error ?? 'Simulation failed';
         return {
           success: false,
           error: { code: inferErrorCode(rawError), message: rawError },
@@ -114,14 +114,11 @@ export class SuiPaymentAdapter implements PaymentAdapter {
 
       // Compute net gas fee: computationCost + storageCost − storageRebate
       const { computationCost, storageCost, storageRebate } = dryRun.effects.gasUsed;
-      const gasFee =
-        BigInt(computationCost) +
-        BigInt(storageCost) -
-        BigInt(storageRebate);
+      const gasFee = BigInt(computationCost) + BigInt(storageCost) - BigInt(storageRebate);
 
       return {
         success: true,
-        estimatedFee: { amount: gasFee, currency: "SUI" },
+        estimatedFee: { amount: gasFee, currency: 'SUI' },
       };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -148,10 +145,8 @@ export class SuiPaymentAdapter implements PaymentAdapter {
       options: { showEffects: true },
     });
 
-    if (result.effects?.status?.status !== "success") {
-      throw new Error(
-        `Transaction failed: ${result.effects?.status?.error ?? "unknown error"}`,
-      );
+    if (result.effects?.status?.status !== 'success') {
+      throw new Error(`Transaction failed: ${result.effects?.status?.error ?? 'unknown error'}`);
     }
 
     return { txId: result.digest };
@@ -163,11 +158,15 @@ export class SuiPaymentAdapter implements PaymentAdapter {
 function inferErrorCode(message: string): string {
   const m = message.toLowerCase();
   // Check gas-specific errors first — "InsufficientGas" is a gas shortfall, not a balance shortfall
-  if (m.includes("insufficientgas") || m.includes("notsufficientgas") || (m.includes("gas") && !m.includes("balance"))) {
-    return "INSUFFICIENT_GAS";
+  if (
+    m.includes('insufficientgas') ||
+    m.includes('notsufficientgas') ||
+    (m.includes('gas') && !m.includes('balance'))
+  ) {
+    return 'INSUFFICIENT_GAS';
   }
-  if (m.includes("insufficient") || m.includes("balance")) {
-    return "INSUFFICIENT_BALANCE";
+  if (m.includes('insufficient') || m.includes('balance')) {
+    return 'INSUFFICIENT_BALANCE';
   }
-  return "SIMULATION_FAILED";
+  return 'SIMULATION_FAILED';
 }

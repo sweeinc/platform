@@ -1,18 +1,18 @@
-import { z } from "zod";
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { SweefiContext } from "../context.js";
-import { formatBalance, resolveCoinType, suiAddress } from "../utils/format.js";
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { SweefiContext } from '../context.js';
+import { z } from 'zod';
+import { formatBalance, resolveCoinType, suiAddress } from '../utils/format.js';
 
 export function registerBalanceTool(server: McpServer, ctx: SweefiContext) {
   server.registerTool(
-    "sweefi_check_balance",
+    'sweefi_check_balance',
     {
-      title: "Check Wallet Balance",
+      title: 'Check Wallet Balance',
       description:
-        "Check the SUI, USDC, or USDT balance for any Sui address. " +
-        "Returns the balance in human-readable format with proper decimals.",
+        'Check the SUI, USDC, or USDT balance for any Sui address. ' +
+        'Returns the balance in human-readable format with proper decimals.',
       inputSchema: {
-        address: suiAddress("Wallet"),
+        address: suiAddress('Wallet'),
         coinType: z
           .string()
           .optional()
@@ -32,7 +32,7 @@ export function registerBalanceTool(server: McpServer, ctx: SweefiContext) {
       return {
         content: [
           {
-            type: "text" as const,
+            type: 'text' as const,
             text: `Balance for ${address}:\n${formatted}\n\nRaw: ${balance.totalBalance} (${balance.coinObjectCount} coin objects)`,
           },
         ],

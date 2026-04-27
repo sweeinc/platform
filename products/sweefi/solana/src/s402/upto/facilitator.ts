@@ -25,13 +25,13 @@ import type {
   s402FacilitatorScheme,
   s402PaymentPayload,
   s402PaymentRequirements,
-  s402VerifyResponse,
   s402SettleResponse,
   s402UptoPayload,
+  s402VerifyResponse,
 } from 's402';
-import type { FacilitatorSolanaSigner } from '../../signer.js';
 import type { SolanaNetwork } from '../../constants.js';
-import { SWEEFI_UPTO_PROGRAM_ID, isSolanaNetwork } from '../../constants.js';
+import type { FacilitatorSolanaSigner } from '../../signer.js';
+import { isSolanaNetwork, SWEEFI_UPTO_PROGRAM_ID } from '../../constants.js';
 import { extractUptoDepositCreatedEvent } from '../../utils/anchor-events.js';
 
 export class UptoSolanaFacilitatorScheme implements s402FacilitatorScheme {

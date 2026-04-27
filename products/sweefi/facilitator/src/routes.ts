@@ -1,59 +1,64 @@
-import { Hono } from "hono";
-import type { Context } from "hono";
-import type { s402Facilitator } from "s402";
-import { S402_VERSION, isValidAmount } from "s402";
-import { pickRequirementsFields } from "s402/http";
-import { Transaction } from "@mysten/sui/transactions";
-import { recordSettlement } from "./metering/hooks";
-import type { UsageTracker } from "./metering/usage-tracker";
-import type { IGasSponsorTracker } from "./metering/gas-sponsor-tracker";
-import type { GasSponsorService } from "./gas-service";
+import type { Context } from 'hono';
+import type { s402Facilitator } from 's402';
+import type { GasSponsorService } from './gas-service';
+import type { IGasSponsorTracker } from './metering/gas-sponsor-tracker';
+import type { UsageTracker } from './metering/usage-tracker';
+import { Transaction } from '@mysten/sui/transactions';
+import { Hono } from 'hono';
+import { isValidAmount, S402_VERSION } from 's402';
+import { pickRequirementsFields } from 's402/http';
+import { recordSettlement } from './metering/hooks';
 
 /** Extract API key set by auth middleware. */
 function getApiKey(c: Context): string | undefined {
   try {
-    return (c as any).get("apiKey") as string | undefined;
+    return (c as any).get('apiKey') as string | undefined;
   } catch {
     return undefined;
   }
 }
 
-const VALID_SCHEMES = new Set<string>(["exact", "stream", "escrow", "unlock", "prepaid", "upto"]);
+const VALID_SCHEMES = new Set<string>(['exact', 'stream', 'escrow', 'unlock', 'prepaid', 'upto']);
 
 /** Validate the shape of a settlement request body. Returns an error string or null if valid. */
 function validateSettlementBody(body: unknown): string | null {
-  if (typeof body !== "object" || body === null) return "Body must be a JSON object";
+  if (typeof body !== 'object' || body === null) return 'Body must be a JSON object';
   const b = body as Record<string, unknown>;
-  if (!b.paymentPayload || typeof b.paymentPayload !== "object") return "Missing or invalid paymentPayload";
-  if (!b.paymentRequirements || typeof b.paymentRequirements !== "object") return "Missing or invalid paymentRequirements";
+  if (!b.paymentPayload || typeof b.paymentPayload !== 'object')
+    return 'Missing or invalid paymentPayload';
+  if (!b.paymentRequirements || typeof b.paymentRequirements !== 'object')
+    return 'Missing or invalid paymentRequirements';
 
   const payload = b.paymentPayload as Record<string, unknown>;
-  if (typeof payload.scheme !== "string" || !VALID_SCHEMES.has(payload.scheme)) {
-    return `Invalid scheme: "${payload.scheme}". Must be one of: ${[...VALID_SCHEMES].join(", ")}`;
+  if (typeof payload.scheme !== 'string' || !VALID_SCHEMES.has(payload.scheme)) {
+    return `Invalid scheme: "${payload.scheme}". Must be one of: ${[...VALID_SCHEMES].join(', ')}`;
   }
 
   // A-11: Validate inner payload fields — all schemes require transaction + signature as strings
   const inner = payload.payload;
-  if (inner == null || typeof inner !== "object") {
-    return "paymentPayload.payload must be an object containing transaction and signature";
+  if (inner == null || typeof inner !== 'object') {
+    return 'paymentPayload.payload must be an object containing transaction and signature';
   }
   const innerObj = inner as Record<string, unknown>;
-  if (typeof innerObj.transaction !== "string") {
+  if (typeof innerObj.transaction !== 'string') {
     return `paymentPayload.payload.transaction must be a string, got ${typeof innerObj.transaction}`;
   }
-  if (typeof innerObj.signature !== "string") {
+  if (typeof innerObj.signature !== 'string') {
     return `paymentPayload.payload.signature must be a string, got ${typeof innerObj.signature}`;
   }
 
   const reqs = b.paymentRequirements as Record<string, unknown>;
-  if (typeof reqs.network !== "string" || reqs.network.length === 0) return "paymentRequirements.network is required";
-  if (typeof reqs.amount !== "string" || reqs.amount.length === 0) return "paymentRequirements.amount is required";
+  if (typeof reqs.network !== 'string' || reqs.network.length === 0)
+    return 'paymentRequirements.network is required';
+  if (typeof reqs.amount !== 'string' || reqs.amount.length === 0)
+    return 'paymentRequirements.amount is required';
   if (!isValidAmount(reqs.amount as string)) {
     return `paymentRequirements.amount must be a non-negative integer string, got "${reqs.amount}"`;
   }
-  if (typeof reqs.payTo !== "string" || reqs.payTo.length === 0) return "paymentRequirements.payTo is required";
+  if (typeof reqs.payTo !== 'string' || reqs.payTo.length === 0)
+    return 'paymentRequirements.payTo is required';
   // D-07: Full payTo address format validation (Sui hex addresses — 0x + 64 hex chars)
-  if (typeof reqs.payTo === "string" && !/^0x[a-fA-F0-9]{64}$/.test(reqs.payTo)) {
+  if (typeof reqs.payTo === 'string' && !/^0x[a-fA-F0-9]{64}$/.test(reqs.payTo)) {
     return `paymentRequirements.payTo must be a valid Sui address (0x + 64 hex chars), got "${reqs.payTo}"`;
   }
 
@@ -85,7 +90,7 @@ export function createRoutes(
   const app = new Hono();
 
   // Root landing page — prevents Google Safe Browsing false positives on API-only domains
-  app.get("/", (c) => {
+  app.get('/', (c) => {
     return c.html(`<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -115,14 +120,14 @@ export function createRoutes(
 </html>`);
   });
 
-  app.get("/health", (c) => {
-    return c.json({ status: "ok", timestamp: new Date().toISOString() });
+  app.get('/health', (c) => {
+    return c.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
-  app.get("/supported", (c) => {
+  app.get('/supported', (c) => {
     // List all supported networks and their schemes
     const networks: Record<string, string[]> = {};
-    for (const network of ["sui:testnet", "sui:mainnet"]) {
+    for (const network of ['sui:testnet', 'sui:mainnet']) {
       const schemes = facilitator.supportedSchemes(network);
       if (schemes.length > 0) {
         networks[network] = schemes;
@@ -131,13 +136,13 @@ export function createRoutes(
     return c.json({ s402Version: S402_VERSION, networks });
   });
 
-  app.post("/verify", async (c) => {
+  app.post('/verify', async (c) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let body: any;
     try {
       body = await c.req.json();
     } catch {
-      return c.json({ error: "Invalid JSON body" }, 400);
+      return c.json({ error: 'Invalid JSON body' }, 400);
     }
 
     const validationError = validateSettlementBody(body);
@@ -148,24 +153,21 @@ export function createRoutes(
     try {
       // A-12: Strip unknown fields from requirements at the trust boundary
       const cleanReqs = pickRequirementsFields(body.paymentRequirements);
-      const result = await facilitator.verify(
-        body.paymentPayload,
-        cleanReqs,
-      );
+      const result = await facilitator.verify(body.paymentPayload, cleanReqs);
       return c.json(result);
     } catch (err) {
-      console.error("[verify] Unexpected error:", err);
-      return c.json({ error: "Internal verification error" }, 500);
+      console.error('[verify] Unexpected error:', err);
+      return c.json({ error: 'Internal verification error' }, 500);
     }
   });
 
-  app.post("/settle", async (c) => {
+  app.post('/settle', async (c) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let body: any;
     try {
       body = await c.req.json();
     } catch {
-      return c.json({ error: "Invalid JSON body" }, 400);
+      return c.json({ error: 'Invalid JSON body' }, 400);
     }
 
     const validationError = validateSettlementBody(body);
@@ -175,10 +177,7 @@ export function createRoutes(
 
     try {
       const cleanReqs = pickRequirementsFields(body.paymentRequirements);
-      const result = await facilitator.settle(
-        body.paymentPayload,
-        cleanReqs,
-      );
+      const result = await facilitator.settle(body.paymentPayload, cleanReqs);
 
       // Inline metering — record settlement on success
       if (result.success) {
@@ -200,8 +199,8 @@ export function createRoutes(
 
       return c.json(result);
     } catch (err) {
-      console.error("[settle] Unexpected error:", err);
-      return c.json({ error: "Internal settlement error" }, 500);
+      console.error('[settle] Unexpected error:', err);
+      return c.json({ error: 'Internal settlement error' }, 500);
     }
   });
 
@@ -209,13 +208,13 @@ export function createRoutes(
   // s402 atomic route (verify + settle in one call)
   // ══════════════════════════════════════════════════════════════
 
-  app.post("/s402/process", async (c) => {
+  app.post('/s402/process', async (c) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let body: any;
     try {
       body = await c.req.json();
     } catch {
-      return c.json({ error: "Invalid JSON body" }, 400);
+      return c.json({ error: 'Invalid JSON body' }, 400);
     }
 
     const validationError = validateSettlementBody(body);
@@ -225,10 +224,7 @@ export function createRoutes(
 
     try {
       const cleanReqs = pickRequirementsFields(body.paymentRequirements);
-      const result = await facilitator.process(
-        body.paymentPayload,
-        cleanReqs,
-      );
+      const result = await facilitator.process(body.paymentPayload, cleanReqs);
 
       // Inline metering
       if (result.success) {
@@ -248,8 +244,8 @@ export function createRoutes(
 
       return c.json(result);
     } catch (err) {
-      console.error("[s402/process] Unexpected error:", err);
-      return c.json({ error: "Internal processing error" }, 500);
+      console.error('[s402/process] Unexpected error:', err);
+      return c.json({ error: 'Internal processing error' }, 500);
     }
   });
 
@@ -273,18 +269,12 @@ export function createRoutes(
    *
    * Rate-limited by the GAS_SPONSOR_MAX_PER_HOUR setting per API key.
    */
-  app.post("/sponsor", async (c) => {
+  app.post('/sponsor', async (c) => {
     if (!gasSponsorService) {
-      return c.json(
-        { error: "Gas sponsorship is not enabled on this facilitator" },
-        503,
-      );
+      return c.json({ error: 'Gas sponsorship is not enabled on this facilitator' }, 503);
     }
     if (!gasSponsorService.initialized) {
-      return c.json(
-        { error: "Gas sponsor pool is initializing — try again shortly" },
-        503,
-      );
+      return c.json({ error: 'Gas sponsor pool is initializing — try again shortly' }, 503);
     }
 
     // Rate limit gas sponsorship per API key (atomic check-and-consume).
@@ -294,10 +284,7 @@ export function createRoutes(
     if (apiKey && gasSponsorTracker) {
       const consumed = await gasSponsorTracker.tryConsume(apiKey);
       if (!consumed) {
-        return c.json(
-          { error: "Gas sponsorship rate limit exceeded" },
-          429,
-        );
+        return c.json({ error: 'Gas sponsorship rate limit exceeded' }, 429);
       }
     }
 
@@ -306,36 +293,23 @@ export function createRoutes(
     try {
       body = await c.req.json();
     } catch {
-      return c.json({ error: "Invalid JSON body" }, 400);
+      return c.json({ error: 'Invalid JSON body' }, 400);
     }
 
     const { sender, transactionKindBytes, network } = body;
 
-    if (typeof sender !== "string" || !/^0x[a-fA-F0-9]{64}$/.test(sender)) {
-      return c.json(
-        { error: "sender must be a valid Sui address (0x + 64 hex chars)" },
-        400,
-      );
+    if (typeof sender !== 'string' || !/^0x[a-fA-F0-9]{64}$/.test(sender)) {
+      return c.json({ error: 'sender must be a valid Sui address (0x + 64 hex chars)' }, 400);
     }
-    if (typeof transactionKindBytes !== "string" || transactionKindBytes.length === 0) {
-      return c.json(
-        { error: "transactionKindBytes must be a non-empty base64 string" },
-        400,
-      );
+    if (typeof transactionKindBytes !== 'string' || transactionKindBytes.length === 0) {
+      return c.json({ error: 'transactionKindBytes must be a non-empty base64 string' }, 400);
     }
-    if (typeof network !== "string" || !network.startsWith("sui:")) {
-      return c.json(
-        { error: 'network must be a CAIP-2 Sui network (e.g., "sui:testnet")' },
-        400,
-      );
+    if (typeof network !== 'string' || !network.startsWith('sui:')) {
+      return c.json({ error: 'network must be a CAIP-2 Sui network (e.g., "sui:testnet")' }, 400);
     }
 
     try {
-      const result = await gasSponsorService.sponsor(
-        sender,
-        transactionKindBytes,
-        network,
-      );
+      const result = await gasSponsorService.sponsor(sender, transactionKindBytes, network);
 
       // Rate token already consumed by tryConsume() above — no separate record needed.
 
@@ -347,14 +321,14 @@ export function createRoutes(
         sponsorAddress: gasSponsorService.address,
       });
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Sponsorship failed";
+      const message = err instanceof Error ? err.message : 'Sponsorship failed';
       // Pool exhaustion is temporary — 503 so clients can retry.
       // Sponsor errors are operational (known failure modes), not internal leaks.
-      if (message.includes("POOL_EXHAUSTED")) {
-        return c.json({ error: "Gas sponsor pool temporarily exhausted" }, 503);
+      if (message.includes('POOL_EXHAUSTED')) {
+        return c.json({ error: 'Gas sponsor pool temporarily exhausted' }, 503);
       }
-      console.error("[sponsor] Sponsorship error:", err);
-      return c.json({ error: "Sponsorship failed" }, 400);
+      console.error('[sponsor] Sponsorship error:', err);
+      return c.json({ error: 'Sponsorship failed' }, 400);
     }
   });
 
@@ -363,10 +337,7 @@ export function createRoutes(
    * for coin recycling. Fire-and-forget — errors are logged but don't affect
    * the settlement response.
    */
-  function reportSponsoredSettlement(
-    txDigest: string,
-    transactionBytes: string,
-  ): void {
+  function reportSponsoredSettlement(txDigest: string, transactionBytes: string): void {
     if (!gasSponsorService) return;
 
     try {
@@ -375,14 +346,9 @@ export function createRoutes(
       const gasObjectId = gasPayment?.[0]?.objectId;
 
       if (gasObjectId) {
-        gasSponsorService
-          .reportSettlement(txDigest, gasObjectId)
-          .catch((err) => {
-            console.error(
-              `[gas-service] Failed to report settlement for ${txDigest}:`,
-              err,
-            );
-          });
+        gasSponsorService.reportSettlement(txDigest, gasObjectId).catch((err) => {
+          console.error(`[gas-service] Failed to report settlement for ${txDigest}:`, err);
+        });
       }
     } catch {
       // Transaction deserialization failed — can't recycle, coin will timeout
@@ -400,11 +366,11 @@ export function createRoutes(
    * it describes the FACILITATOR (who settles) not the RESOURCE SERVER (who charges).
    * Those are two different actors in the s402 protocol.
    */
-  app.get("/.well-known/s402-facilitator", (c) => {
+  app.get('/.well-known/s402-facilitator', (c) => {
     const networks: string[] = [];
     const schemes = new Set<string>();
 
-    for (const network of ["sui:testnet", "sui:mainnet"]) {
+    for (const network of ['sui:testnet', 'sui:mainnet']) {
       const supported = facilitator.supportedSchemes(network);
       if (supported.length > 0) {
         networks.push(network);
@@ -419,16 +385,16 @@ export function createRoutes(
 
     // Advertise gas sponsorship when available
     const gasStation = gasSponsorService?.initialized
-      ? { sponsorAddress: gasSponsorService.address, status: "active" }
+      ? { sponsorAddress: gasSponsorService.address, status: 'active' }
       : gasSponsorService
-        ? { status: "initializing" }
+        ? { status: 'initializing' }
         : undefined;
 
     return c.json({
-      version: "1",
+      version: '1',
       feeMicroPercent,
       feeRecipient: feeRecipient ?? null,
-      minFeeUsd: "0.001",
+      minFeeUsd: '0.001',
       supportedSchemes: [...schemes],
       supportedNetworks: networks,
       ...(gasStation ? { gasStation } : {}),
@@ -437,11 +403,11 @@ export function createRoutes(
     });
   });
 
-  app.get("/.well-known/s402.json", (c) => {
+  app.get('/.well-known/s402.json', (c) => {
     const schemes = new Set<string>();
     const networkList: string[] = [];
 
-    for (const network of ["sui:testnet", "sui:mainnet"]) {
+    for (const network of ['sui:testnet', 'sui:mainnet']) {
       const supported = facilitator.supportedSchemes(network);
       if (supported.length > 0) {
         networkList.push(network);
@@ -473,14 +439,14 @@ export function createRoutes(
    * before that timestamp. Do not use this endpoint as a sole audit trail —
    * cross-reference with on-chain transaction digests for full history.
    */
-  app.get("/settlements", (c) => {
+  app.get('/settlements', (c) => {
     const apiKey = getApiKey(c);
     if (!apiKey) {
-      return c.json({ error: "API key not found in context" }, 401);
+      return c.json({ error: 'API key not found in context' }, 401);
     }
 
-    const limitParam = parseInt(c.req.query("limit") ?? "100", 10);
-    const offsetParam = parseInt(c.req.query("offset") ?? "0", 10);
+    const limitParam = parseInt(c.req.query('limit') ?? '100', 10);
+    const offsetParam = parseInt(c.req.query('offset') ?? '0', 10);
     const limit = Math.min(Math.max(1, Number.isNaN(limitParam) ? 100 : limitParam), 1000);
     const offset = Math.max(0, Number.isNaN(offsetParam) ? 0 : offsetParam);
 

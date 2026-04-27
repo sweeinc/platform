@@ -1,12 +1,12 @@
-import { Transaction } from "@mysten/sui/transactions";
-import type { SweefiConfig, AdminParams } from "./types";
-import { SUI_CLOCK } from "./deployments";
+import type { AdminParams, SweefiConfig } from './types';
+import { Transaction } from '@mysten/sui/transactions';
+import { SUI_CLOCK } from './deployments';
 
 function requireProtocolState(config: SweefiConfig): string {
   if (!config.protocolStateId) {
     throw new Error(
-      "SweefiConfig.protocolStateId is required for admin operations. " +
-      "Set it to the shared ProtocolState object ID from your deployment.",
+      'SweefiConfig.protocolStateId is required for admin operations. ' +
+        'Set it to the shared ProtocolState object ID from your deployment.',
     );
   }
   return config.protocolStateId;
@@ -18,21 +18,14 @@ function requireProtocolState(config: SweefiConfig): string {
  * Records timestamp for auto-unpause timer (14-day window).
  * Requires the AdminCap.
  */
-export function buildAdminPauseTx(
-  config: SweefiConfig,
-  params: AdminParams,
-): Transaction {
+export function buildAdminPauseTx(config: SweefiConfig, params: AdminParams): Transaction {
   const protocolStateId = requireProtocolState(config);
   const tx = new Transaction();
   tx.setSender(params.sender);
 
   tx.moveCall({
     target: `${config.packageId}::admin::pause`,
-    arguments: [
-      tx.object(params.adminCapId),
-      tx.object(protocolStateId),
-      tx.object(SUI_CLOCK),
-    ],
+    arguments: [tx.object(params.adminCapId), tx.object(protocolStateId), tx.object(SUI_CLOCK)],
   });
 
   return tx;
@@ -43,20 +36,14 @@ export function buildAdminPauseTx(
  * Resumes normal operation (stream/escrow/prepaid creation re-enabled).
  * Requires the AdminCap.
  */
-export function buildAdminUnpauseTx(
-  config: SweefiConfig,
-  params: AdminParams,
-): Transaction {
+export function buildAdminUnpauseTx(config: SweefiConfig, params: AdminParams): Transaction {
   const protocolStateId = requireProtocolState(config);
   const tx = new Transaction();
   tx.setSender(params.sender);
 
   tx.moveCall({
     target: `${config.packageId}::admin::unpause`,
-    arguments: [
-      tx.object(params.adminCapId),
-      tx.object(protocolStateId),
-    ],
+    arguments: [tx.object(params.adminCapId), tx.object(protocolStateId)],
   });
 
   return tx;
@@ -67,20 +54,14 @@ export function buildAdminUnpauseTx(
  * After burn, no one can pause/unpause — the protocol becomes fully trustless.
  * This is a one-way door. Requires the protocol to be unpaused (prevents permanent lockdown).
  */
-export function buildBurnAdminCapTx(
-  config: SweefiConfig,
-  params: AdminParams,
-): Transaction {
+export function buildBurnAdminCapTx(config: SweefiConfig, params: AdminParams): Transaction {
   const protocolStateId = requireProtocolState(config);
   const tx = new Transaction();
   tx.setSender(params.sender);
 
   tx.moveCall({
     target: `${config.packageId}::admin::burn_admin_cap`,
-    arguments: [
-      tx.object(params.adminCapId),
-      tx.object(protocolStateId),
-    ],
+    arguments: [tx.object(params.adminCapId), tx.object(protocolStateId)],
   });
 
   return tx;
@@ -98,20 +79,14 @@ export interface AutoUnpauseParams {
  * Fails with EAutoUnpauseNotReady if the window hasn't elapsed.
  * Fails with ENotPaused if the protocol isn't paused.
  */
-export function buildAutoUnpauseTx(
-  config: SweefiConfig,
-  params: AutoUnpauseParams,
-): Transaction {
+export function buildAutoUnpauseTx(config: SweefiConfig, params: AutoUnpauseParams): Transaction {
   const protocolStateId = requireProtocolState(config);
   const tx = new Transaction();
   tx.setSender(params.sender);
 
   tx.moveCall({
     target: `${config.packageId}::admin::auto_unpause`,
-    arguments: [
-      tx.object(protocolStateId),
-      tx.object(SUI_CLOCK),
-    ],
+    arguments: [tx.object(protocolStateId), tx.object(SUI_CLOCK)],
   });
 
   return tx;

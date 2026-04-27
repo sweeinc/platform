@@ -16,15 +16,15 @@
  * revalidation refreshes stale ObjectRefs on epoch boundaries.
  */
 
-import { GasSponsor } from "sui-gas-station";
+import type { Signer } from '@mysten/sui/cryptography';
+import type { SuiJsonRpcClient } from '@mysten/sui/jsonRpc';
 import type {
   GasCoinReservation,
-  SponsoredTransaction,
   PoolStats,
+  SponsoredTransaction,
   SponsorPolicy,
-} from "sui-gas-station";
-import type { SuiJsonRpcClient } from "@mysten/sui/jsonRpc";
-import type { Signer } from "@mysten/sui/cryptography";
+} from 'sui-gas-station';
+import { GasSponsor } from 'sui-gas-station';
 
 export interface GasSponsorServiceOptions {
   client: SuiJsonRpcClient;
@@ -70,11 +70,11 @@ export class GasSponsorService {
       onPoolDepleted: (stats) => {
         console.warn(
           `[gas-service] Pool depleted! ${stats.availableCoins}/${stats.totalCoins} coins available. ` +
-          `Triggering replenish.`,
+            `Triggering replenish.`,
         );
         // Fire-and-forget replenishment
         this.gasSponsor.replenish().catch((err) => {
-          console.error("[gas-service] Replenish failed:", err);
+          console.error('[gas-service] Replenish failed:', err);
         });
       },
     });
@@ -90,7 +90,7 @@ export class GasSponsorService {
     const stats = this.gasSponsor.getStats();
     console.log(
       `[gas-service] Initialized. Pool: ${stats.availableCoins} coins, ` +
-      `sponsor: ${this.sponsorAddress}`,
+        `sponsor: ${this.sponsorAddress}`,
     );
   }
 
@@ -116,7 +116,7 @@ export class GasSponsorService {
     network: string,
   ): Promise<SponsoredTransaction> {
     if (!this._initialized) {
-      throw new Error("Gas sponsor not initialized — call initialize() first");
+      throw new Error('Gas sponsor not initialized — call initialize() first');
     }
 
     const result = await this.gasSponsor.sponsorTransaction({
@@ -129,7 +129,7 @@ export class GasSponsorService {
 
     console.log(
       `[gas-service] Sponsored tx for ${sender} on ${network}. ` +
-      `Gas coin: ${result.reservation.objectId}, budget: ${result.gasBudget}`,
+        `Gas coin: ${result.reservation.objectId}, budget: ${result.gasBudget}`,
     );
 
     return result;
@@ -168,10 +168,7 @@ export class GasSponsorService {
 
       this.reservations.delete(gasObjectId);
     } catch (err) {
-      console.error(
-        `[gas-service] Failed to report settlement for ${txDigest}:`,
-        err,
-      );
+      console.error(`[gas-service] Failed to report settlement for ${txDigest}:`, err);
       // Don't delete reservation — it'll expire naturally via timeout
     }
   }

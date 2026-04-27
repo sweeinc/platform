@@ -1,5 +1,5 @@
-import type { Context, Next } from "hono";
-import { timingSafeEqual, createHash } from "node:crypto";
+import type { Context, Next } from 'hono';
+import { createHash, timingSafeEqual } from 'node:crypto';
 
 /**
  * Constant-time string comparison to prevent timing attacks.
@@ -7,8 +7,8 @@ import { timingSafeEqual, createHash } from "node:crypto";
  * preventing length-oracle side-channel leaks.
  */
 function constantTimeCompare(a: string, b: string): boolean {
-  const ha = createHash("sha256").update(a).digest();
-  const hb = createHash("sha256").update(b).digest();
+  const ha = createHash('sha256').update(a).digest();
+  const hb = createHash('sha256').update(b).digest();
   return timingSafeEqual(ha, hb);
 }
 
@@ -19,9 +19,9 @@ function constantTimeCompare(a: string, b: string): boolean {
  */
 export function apiKeyAuth(validKeys: Set<string>) {
   return async (c: Context, next: Next) => {
-    const authHeader = c.req.header("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return c.json({ error: "Missing or invalid Authorization header" }, 401);
+    const authHeader = c.req.header('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return c.json({ error: 'Missing or invalid Authorization header' }, 401);
     }
 
     const key = authHeader.slice(7);
@@ -32,11 +32,11 @@ export function apiKeyAuth(validKeys: Set<string>) {
       if (constantTimeCompare(key, k)) isValid = true;
     }
     if (!isValid) {
-      return c.json({ error: "Invalid API key" }, 403);
+      return c.json({ error: 'Invalid API key' }, 403);
     }
 
     // Attach API key to context for metering
-    c.set("apiKey", key);
+    c.set('apiKey', key);
     await next();
   };
 }

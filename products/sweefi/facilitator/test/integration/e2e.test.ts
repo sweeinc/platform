@@ -16,21 +16,26 @@
  *
  * Requires: network access to Sui testnet
  */
-import { describe, it, expect, beforeAll } from "vitest";
-import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
-import { SuiJsonRpcClient, getJsonRpcFullnodeUrl } from "@mysten/sui/jsonRpc";
-import { requestSuiFromFaucetV2, getFaucetHost } from "@mysten/sui/faucet";
-import { toClientSuiSigner, toFacilitatorSuiSigner, ExactSuiClientScheme, ExactSuiFacilitatorScheme } from "@sweefi/sui";
-import { s402Client, s402Facilitator } from "s402";
-import type { s402PaymentRequirements } from "s402";
+import type { s402PaymentRequirements } from 's402';
+import { getFaucetHost, requestSuiFromFaucetV2 } from '@mysten/sui/faucet';
+import { getJsonRpcFullnodeUrl, SuiJsonRpcClient } from '@mysten/sui/jsonRpc';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+import { s402Client, s402Facilitator } from 's402';
+import { beforeAll, describe, expect, it } from 'vitest';
+import {
+  ExactSuiClientScheme,
+  ExactSuiFacilitatorScheme,
+  toClientSuiSigner,
+  toFacilitatorSuiSigner,
+} from '@sweefi/sui';
 
-const SUI_COIN_TYPE = "0x2::sui::SUI";
-const PAYMENT_AMOUNT = "1000000"; // 0.001 SUI (1M MIST)
+const SUI_COIN_TYPE = '0x2::sui::SUI';
+const PAYMENT_AMOUNT = '1000000'; // 0.001 SUI (1M MIST)
 
 let skipped = false;
-let skipReason = "";
+let skipReason = '';
 
-describe("E2E: s402 Client → Facilitator → Sui Testnet", () => {
+describe('E2E: s402 Client → Facilitator → Sui Testnet', () => {
   let payerKeypair: Ed25519Keypair;
   let recipientAddress: string;
   let suiClient: SuiJsonRpcClient;
@@ -38,7 +43,7 @@ describe("E2E: s402 Client → Facilitator → Sui Testnet", () => {
   let client: s402Client;
 
   beforeAll(async () => {
-    suiClient = new SuiJsonRpcClient({ url: getJsonRpcFullnodeUrl("testnet"), network: "testnet" });
+    suiClient = new SuiJsonRpcClient({ url: getJsonRpcFullnodeUrl('testnet'), network: 'testnet' });
     recipientAddress = Ed25519Keypair.generate().toSuiAddress();
 
     // Option 1: Pre-funded keypair from env (avoids faucet rate limits)
@@ -53,15 +58,16 @@ describe("E2E: s402 Client → Facilitator → Sui Testnet", () => {
 
       try {
         await requestSuiFromFaucetV2({
-          host: getFaucetHost("testnet"),
+          host: getFaucetHost('testnet'),
           recipient: payerKeypair.toSuiAddress(),
         });
         // Wait for faucet transaction to be indexed
         await new Promise((r) => setTimeout(r, 3000));
       } catch (err: any) {
-        if (err.message?.includes("Too many requests") || err.message?.includes("rate limit")) {
+        if (err.message?.includes('Too many requests') || err.message?.includes('rate limit')) {
           skipped = true;
-          skipReason = "Faucet rate-limited. Set SUI_TESTNET_PRIVATE_KEY to use a pre-funded keypair.";
+          skipReason =
+            'Faucet rate-limited. Set SUI_TESTNET_PRIVATE_KEY to use a pre-funded keypair.';
           console.warn(`Warning: ${skipReason}`);
           return;
         }
@@ -85,12 +91,12 @@ describe("E2E: s402 Client → Facilitator → Sui Testnet", () => {
     // Set up s402 client with exact scheme
     const clientSigner = toClientSuiSigner(payerKeypair, suiClient);
     client = new s402Client();
-    client.register("sui:testnet", new ExactSuiClientScheme(clientSigner));
+    client.register('sui:testnet', new ExactSuiClientScheme(clientSigner));
 
     // Set up s402 facilitator with exact scheme
     facilitator = new s402Facilitator();
     const facilitatorSigner = toFacilitatorSuiSigner();
-    facilitator.register("sui:testnet", new ExactSuiFacilitatorScheme(facilitatorSigner));
+    facilitator.register('sui:testnet', new ExactSuiFacilitatorScheme(facilitatorSigner));
   });
 
   function skipIfNeeded() {
@@ -103,16 +109,16 @@ describe("E2E: s402 Client → Facilitator → Sui Testnet", () => {
 
   function makeRequirements(): s402PaymentRequirements {
     return {
-      s402Version: "1",
-      accepts: ["exact"],
-      network: "sui:testnet",
+      s402Version: '1',
+      accepts: ['exact'],
+      network: 'sui:testnet',
       asset: SUI_COIN_TYPE,
       amount: PAYMENT_AMOUNT,
       payTo: recipientAddress,
     };
   }
 
-  it("verifies a signed payment payload against testnet", async () => {
+  it('verifies a signed payment payload against testnet', async () => {
     if (skipIfNeeded()) return;
 
     const requirements = makeRequirements();
@@ -123,7 +129,7 @@ describe("E2E: s402 Client → Facilitator → Sui Testnet", () => {
     expect(result.payerAddress).toBe(payerKeypair.toSuiAddress());
   });
 
-  it("settles a payment on Sui testnet and returns transaction digest", async () => {
+  it('settles a payment on Sui testnet and returns transaction digest', async () => {
     if (skipIfNeeded()) return;
 
     const requirements = makeRequirements();
@@ -135,7 +141,7 @@ describe("E2E: s402 Client → Facilitator → Sui Testnet", () => {
     expect(result.txDigest!.length).toBeGreaterThan(10); // Sui digests are base58, ~44 chars
   });
 
-  it("settled transaction exists on-chain with success status", async () => {
+  it('settled transaction exists on-chain with success status', async () => {
     if (skipIfNeeded()) return;
 
     const requirements = makeRequirements();
@@ -155,31 +161,29 @@ describe("E2E: s402 Client → Facilitator → Sui Testnet", () => {
       options: { showEffects: true, showBalanceChanges: true },
     });
 
-    expect(txn.effects?.status?.status).toBe("success");
+    expect(txn.effects?.status?.status).toBe('success');
 
     // Verify balance change: recipient received the payment
     const recipientChange = txn.balanceChanges?.find(
       (c) =>
         c.owner &&
-        typeof c.owner === "object" &&
-        "AddressOwner" in c.owner &&
+        typeof c.owner === 'object' &&
+        'AddressOwner' in c.owner &&
         c.owner.AddressOwner === recipientAddress,
     );
     expect(recipientChange).toBeDefined();
     expect(BigInt(recipientChange!.amount)).toBe(BigInt(PAYMENT_AMOUNT));
   });
 
-  it("facilitator rejects a payload with wrong network", async () => {
+  it('facilitator rejects a payload with wrong network', async () => {
     if (skipIfNeeded()) return;
 
     const requirements = makeRequirements();
     const payload = await client.createPayment(requirements);
 
     // Tamper: change network in requirements
-    const wrongRequirements = { ...requirements, network: "sui:mainnet" };
+    const wrongRequirements = { ...requirements, network: 'sui:mainnet' };
 
-    await expect(
-      facilitator.verify(payload, wrongRequirements),
-    ).rejects.toThrow();
+    await expect(facilitator.verify(payload, wrongRequirements)).rejects.toThrow();
   });
 });

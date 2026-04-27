@@ -15,11 +15,11 @@
 
 // Transaction imported as a value — needed by toFacilitatorSolanaSigner which
 // calls Transaction.from() to deserialize client-submitted bytes.
-import { Transaction } from '@solana/web3.js';
-import type { Keypair, Connection, PublicKey } from '@solana/web3.js';
-import { createSolanaConnection } from './utils/connection.js';
-import { uint8ArrayToBase64, base64ToUint8Array } from './utils/encoding.js';
+import type { Connection, Keypair, PublicKey } from '@solana/web3.js';
 import type { SolanaNetwork } from './constants.js';
+import { Transaction } from '@solana/web3.js';
+import { createSolanaConnection } from './utils/connection.js';
+import { base64ToUint8Array, uint8ArrayToBase64 } from './utils/encoding.js';
 
 // ─── Shared types ─────────────────────────────────────────────────────────────
 
@@ -109,10 +109,7 @@ export interface FacilitatorSolanaSigner {
    * Includes pre/post SOL and SPL token balances, keyed by account index.
    * accountKeys maps those indices to base58 addresses.
    */
-  simulateTransaction(
-    serializedTx: string,
-    network: SolanaNetwork,
-  ): Promise<SolanaSimulateResult>;
+  simulateTransaction(serializedTx: string, network: SolanaNetwork): Promise<SolanaSimulateResult>;
 
   /** Submit raw signed transaction bytes; returns the transaction signature (txid). */
   executeTransaction(serializedTx: string, network: SolanaNetwork): Promise<string>;
@@ -252,10 +249,7 @@ export function toFacilitatorSolanaSigner(
   };
 
   return {
-    async verifyAndGetPayer(
-      serializedTx: string,
-      _network: SolanaNetwork,
-    ): Promise<string> {
+    async verifyAndGetPayer(serializedTx: string, _network: SolanaNetwork): Promise<string> {
       const txBytes = base64ToUint8Array(serializedTx);
       const tx = Transaction.from(txBytes);
 
@@ -276,12 +270,7 @@ export function toFacilitatorSolanaSigner(
       );
 
       const messageBytes = tx.serializeMessage();
-      const isValid = await crypto.subtle.verify(
-        'Ed25519',
-        cryptoKey,
-        sig,
-        messageBytes,
-      );
+      const isValid = await crypto.subtle.verify('Ed25519', cryptoKey, sig, messageBytes);
 
       if (!isValid) throw new Error('Invalid transaction signature — payer mismatch');
 
@@ -307,14 +296,22 @@ export function toFacilitatorSolanaSigner(
       const simValue = result.value as Record<string, unknown>;
       const preBalances = (simValue.preBalances as number[] | undefined) ?? [];
       const postBalances = (simValue.postBalances as number[] | undefined) ?? [];
-      const preTokenBalances = simValue.preTokenBalances as Array<{
-        accountIndex: number; mint: string; owner: string;
-        uiTokenAmount: { amount: string; decimals: number };
-      }> | undefined;
-      const postTokenBalances = simValue.postTokenBalances as Array<{
-        accountIndex: number; mint: string; owner: string;
-        uiTokenAmount: { amount: string; decimals: number };
-      }> | undefined;
+      const preTokenBalances = simValue.preTokenBalances as
+        | Array<{
+            accountIndex: number;
+            mint: string;
+            owner: string;
+            uiTokenAmount: { amount: string; decimals: number };
+          }>
+        | undefined;
+      const postTokenBalances = simValue.postTokenBalances as
+        | Array<{
+            accountIndex: number;
+            mint: string;
+            owner: string;
+            uiTokenAmount: { amount: string; decimals: number };
+          }>
+        | undefined;
 
       return {
         success: result.value.err === null,
@@ -345,10 +342,7 @@ export function toFacilitatorSolanaSigner(
       };
     },
 
-    async executeTransaction(
-      serializedTx: string,
-      network: SolanaNetwork,
-    ): Promise<string> {
+    async executeTransaction(serializedTx: string, network: SolanaNetwork): Promise<string> {
       const conn = getConnection(network);
       const txBytes = base64ToUint8Array(serializedTx);
       return conn.sendRawTransaction(txBytes, { skipPreflight: false });
@@ -362,9 +356,7 @@ export function toFacilitatorSolanaSigner(
         'confirmed',
       );
       if (result.value.err) {
-        throw new Error(
-          `Transaction confirmation failed: ${JSON.stringify(result.value.err)}`,
-        );
+        throw new Error(`Transaction confirmation failed: ${JSON.stringify(result.value.err)}`);
       }
     },
   };

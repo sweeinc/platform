@@ -21,11 +21,15 @@ For a complete Sui implementation, install `@sweefi/sui` which provides the `Sui
 ## Usage
 
 ```typescript
-import { createPaymentController } from '@sweefi/ui-core';
 import { SuiPaymentAdapter } from '@sweefi/sui';
+import { createPaymentController } from '@sweefi/ui-core';
 
 // 1. Create a chain adapter
-const adapter = new SuiPaymentAdapter({ wallet: currentWallet, client: suiClient, network: 'sui:testnet' });
+const adapter = new SuiPaymentAdapter({
+  wallet: currentWallet,
+  client: suiClient,
+  network: 'sui:testnet',
+});
 
 // 2. Create a controller
 const controller = createPaymentController(adapter);
@@ -53,28 +57,28 @@ unsubscribe();
 
 The `PaymentController` drives a deterministic state machine:
 
-| Status | Meaning |
-|--------|---------|
-| `idle` | No payment in progress |
+| Status                  | Meaning                                                           |
+| ----------------------- | ----------------------------------------------------------------- |
+| `idle`                  | No payment in progress                                            |
 | `fetching_requirements` | GET request sent, awaiting 402 response with payment requirements |
-| `simulating` | Dry-running the transaction to estimate gas |
-| `ready` | Simulation passed — call `confirm()` to sign and broadcast |
-| `awaiting_signature` | Waiting for wallet to sign the transaction |
-| `broadcasting` | Signed transaction submitted to chain |
-| `settled` | Payment confirmed on-chain, receipt available |
-| `error` | Payment failed (error string available on state) |
+| `simulating`            | Dry-running the transaction to estimate gas                       |
+| `ready`                 | Simulation passed — call `confirm()` to sign and broadcast        |
+| `awaiting_signature`    | Waiting for wallet to sign the transaction                        |
+| `broadcasting`          | Signed transaction submitted to chain                             |
+| `settled`               | Payment confirmed on-chain, receipt available                     |
+| `error`                 | Payment failed (error string available on state)                  |
 
 ---
 
 ## Key exports
 
-| Export | Type | Purpose |
-|--------|------|---------|
-| `createPaymentController` | function | Create a new controller from an adapter |
-| `PaymentController` | class | The state machine |
-| `PaymentAdapter` | interface | Implement to add a new chain |
-| `PaymentState` | type | Current controller state |
-| `PaymentStatus` | type | Status union literal |
+| Export                    | Type      | Purpose                                 |
+| ------------------------- | --------- | --------------------------------------- |
+| `createPaymentController` | function  | Create a new controller from an adapter |
+| `PaymentController`       | class     | The state machine                       |
+| `PaymentAdapter`          | interface | Implement to add a new chain            |
+| `PaymentState`            | type      | Current controller state                |
+| `PaymentStatus`           | type      | Status union literal                    |
 
 ---
 
@@ -95,12 +99,12 @@ class MyChainAdapter implements PaymentAdapter {
 
 ## Ecosystem
 
-| Package | Purpose |
-|---------|---------|
-| [`@sweefi/ui-core`](https://www.npmjs.com/package/@sweefi/ui-core) | This package — state machine + adapter interface |
-| [`@sweefi/sui`](https://www.npmjs.com/package/@sweefi/sui) | Sui adapter + $extend() plugin + contract classes + `createS402Client` |
-| [`@sweefi/vue`](https://www.npmjs.com/package/@sweefi/vue) | Vue 3 composable + plugin |
-| [`@sweefi/react`](https://www.npmjs.com/package/@sweefi/react) | React hook + context provider |
+| Package                                                            | Purpose                                                                |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| [`@sweefi/ui-core`](https://www.npmjs.com/package/@sweefi/ui-core) | This package — state machine + adapter interface                       |
+| [`@sweefi/sui`](https://www.npmjs.com/package/@sweefi/sui)         | Sui adapter + $extend() plugin + contract classes + `createS402Client` |
+| [`@sweefi/vue`](https://www.npmjs.com/package/@sweefi/vue)         | Vue 3 composable + plugin                                              |
+| [`@sweefi/react`](https://www.npmjs.com/package/@sweefi/react)     | React hook + context provider                                          |
 
 ---
 

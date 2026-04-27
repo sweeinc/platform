@@ -20,16 +20,16 @@
  */
 
 import type {
+  s402EscrowPayload,
   s402FacilitatorScheme,
   s402PaymentPayload,
   s402PaymentRequirements,
-  s402VerifyResponse,
   s402SettleResponse,
-  s402EscrowPayload,
+  s402VerifyResponse,
 } from 's402';
-import type { FacilitatorSolanaSigner } from '../../signer.js';
 import type { SolanaNetwork } from '../../constants.js';
-import { SWEEFI_ESCROW_PROGRAM_ID, isSolanaNetwork } from '../../constants.js';
+import type { FacilitatorSolanaSigner } from '../../signer.js';
+import { isSolanaNetwork, SWEEFI_ESCROW_PROGRAM_ID } from '../../constants.js';
 import { extractEscrowCreatedEvent } from '../../utils/anchor-events.js';
 
 export class EscrowSolanaFacilitatorScheme implements s402FacilitatorScheme {

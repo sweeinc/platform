@@ -1,6 +1,6 @@
 import type { QueryContext } from './context.js';
-import { ResourceNotFoundError } from '../utils/errors.js';
 import { EscrowBcs } from '../types/bcs.js';
+import { ResourceNotFoundError } from '../utils/errors.js';
 
 /** Must match escrow.move constants: STATE_ACTIVE=0, STATE_DISPUTED=1, STATE_RELEASED=2, STATE_REFUNDED=3 */
 export const EscrowState = {
@@ -9,7 +9,7 @@ export const EscrowState = {
   Released: 2,
   Refunded: 3,
 } as const;
-export type EscrowStateValue = typeof EscrowState[keyof typeof EscrowState];
+export type EscrowStateValue = (typeof EscrowState)[keyof typeof EscrowState];
 
 export interface EscrowData {
   buyer: string;

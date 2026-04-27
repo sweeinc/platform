@@ -7,13 +7,13 @@
  * Matches the Anchor program in contracts/solana/programs/sweefi-upto
  */
 
+import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import {
   PublicKey,
-  TransactionInstruction,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
+  TransactionInstruction,
 } from '@solana/web3.js';
-import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress } from '@solana/spl-token';
 
 // ─── Program Constants ───────────────────────────────────────────────────────
 
@@ -119,19 +119,10 @@ export interface ExpireUptoParams {
  * 8. [] systemProgram
  * 9. [] rent
  */
-export async function buildCreateUptoIx(
-  params: CreateUptoParams,
-): Promise<TransactionInstruction> {
-  const [depositPda, bump] = deriveUptoDepositPda(
-    params.payer,
-    params.recipient,
-    params.nonce,
-  );
+export async function buildCreateUptoIx(params: CreateUptoParams): Promise<TransactionInstruction> {
+  const [depositPda, _bump] = deriveUptoDepositPda(params.payer, params.recipient, params.nonce);
 
-  const payerTokenAccount = await getAssociatedTokenAddress(
-    params.mint,
-    params.payer,
-  );
+  const payerTokenAccount = await getAssociatedTokenAddress(params.mint, params.payer);
 
   const escrowTokenAccount = await getEscrowTokenAccount(depositPda, params.mint);
 
@@ -197,20 +188,11 @@ export async function buildSettleUptoIx(
   payer: PublicKey,
   recipientSigner: PublicKey,
 ): Promise<TransactionInstruction> {
-  const recipientTokenAccount = await getAssociatedTokenAddress(
-    params.mint,
-    params.recipient,
-  );
+  const recipientTokenAccount = await getAssociatedTokenAddress(params.mint, params.recipient);
 
-  const payerTokenAccount = await getAssociatedTokenAddress(
-    params.mint,
-    payer,
-  );
+  const payerTokenAccount = await getAssociatedTokenAddress(params.mint, payer);
 
-  const feeTokenAccount = await getAssociatedTokenAddress(
-    params.mint,
-    params.feeRecipient,
-  );
+  const feeTokenAccount = await getAssociatedTokenAddress(params.mint, params.feeRecipient);
 
   const escrowTokenAccount = await getEscrowTokenAccount(params.deposit, params.mint);
 
@@ -234,7 +216,11 @@ export async function buildSettleUptoIx(
       { pubkey: payerTokenAccount, isSigner: false, isWritable: true },
       { pubkey: feeTokenAccount, isSigner: false, isWritable: true },
       { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-      { pubkey: new PublicKey('SysvarC1ock11111111111111111111111111111111'), isSigner: false, isWritable: false },
+      {
+        pubkey: new PublicKey('SysvarC1ock11111111111111111111111111111111'),
+        isSigner: false,
+        isWritable: false,
+      },
     ],
     data,
   });
@@ -256,10 +242,7 @@ export async function buildExpireUptoIx(
   params: ExpireUptoParams,
   caller: PublicKey,
 ): Promise<TransactionInstruction> {
-  const payerTokenAccount = await getAssociatedTokenAddress(
-    params.mint,
-    params.payer,
-  );
+  const payerTokenAccount = await getAssociatedTokenAddress(params.mint, params.payer);
 
   const escrowTokenAccount = await getEscrowTokenAccount(params.deposit, params.mint);
 
@@ -276,7 +259,11 @@ export async function buildExpireUptoIx(
       { pubkey: escrowTokenAccount, isSigner: false, isWritable: true },
       { pubkey: payerTokenAccount, isSigner: false, isWritable: true },
       { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-      { pubkey: new PublicKey('SysvarC1ock11111111111111111111111111111111'), isSigner: false, isWritable: false },
+      {
+        pubkey: new PublicKey('SysvarC1ock11111111111111111111111111111111'),
+        isSigner: false,
+        isWritable: false,
+      },
     ],
     data: discriminator,
   });

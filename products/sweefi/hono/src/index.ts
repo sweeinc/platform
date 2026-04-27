@@ -16,18 +16,18 @@
  */
 
 // Server-side Hono middleware
-export { s402Gate } from "./server/index";
-export type { s402GateConfig } from "./server/index";
+export { s402Gate } from './server/index';
+export type { s402GateConfig } from './server/index';
 
 // Client-side fetch wrapper (browser / agent)
 // NOTE: adaptWallet was moved to @sweefi/sui to break a circular dependency.
 // Import it from '@sweefi/sui' instead. See pre-publication audit.
-export { wrapFetchWithS402, s402PaymentSentError } from "./client/s402-fetch";
-export type { s402FetchOptions } from "./client/s402-fetch";
+export { wrapFetchWithS402, s402PaymentSentError } from './client/s402-fetch';
+export type { s402FetchOptions } from './client/s402-fetch';
 
 // Shared utilities
-export { DEFAULT_FACILITATOR_URL } from "./shared/constants";
+export { DEFAULT_FACILITATOR_URL } from './shared/constants';
 
 // Logger interface (lets consumers plug in Pino / Winston)
-export type { SweeLogger } from "./logging/logger";
-export { defaultLogger } from "./logging/logger";
+export type { SweeLogger } from './logging/logger';
+export { defaultLogger } from './logging/logger';

@@ -18,23 +18,23 @@
  *   intentionally avoided to prevent precision loss above 2^53.
  */
 
-import { Transaction, SystemProgram, PublicKey } from '@solana/web3.js';
+import type { Connection } from '@solana/web3.js';
+import type {
+  s402ClientScheme,
+  s402ExactPayload,
+  s402PaymentPayload,
+  s402PaymentRequirements,
+  s402SettlementVerification,
+  s402SettleResponse,
+} from 's402';
+import type { ClientSolanaSigner } from '../../signer.js';
 import {
   createTransferInstruction,
   getAssociatedTokenAddress,
   TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
-import type { Connection } from '@solana/web3.js';
-import type {
-  s402ClientScheme,
-  s402PaymentRequirements,
-  s402ExactPayload,
-  s402PaymentPayload,
-  s402SettleResponse,
-  s402SettlementVerification,
-} from 's402';
+import { PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 import { S402_VERSION } from 's402';
-import type { ClientSolanaSigner } from '../../signer.js';
 import { NATIVE_SOL_MINT } from '../../constants.js';
 
 // ─── ExactSolanaClientScheme ──────────────────────────────────────────────────
@@ -120,25 +120,11 @@ export class ExactSolanaClientScheme implements s402ClientScheme {
             [],
             TOKEN_PROGRAM_ID,
           ),
-          createTransferInstruction(
-            sourceAta,
-            feeDestAta,
-            payer,
-            feeAmount,
-            [],
-            TOKEN_PROGRAM_ID,
-          ),
+          createTransferInstruction(sourceAta, feeDestAta, payer, feeAmount, [], TOKEN_PROGRAM_ID),
         );
       } else {
         tx.add(
-          createTransferInstruction(
-            sourceAta,
-            destAta,
-            payer,
-            totalAmount,
-            [],
-            TOKEN_PROGRAM_ID,
-          ),
+          createTransferInstruction(sourceAta, destAta, payer, totalAmount, [], TOKEN_PROGRAM_ID),
         );
       }
     }

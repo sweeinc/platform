@@ -10,11 +10,7 @@
  */
 
 import type { s402Client, s402PaymentRequirements } from 's402';
-import {
-  encodePaymentPayload,
-  S402_HEADERS,
-  decodePaymentRequired,
-} from 's402';
+import { decodePaymentRequired, encodePaymentPayload, S402_HEADERS } from 's402';
 
 export interface s402FetchOptions {
   /** Facilitator URL for settlement */
@@ -35,8 +31,8 @@ export class s402PaymentSentError extends Error {
   constructor(requirements: s402PaymentRequirements, _cause?: unknown) {
     super(
       `Payment was submitted but the response was lost (network error). ` +
-      `The payment may have been processed. Check on-chain state before retrying. ` +
-      `Amount: ${requirements.amount}, payTo: ${requirements.payTo}`,
+        `The payment may have been processed. Check on-chain state before retrying. ` +
+        `Amount: ${requirements.amount}, payTo: ${requirements.payTo}`,
     );
     this.name = 's402PaymentSentError';
     this.requirements = requirements;
@@ -95,14 +91,7 @@ export function wrapFetchWithS402(
     while (retries < maxRetries) {
       // Only create a new payment if requirements changed or no cached payload
       if (!cachedPayload || cachedRequirements !== requirements) {
-        let payload;
-        try {
-          payload = await client.createPayment(requirements);
-        } catch (createError) {
-          // All createPayment errors are non-retryable (mandate auth failures,
-          // missing config, etc.) — bubble up immediately
-          throw createError;
-        }
+        const payload = await client.createPayment(requirements);
         cachedPayload = encodePaymentPayload(payload);
         cachedRequirements = requirements;
         paymentCreated = true;

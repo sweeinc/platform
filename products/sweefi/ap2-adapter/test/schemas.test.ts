@@ -1,11 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-  intentMandateSchema,
   cartContentsSchema,
   cartMandateSchema,
-  paymentMethodDataSchema,
-  mandateDefaultsSchema,
+  intentMandateSchema,
   invoiceDefaultsSchema,
+  mandateDefaultsSchema,
+  paymentMethodDataSchema,
 } from '../src/schemas';
 
 // ══════════════════════════════════════════════════════════════

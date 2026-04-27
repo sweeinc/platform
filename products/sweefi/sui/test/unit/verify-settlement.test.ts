@@ -11,11 +11,11 @@
  *   - All 5 scheme adapters delegate correctly
  */
 
-import { describe, it, expect } from 'vitest';
+import type { s402PaymentPayload, s402SettleResponse } from 's402';
 import { TransactionDataBuilder } from '@mysten/sui/transactions';
 import { toBase64 } from '@mysten/sui/utils';
+import { describe, expect, it } from 'vitest';
 import { verifySuiSettlement } from '../../src/s402/verify.js';
-import type { s402PaymentPayload, s402SettleResponse } from 's402';
 
 // ── Test helpers ─────────────────────────────────
 
@@ -27,9 +27,28 @@ import type { s402PaymentPayload, s402SettleResponse } from 's402';
 function buildTestData(): { base64Bytes: string; expectedDigest: string } {
   // Arbitrary bytes simulating BCS-encoded transaction data
   const rawBytes = new Uint8Array([
-    0, 0, 0, 0, 0, 0, 0, 0,  // version/kind
-    1, 2, 3, 4, 5, 6, 7, 8,  // some payload
-    10, 20, 30, 40, 50, 60,   // more data
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0, // version/kind
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8, // some payload
+    10,
+    20,
+    30,
+    40,
+    50,
+    60, // more data
   ]);
   const base64Bytes = toBase64(rawBytes);
   const expectedDigest = TransactionDataBuilder.getDigestFromBytes(rawBytes);

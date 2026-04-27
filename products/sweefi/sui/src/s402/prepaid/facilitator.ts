@@ -27,14 +27,14 @@ import type {
   s402FacilitatorScheme,
   s402PaymentPayload,
   s402PaymentRequirements,
-  s402VerifyResponse,
-  s402SettleResponse,
   s402PrepaidPayload,
+  s402SettleResponse,
+  s402VerifyResponse,
 } from 's402';
 import type { FacilitatorSuiSigner } from '../../signer.js';
-import { coinTypesEqual } from '../../utils.js';
 import { normalizeSuiAddress } from '@mysten/sui/utils';
 import { bpsToMicroPercent } from '../../ptb/assert.js';
+import { coinTypesEqual } from '../../utils.js';
 
 export class PrepaidSuiFacilitatorScheme implements s402FacilitatorScheme {
   readonly scheme = 'prepaid' as const;
@@ -52,8 +52,8 @@ export class PrepaidSuiFacilitatorScheme implements s402FacilitatorScheme {
   ) {
     if (!packageId) {
       throw new Error(
-        "PrepaidSuiFacilitatorScheme: packageId is required to prevent event spoofing. " +
-        "Set SWEEFI_PACKAGE_ID environment variable."
+        'PrepaidSuiFacilitatorScheme: packageId is required to prevent event spoofing. ' +
+          'Set SWEEFI_PACKAGE_ID environment variable.',
       );
     }
   }
@@ -288,8 +288,10 @@ function extractDepositEvent(
   packageId?: string,
 ): DepositEventData | null {
   const event = packageId
-    ? events.find(e => e.type.startsWith(`${packageId}::`) && e.type.endsWith('::PrepaidDeposited'))
-    : events.find(e => e.type.endsWith('::prepaid::PrepaidDeposited'));
+    ? events.find(
+        (e) => e.type.startsWith(`${packageId}::`) && e.type.endsWith('::PrepaidDeposited'),
+      )
+    : events.find((e) => e.type.endsWith('::prepaid::PrepaidDeposited'));
   if (!event?.parsedJson || typeof event.parsedJson !== 'object') return null;
 
   // Explicit field validation — fail fast on schema mismatch

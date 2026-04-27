@@ -6,22 +6,19 @@
  * actual usage, with the remainder returned.
  */
 
-import { Transaction, PublicKey } from '@solana/web3.js';
 import type { Connection } from '@solana/web3.js';
 import type {
   s402ClientScheme,
-  s402PaymentRequirements,
   s402PaymentPayload,
-  s402UptoPayload,
-  s402SettleResponse,
+  s402PaymentRequirements,
   s402SettlementVerification,
+  s402SettleResponse,
+  s402UptoPayload,
 } from 's402';
-import { S402_VERSION } from 's402';
 import type { ClientSolanaSigner } from '../../signer.js';
-import {
-  buildCreateUptoIx,
-  deriveUptoDepositPda,
-} from '../../programs/upto.js';
+import { PublicKey, Transaction } from '@solana/web3.js';
+import { S402_VERSION } from 's402';
+import { buildCreateUptoIx, deriveUptoDepositPda } from '../../programs/upto.js';
 
 export class UptoSolanaClientScheme implements s402ClientScheme {
   readonly scheme = 'upto' as const;
@@ -32,7 +29,7 @@ export class UptoSolanaClientScheme implements s402ClientScheme {
   ) {}
 
   async createPayment(requirements: s402PaymentRequirements): Promise<s402PaymentPayload> {
-    const { asset, payTo, protocolFeeBps, upto, expiresAt } = requirements;
+    const { asset, payTo, protocolFeeBps, upto, expiresAt: _expiresAt } = requirements;
 
     if (!upto) {
       throw new Error('Upto scheme requires requirements.upto');
@@ -51,7 +48,7 @@ export class UptoSolanaClientScheme implements s402ClientScheme {
     const deadlineSeconds = deadlineMs / 1000n;
 
     const nonce = BigInt(Date.now());
-    const [depositPda] = deriveUptoDepositPda(payer, recipient, nonce);
+    const [_depositPda] = deriveUptoDepositPda(payer, recipient, nonce);
 
     const tx = new Transaction();
 

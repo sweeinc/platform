@@ -21,11 +21,7 @@
 
 // ─── Signer utilities ────────────────────────────────────────────────────────
 
-export {
-  SolanaKeypairSigner,
-  SolanaWalletSigner,
-  toFacilitatorSolanaSigner,
-} from './signer.js';
+export { SolanaKeypairSigner, SolanaWalletSigner, toFacilitatorSolanaSigner } from './signer.js';
 export type {
   ClientSolanaSigner,
   FacilitatorSolanaSigner,
@@ -60,7 +56,11 @@ export type { SolanaNetwork } from './constants.js';
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
-export { createSolanaConnection, networkToCluster, getDefaultUsdcMint } from './utils/connection.js';
+export {
+  createSolanaConnection,
+  networkToCluster,
+  getDefaultUsdcMint,
+} from './utils/connection.js';
 export { uint8ArrayToBase64, base64ToUint8Array } from './utils/encoding.js';
 
 // ─── s402 scheme implementations ─────────────────────────────────────────────

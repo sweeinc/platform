@@ -54,6 +54,9 @@
     "vitest": "^3.0.0"
   },
   "manypkg": {
-    "ignoredRules": ["INTERNAL_MISMATCH", "ROOT_HAS_DEV_DEPENDENCIES"]
+    "ignoredRules": [
+      "INTERNAL_MISMATCH",
+      "ROOT_HAS_DEV_DEPENDENCIES"
+    ]
   }
 }

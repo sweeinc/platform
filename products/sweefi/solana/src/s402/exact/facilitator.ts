@@ -14,16 +14,16 @@
  */
 
 import type {
+  s402ExactPayload,
   s402FacilitatorScheme,
   s402PaymentPayload,
   s402PaymentRequirements,
-  s402VerifyResponse,
   s402SettleResponse,
-  s402ExactPayload,
+  s402VerifyResponse,
 } from 's402';
-import type { FacilitatorSolanaSigner, SolanaSimulateResult } from '../../signer.js';
 import type { SolanaNetwork } from '../../constants.js';
-import { NATIVE_SOL_MINT, isSolanaNetwork } from '../../constants.js';
+import type { FacilitatorSolanaSigner, SolanaSimulateResult } from '../../signer.js';
+import { isSolanaNetwork, NATIVE_SOL_MINT } from '../../constants.js';
 
 // ─── ExactSolanaFacilitatorScheme ─────────────────────────────────────────────
 
@@ -82,15 +82,17 @@ export class ExactSolanaFacilitatorScheme implements s402FacilitatorScheme {
       if (isNative) {
         const solResult = verifySolTransfer(simResult, requirements);
         if (!solResult.success) {
-          const reason = solResult.reason
-            ?? `SOL balance delta ${solResult.actual} below required ${solResult.required}`;
+          const reason =
+            solResult.reason ??
+            `SOL balance delta ${solResult.actual} below required ${solResult.required}`;
           return { valid: false, invalidReason: reason, payerAddress };
         }
       } else {
         const splResult = verifySplTransfer(simResult, requirements);
         if (!splResult.success) {
-          const reason = splResult.reason
-            ?? `SPL token balance delta ${splResult.actual} below required ${splResult.required}`;
+          const reason =
+            splResult.reason ??
+            `SPL token balance delta ${splResult.actual} below required ${splResult.required}`;
           return { valid: false, invalidReason: reason, payerAddress };
         }
       }
@@ -231,9 +233,7 @@ function verifySplTransfer(
     // because that would fall through when owner is undefined, accepting any ATA.
     if (!post.owner || post.owner !== requirements.payTo) continue;
 
-    const pre = preTokens.find(
-      (p) => p.accountIndex === post.accountIndex && p.mint === post.mint,
-    );
+    const pre = preTokens.find((p) => p.accountIndex === post.accountIndex && p.mint === post.mint);
     const preAmount = BigInt(pre?.uiTokenAmount.amount ?? '0');
     const postAmount = BigInt(post.uiTokenAmount.amount);
     const delta = postAmount - preAmount;

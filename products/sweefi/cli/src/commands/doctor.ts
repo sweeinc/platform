@@ -11,16 +11,16 @@
  * Each check reports OK/FAIL with actionable fix instructions.
  */
 
-import { getJsonRpcFullnodeUrl } from "@mysten/sui/jsonRpc";
-import type { CliContext } from "../context.js";
-import { withTimeout } from "../context.js";
-import { outputSuccess, VERSION } from "../output.js";
-import type { RequestContext } from "../output.js";
+import type { CliContext } from '../context.js';
+import type { RequestContext } from '../output.js';
+import { getJsonRpcFullnodeUrl } from '@mysten/sui/jsonRpc';
+import { withTimeout } from '../context.js';
+import { outputSuccess, VERSION } from '../output.js';
 
 interface Check {
   name: string;
   value: string;
-  status: "OK" | "FAIL";
+  status: 'OK' | 'FAIL';
   detail?: string;
 }
 
@@ -32,29 +32,30 @@ export async function doctor(
   const checks: Check[] = [];
 
   // 1. Version
-  checks.push({ name: "version", value: VERSION, status: "OK" });
+  checks.push({ name: 'version', value: VERSION, status: 'OK' });
 
   // 2. Network
-  checks.push({ name: "network", value: ctx.network, status: "OK" });
+  checks.push({ name: 'network', value: ctx.network, status: 'OK' });
 
   // 3. Wallet
   if (ctx.signer) {
     const address = ctx.signer.toSuiAddress();
     const short = `${address.slice(0, 6)}...${address.slice(-4)}`;
-    checks.push({ name: "wallet", value: short, status: "OK", detail: "key detected" });
+    checks.push({ name: 'wallet', value: short, status: 'OK', detail: 'key detected' });
   } else if (process.env.SUI_PRIVATE_KEY) {
     checks.push({
-      name: "wallet",
-      value: "SUI_PRIVATE_KEY",
-      status: "FAIL",
-      detail: "Key is set but could not be decoded. Check format: suiprivkey1... (bech32) or base64.",
+      name: 'wallet',
+      value: 'SUI_PRIVATE_KEY',
+      status: 'FAIL',
+      detail:
+        'Key is set but could not be decoded. Check format: suiprivkey1... (bech32) or base64.',
     });
   } else {
     checks.push({
-      name: "wallet",
-      value: "SUI_PRIVATE_KEY",
-      status: "FAIL",
-      detail: "Not set. Export SUI_PRIVATE_KEY=suiprivkey1... to enable transactions.",
+      name: 'wallet',
+      value: 'SUI_PRIVATE_KEY',
+      status: 'FAIL',
+      detail: 'Not set. Export SUI_PRIVATE_KEY=suiprivkey1... to enable transactions.',
     });
   }
 
@@ -63,37 +64,42 @@ export async function doctor(
   const isDefault = !process.env.SUI_PACKAGE_ID;
   const short = `${packageId.slice(0, 6)}...${packageId.slice(-4)}`;
   checks.push({
-    name: "package ID",
+    name: 'package ID',
     value: short,
-    status: "OK",
-    detail: isDefault ? `using default for ${ctx.network}` : "custom override via SUI_PACKAGE_ID",
+    status: 'OK',
+    detail: isDefault ? `using default for ${ctx.network}` : 'custom override via SUI_PACKAGE_ID',
   });
 
   // 5. RPC connectivity
   const rpcUrl = process.env.SUI_RPC_URL ?? getJsonRpcFullnodeUrl(ctx.network);
   try {
     const start = performance.now();
-    await withTimeout(ctx, ctx.suiClient.getRpcApiVersion(), "RPC version check");
+    await withTimeout(ctx, ctx.suiClient.getRpcApiVersion(), 'RPC version check');
     const latency = Math.round(performance.now() - start);
     checks.push({
-      name: "RPC connectivity",
+      name: 'RPC connectivity',
       value: `${latency}ms`,
-      status: "OK",
+      status: 'OK',
       detail: rpcUrl.length > 40 ? `${rpcUrl.slice(0, 37)}...` : rpcUrl,
     });
   } catch (e) {
     checks.push({
-      name: "RPC connectivity",
-      value: "unreachable",
-      status: "FAIL",
-      detail: `Could not connect to ${rpcUrl}. ${e instanceof Error ? e.message : ""}`.trim(),
+      name: 'RPC connectivity',
+      value: 'unreachable',
+      status: 'FAIL',
+      detail: `Could not connect to ${rpcUrl}. ${e instanceof Error ? e.message : ''}`.trim(),
     });
   }
 
-  const allOk = checks.every((c) => c.status === "OK");
+  const allOk = checks.every((c) => c.status === 'OK');
 
-  outputSuccess("doctor", {
-    healthy: allOk,
-    checks,
-  }, flags.human ?? false, reqCtx);
+  outputSuccess(
+    'doctor',
+    {
+      healthy: allOk,
+      checks,
+    },
+    flags.human ?? false,
+    reqCtx,
+  );
 }

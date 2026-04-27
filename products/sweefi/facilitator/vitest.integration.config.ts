@@ -1,9 +1,9 @@
-import { defineConfig } from "vitest/config";
-import tsconfigPaths from "vite-tsconfig-paths";
+import tsconfigPaths from 'vite-tsconfig-paths';
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
-    include: ["test/integration/**/*.test.ts"],
+    include: ['test/integration/**/*.test.ts'],
     testTimeout: 60_000,
     hookTimeout: 60_000,
   },

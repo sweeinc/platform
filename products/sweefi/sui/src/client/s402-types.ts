@@ -2,7 +2,7 @@
  * Configuration and fetch types for the Sui s402 client.
  */
 
-export type SuiNetwork = "sui:testnet" | "sui:mainnet" | "sui:devnet";
+export type SuiNetwork = 'sui:testnet' | 'sui:mainnet' | 'sui:devnet';
 
 /**
  * Per-fetch s402 options. Passed as `s402` property on the fetch init object.
@@ -61,7 +61,7 @@ export interface S402PaymentMetadata {
 
 export interface s402ClientConfig {
   /** Sui keypair (Ed25519Keypair, Secp256k1Keypair, etc.) */
-  wallet: import("@mysten/sui/cryptography").Signer;
+  wallet: import('@mysten/sui/cryptography').Signer;
 
   /** Target Sui network (e.g., "sui:testnet") */
   network: SuiNetwork;

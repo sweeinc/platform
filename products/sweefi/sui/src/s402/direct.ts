@@ -13,11 +13,11 @@
  * facilitator service, not protocol enforcement.
  */
 
-import { Transaction, coinWithBalance } from '@mysten/sui/transactions';
-import type { SuiJsonRpcClient } from '@mysten/sui/jsonRpc';
 import type { Signer } from '@mysten/sui/cryptography';
-import { toBase64 } from '@mysten/sui/utils';
+import type { SuiJsonRpcClient } from '@mysten/sui/jsonRpc';
 import type { s402DirectScheme, s402PaymentRequirements, s402SettleResponse } from 's402';
+import { coinWithBalance, Transaction } from '@mysten/sui/transactions';
+import { toBase64 } from '@mysten/sui/utils';
 
 export class DirectSuiSettlement implements s402DirectScheme {
   readonly scheme = 'exact' as const;
@@ -27,16 +27,15 @@ export class DirectSuiSettlement implements s402DirectScheme {
     private readonly client: SuiJsonRpcClient,
   ) {}
 
-  async settleDirectly(
-    requirements: s402PaymentRequirements,
-  ): Promise<s402SettleResponse> {
+  async settleDirectly(requirements: s402PaymentRequirements): Promise<s402SettleResponse> {
     const startMs = Date.now();
 
     // Direct settlement does not mint on-chain receipts
     if (requirements.receiptRequired) {
       return {
         success: false,
-        error: 'Direct settlement does not support on-chain receipts. Use facilitator settlement instead.',
+        error:
+          'Direct settlement does not support on-chain receipts. Use facilitator settlement instead.',
       };
     }
 

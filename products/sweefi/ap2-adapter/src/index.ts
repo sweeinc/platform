@@ -55,7 +55,4 @@ export {
 } from './mapper';
 
 // ── Bridge (validate → map → build PTB) ─────────────────────
-export {
-  buildAgentMandateFromIntent,
-  buildInvoiceFromCart,
-} from './bridge';
+export { buildAgentMandateFromIntent, buildInvoiceFromCart } from './bridge';

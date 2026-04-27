@@ -8,9 +8,9 @@
  * Then any child component can call useSweefiPayment() without passing the controller.
  */
 
-import { createContext, createElement, useContext } from "react";
-import type { ReactNode } from "react";
-import type { PaymentController } from "@sweefi/ui-core";
+import type { PaymentController } from '@sweefi/ui-core';
+import type { ReactNode } from 'react';
+import { createContext, createElement, useContext } from 'react';
 
 /** The context used by SweefiProvider and useSweefiPayment(). */
 export const SweefiPaymentContext = createContext<PaymentController | null>(null);
@@ -36,8 +36,8 @@ export function useSweefiController(): PaymentController {
   const controller = useContext(SweefiPaymentContext);
   if (!controller) {
     throw new Error(
-      "useSweefiController: SweefiProvider is not mounted. " +
-        "Wrap your component tree with <SweefiProvider controller={controller}>."
+      'useSweefiController: SweefiProvider is not mounted. ' +
+        'Wrap your component tree with <SweefiProvider controller={controller}>.',
     );
   }
   return controller;

@@ -9,20 +9,20 @@
  * or any DOM global. Safe to import in Next.js / Nuxt.js server contexts.
  */
 
-import type { s402PaymentRequirements } from "s402";
-import type { PaymentAdapter, SimulationResult } from "../interfaces/PaymentAdapter.js";
+import type { s402PaymentRequirements } from 's402';
+import type { PaymentAdapter, SimulationResult } from '../interfaces/PaymentAdapter.js';
 
 // ─── State ───────────────────────────────────────────────────────────────────
 
 export type PaymentStatus =
-  | "idle"
-  | "fetching_requirements"
-  | "simulating"
-  | "ready"
-  | "awaiting_signature"
-  | "broadcasting"
-  | "settled"
-  | "error";
+  | 'idle'
+  | 'fetching_requirements'
+  | 'simulating'
+  | 'ready'
+  | 'awaiting_signature'
+  | 'broadcasting'
+  | 'settled'
+  | 'error';
 
 export interface PaymentState {
   status: PaymentStatus;
@@ -48,7 +48,7 @@ export class PaymentController {
   constructor(adapter: PaymentAdapter) {
     this.adapter = adapter;
     this.state = {
-      status: "idle",
+      status: 'idle',
       address: adapter.getAddress(),
       requirements: null,
       simulation: null,
@@ -90,11 +90,11 @@ export class PaymentController {
    */
   async pay(
     targetUrl: string,
-    options?: { requirements?: s402PaymentRequirements }
+    options?: { requirements?: s402PaymentRequirements },
   ): Promise<void> {
-    if (this.state.status !== "idle") {
+    if (this.state.status !== 'idle') {
       throw new Error(
-        `Cannot start payment from state "${this.state.status}". Call reset() first.`
+        `Cannot start payment from state "${this.state.status}". Call reset() first.`,
       );
     }
 
@@ -106,24 +106,24 @@ export class PaymentController {
       let reqs = options?.requirements;
 
       if (!reqs) {
-        this.setState({ status: "fetching_requirements", error: null });
+        this.setState({ status: 'fetching_requirements', error: null });
         reqs = await this.fetchRequirements(targetUrl);
       }
 
-      this.setState({ status: "simulating", requirements: reqs, error: null });
+      this.setState({ status: 'simulating', requirements: reqs, error: null });
       const simulation = await this.adapter.simulate(reqs);
 
       if (!simulation.success) {
         handledError = true;
-        const msg = simulation.error?.message ?? "Simulation failed";
-        this.setState({ status: "error", simulation, error: msg });
+        const msg = simulation.error?.message ?? 'Simulation failed';
+        this.setState({ status: 'error', simulation, error: msg });
         throw new Error(msg);
       }
 
-      this.setState({ status: "ready", simulation });
+      this.setState({ status: 'ready', simulation });
     } catch (err) {
       if (!handledError) {
-        this.setState({ status: "error", error: errorMessage(err) });
+        this.setState({ status: 'error', error: errorMessage(err) });
       }
       throw err;
     }
@@ -138,9 +138,9 @@ export class PaymentController {
    * show "approve in your wallet" while the wallet extension is open.
    */
   async confirm(): Promise<{ txId: string }> {
-    if (this.state.status !== "ready") {
+    if (this.state.status !== 'ready') {
       throw new Error(
-        `Cannot confirm payment from state "${this.state.status}". Call pay() first.`
+        `Cannot confirm payment from state "${this.state.status}". Call pay() first.`,
       );
     }
 
@@ -148,19 +148,19 @@ export class PaymentController {
 
     try {
       // Signal wallet is open and waiting for user approval
-      this.setState({ status: "awaiting_signature" });
+      this.setState({ status: 'awaiting_signature' });
 
       // Set broadcasting BEFORE the call so the UI actually observes this state
       // during the network round-trip. signAndBroadcast is atomic (sign + submit),
       // so this represents "wallet approved, submitting to network" — the work
       // that is happening while we await.
-      this.setState({ status: "broadcasting" });
+      this.setState({ status: 'broadcasting' });
       const { txId } = await this.adapter.signAndBroadcast(reqs);
 
-      this.setState({ status: "settled", txId });
+      this.setState({ status: 'settled', txId });
       return { txId };
     } catch (err) {
-      this.setState({ status: "error", error: errorMessage(err) });
+      this.setState({ status: 'error', error: errorMessage(err) });
       throw err;
     }
   }
@@ -168,7 +168,7 @@ export class PaymentController {
   /** Reset to idle so `pay()` can be called again. */
   reset(): void {
     this.setState({
-      status: "idle",
+      status: 'idle',
       address: this.adapter.getAddress(),
       requirements: null,
       simulation: null,
@@ -189,7 +189,7 @@ export class PaymentController {
       try {
         listener(snapshot);
       } catch (err) {
-        console.error("[sweefi/ui-core] PaymentController: subscriber threw:", err);
+        console.error('[sweefi/ui-core] PaymentController: subscriber threw:', err);
       }
     }
   }
@@ -198,15 +198,13 @@ export class PaymentController {
    * Fetch s402 payment requirements from a protected endpoint.
    * Expects a 402 response with a JSON body containing `paymentRequirements`.
    */
-  private async fetchRequirements(
-    targetUrl: string
-  ): Promise<s402PaymentRequirements> {
+  private async fetchRequirements(targetUrl: string): Promise<s402PaymentRequirements> {
     const response = await fetch(targetUrl);
 
     if (response.status !== 402) {
       throw new Error(
         `Expected 402 from ${targetUrl}, got ${response.status}. ` +
-          "Is this endpoint protected with s402Gate?"
+          'Is this endpoint protected with s402Gate?',
       );
     }
 
@@ -216,9 +214,7 @@ export class PaymentController {
 
     const reqs = body.paymentRequirements?.[0];
     if (!reqs) {
-      throw new Error(
-        `No paymentRequirements found in 402 response from ${targetUrl}`
-      );
+      throw new Error(`No paymentRequirements found in 402 response from ${targetUrl}`);
     }
 
     return reqs;

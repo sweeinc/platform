@@ -1,28 +1,29 @@
-import { s402Facilitator } from "s402";
-import { toFacilitatorSuiSigner, createSuiClient } from "@sweefi/sui";
+import type { Config } from './config';
+import { decodeSuiPrivateKey } from '@mysten/sui/cryptography';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+import { s402Facilitator } from 's402';
 import {
-  ExactSuiFacilitatorScheme,
-  PrepaidSuiFacilitatorScheme,
-  StreamSuiFacilitatorScheme,
-  EscrowSuiFacilitatorScheme,
-  UptoSuiFacilitatorScheme,
-} from "@sweefi/sui";
-import {
+  EscrowSolanaFacilitatorScheme,
   ExactSolanaFacilitatorScheme,
   PrepaidSolanaFacilitatorScheme,
   StreamSolanaFacilitatorScheme,
-  EscrowSolanaFacilitatorScheme,
-  UptoSolanaFacilitatorScheme,
-  toFacilitatorSolanaSigner,
+  SWEEFI_ESCROW_PROGRAM_ID,
   SWEEFI_PREPAID_PROGRAM_ID,
   SWEEFI_STREAM_PROGRAM_ID,
-  SWEEFI_ESCROW_PROGRAM_ID,
   SWEEFI_UPTO_PROGRAM_ID,
-} from "@sweefi/solana";
-import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
-import { decodeSuiPrivateKey } from "@mysten/sui/cryptography";
-import type { Config } from "./config";
-import { GasSponsorService } from "./gas-service";
+  toFacilitatorSolanaSigner,
+  UptoSolanaFacilitatorScheme,
+} from '@sweefi/solana';
+import {
+  createSuiClient,
+  EscrowSuiFacilitatorScheme,
+  ExactSuiFacilitatorScheme,
+  PrepaidSuiFacilitatorScheme,
+  StreamSuiFacilitatorScheme,
+  toFacilitatorSuiSigner,
+  UptoSuiFacilitatorScheme,
+} from '@sweefi/sui';
+import { GasSponsorService } from './gas-service';
 
 /**
  * Decode FACILITATOR_KEYPAIR — accept both bech32 (suiprivkey1...) and base64 formats.
@@ -62,8 +63,8 @@ export function createFacilitator(config: Config): FacilitatorBundle {
   const facilitator = new s402Facilitator();
 
   const rpcUrls: Record<string, string> = {};
-  if (config.SUI_MAINNET_RPC) rpcUrls["sui:mainnet"] = config.SUI_MAINNET_RPC;
-  if (config.SUI_TESTNET_RPC) rpcUrls["sui:testnet"] = config.SUI_TESTNET_RPC;
+  if (config.SUI_MAINNET_RPC) rpcUrls['sui:mainnet'] = config.SUI_MAINNET_RPC;
+  if (config.SUI_TESTNET_RPC) rpcUrls['sui:testnet'] = config.SUI_TESTNET_RPC;
 
   // Decode keypair for gas sponsorship (accepts bech32 suiprivkey1... or base64)
   const keypair = decodeKeypair(config.FACILITATOR_KEYPAIR);
@@ -72,10 +73,10 @@ export function createFacilitator(config: Config): FacilitatorBundle {
     console.log(`[sweefi-facilitator] Gas sponsor address: ${addr}`);
     console.log(
       `[sweefi-facilitator] Gas sponsorship: exact scheme only. ` +
-      `Budget cap: ${config.MAX_SPONSOR_GAS_MIST} MIST/tx, rate limit: ${config.GAS_SPONSOR_MAX_PER_HOUR}/key/hour.`,
+        `Budget cap: ${config.MAX_SPONSOR_GAS_MIST} MIST/tx, rate limit: ${config.GAS_SPONSOR_MAX_PER_HOUR}/key/hour.`,
     );
   } else {
-    console.log("[sweefi-facilitator] No FACILITATOR_KEYPAIR — gas sponsorship disabled.");
+    console.log('[sweefi-facilitator] No FACILITATOR_KEYPAIR — gas sponsorship disabled.');
   }
 
   const signer = toFacilitatorSuiSigner(
@@ -88,11 +89,14 @@ export function createFacilitator(config: Config): FacilitatorBundle {
   // from emitting fake events that pass facilitator verification.
   const packageId = config.SWEEFI_PACKAGE_ID;
 
-  const networks = ["sui:testnet", "sui:mainnet"];
+  const networks = ['sui:testnet', 'sui:mainnet'];
 
   for (const network of networks) {
     // Exact scheme uses PTB content verification (no events), so packageId not needed.
-    facilitator.register(network, new ExactSuiFacilitatorScheme(signer, BigInt(config.MAX_SPONSOR_GAS_MIST)));
+    facilitator.register(
+      network,
+      new ExactSuiFacilitatorScheme(signer, BigInt(config.MAX_SPONSOR_GAS_MIST)),
+    );
 
     // Non-exact schemes require packageId for event anti-spoofing.
     // Skip registration (with warning) if packageId is not configured.
@@ -106,9 +110,9 @@ export function createFacilitator(config: Config): FacilitatorBundle {
 
   if (!packageId) {
     console.warn(
-      "[sweefi-facilitator] ⚠️  SWEEFI_PACKAGE_ID is not set. " +
-      "Only the exact scheme is registered. Stream, escrow, prepaid, and upto schemes " +
-      "require SWEEFI_PACKAGE_ID for event anti-spoofing verification."
+      '[sweefi-facilitator] ⚠️  SWEEFI_PACKAGE_ID is not set. ' +
+        'Only the exact scheme is registered. Stream, escrow, prepaid, and upto schemes ' +
+        'require SWEEFI_PACKAGE_ID for event anti-spoofing verification.',
     );
   }
 
@@ -117,14 +121,14 @@ export function createFacilitator(config: Config): FacilitatorBundle {
   // Solana schemes use transaction simulation for verification (no on-chain events).
 
   const solanaRpcUrls: Record<string, string> = {};
-  if (config.SOLANA_MAINNET_RPC) solanaRpcUrls["solana:mainnet-beta"] = config.SOLANA_MAINNET_RPC;
-  if (config.SOLANA_DEVNET_RPC) solanaRpcUrls["solana:devnet"] = config.SOLANA_DEVNET_RPC;
+  if (config.SOLANA_MAINNET_RPC) solanaRpcUrls['solana:mainnet-beta'] = config.SOLANA_MAINNET_RPC;
+  if (config.SOLANA_DEVNET_RPC) solanaRpcUrls['solana:devnet'] = config.SOLANA_DEVNET_RPC;
 
   const solanaSigner = toFacilitatorSolanaSigner(
     Object.keys(solanaRpcUrls).length > 0 ? { rpcUrls: solanaRpcUrls } : undefined,
   );
 
-  const solanaNetworks = ["solana:devnet", "solana:mainnet-beta"];
+  const solanaNetworks = ['solana:devnet', 'solana:mainnet-beta'];
 
   // Resolve Solana program IDs from config (with devnet defaults)
   const prepaidProgramId = config.SOLANA_PREPAID_PROGRAM_ID ?? SWEEFI_PREPAID_PROGRAM_ID;
@@ -138,7 +142,10 @@ export function createFacilitator(config: Config): FacilitatorBundle {
 
     // Non-exact schemes — require deployed Anchor programs
     // Program IDs configured via env vars for anti-spoofing verification
-    facilitator.register(network, new PrepaidSolanaFacilitatorScheme(solanaSigner, prepaidProgramId));
+    facilitator.register(
+      network,
+      new PrepaidSolanaFacilitatorScheme(solanaSigner, prepaidProgramId),
+    );
     facilitator.register(network, new StreamSolanaFacilitatorScheme(solanaSigner, streamProgramId));
     facilitator.register(network, new EscrowSolanaFacilitatorScheme(solanaSigner, escrowProgramId));
     facilitator.register(network, new UptoSolanaFacilitatorScheme(solanaSigner, uptoProgramId));
@@ -146,7 +153,7 @@ export function createFacilitator(config: Config): FacilitatorBundle {
 
   console.log(
     `[sweefi-facilitator] Solana schemes registered: exact, prepaid, stream, escrow, upto ` +
-    `for ${solanaNetworks.join(", ")}`
+      `for ${solanaNetworks.join(', ')}`,
   );
 
   // Gas sponsorship service — only when FACILITATOR_KEYPAIR is configured.
@@ -157,7 +164,7 @@ export function createFacilitator(config: Config): FacilitatorBundle {
     // Pick the first available network for the gas sponsor RPC client.
     // Gas sponsorship is per-network — for multi-network support, extend
     // to create one GasSponsorService per network.
-    const sponsorNetwork = config.SUI_TESTNET_RPC ? "sui:testnet" : "sui:mainnet";
+    const sponsorNetwork = config.SUI_TESTNET_RPC ? 'sui:testnet' : 'sui:mainnet';
     const sponsorRpcUrl = rpcUrls[sponsorNetwork] ?? undefined;
     const sponsorClient = createSuiClient(sponsorNetwork, sponsorRpcUrl);
 

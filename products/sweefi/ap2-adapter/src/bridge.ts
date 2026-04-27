@@ -10,13 +10,12 @@
  * For lower-level access, use mapper.ts directly.
  */
 
-import { Transaction } from '@mysten/sui/transactions';
 import type { SweefiConfig } from '@sweefi/sui/ptb';
-import { AgentMandateContract, PaymentContract, createBuilderConfig } from '@sweefi/sui';
-
-import { intentMandateSchema, cartMandateSchema } from './schemas';
+import type { InvoiceDefaults, MandateDefaults } from './types';
+import { Transaction } from '@mysten/sui/transactions';
+import { AgentMandateContract, createBuilderConfig, PaymentContract } from '@sweefi/sui';
 import { createAgentMandateFromAP2Intent, createInvoiceFromAP2Cart } from './mapper';
-import type { MandateDefaults, InvoiceDefaults } from './types';
+import { cartMandateSchema, intentMandateSchema } from './schemas';
 
 // ══════════════════════════════════════════════════════════════
 // IntentMandate → AgentMandate PTB
@@ -44,10 +43,12 @@ export function buildAgentMandateFromIntent(
   const params = createAgentMandateFromAP2Intent(intent, mandateDefaults);
 
   // 3. Build unsigned PTB
-  const contract = new AgentMandateContract(createBuilderConfig({
-    packageId: sweefiConfig.packageId,
-    protocolState: sweefiConfig.protocolStateId,
-  }));
+  const contract = new AgentMandateContract(
+    createBuilderConfig({
+      packageId: sweefiConfig.packageId,
+      protocolState: sweefiConfig.protocolStateId,
+    }),
+  );
   const tx = new Transaction();
   contract.create(params)(tx);
   return tx;
@@ -79,10 +80,12 @@ export function buildInvoiceFromCart(
   const params = createInvoiceFromAP2Cart(cart, invoiceDefaults);
 
   // 3. Build unsigned PTB
-  const contract = new PaymentContract(createBuilderConfig({
-    packageId: sweefiConfig.packageId,
-    protocolState: sweefiConfig.protocolStateId,
-  }));
+  const contract = new PaymentContract(
+    createBuilderConfig({
+      packageId: sweefiConfig.packageId,
+      protocolState: sweefiConfig.protocolStateId,
+    }),
+  );
   const tx = new Transaction();
   contract.createInvoice(params)(tx);
   return tx;

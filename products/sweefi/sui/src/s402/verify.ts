@@ -8,13 +8,9 @@
  * See s402 INVARIANTS.md § S8 for the cryptographic proof.
  */
 
+import type { s402PaymentPayload, s402SettlementVerification, s402SettleResponse } from 's402';
 import { TransactionDataBuilder } from '@mysten/sui/transactions';
 import { fromBase64 } from '@mysten/sui/utils';
-import type {
-  s402PaymentPayload,
-  s402SettleResponse,
-  s402SettlementVerification,
-} from 's402';
 
 /**
  * Verify that a facilitator's SettleResponse digest matches the transaction

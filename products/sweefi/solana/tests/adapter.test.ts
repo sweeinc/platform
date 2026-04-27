@@ -12,7 +12,32 @@
  *   - Constants sanity checks
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { s402PaymentRequirements } from 's402';
+import type {
+  ClientSolanaSigner,
+  FacilitatorSolanaSigner,
+  SolanaSimulateResult,
+} from '../src/index.js';
+// ─── Import SUT after mocks are hoisted ──────────────────────────────────────
+
+import {
+  createAssociatedTokenAccountIdempotentInstruction,
+  createTransferInstruction as mockCreateTransferInstruction,
+} from '@solana/spl-token';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  ATA_RENT_LAMPORTS,
+  BASE_FEE_LAMPORTS,
+  ExactSolanaClientScheme,
+  ExactSolanaFacilitatorScheme,
+  ExactSolanaServerScheme,
+  NATIVE_SOL_MINT,
+  SOLANA_DEVNET_CAIP2,
+  SOLANA_MAINNET_CAIP2,
+  SolanaKeypairSigner,
+  SolanaPaymentAdapter,
+  USDC_DEVNET_MINT,
+} from '../src/index.js';
 
 // ─── Peer dep mocks ───────────────────────────────────────────────────────────
 //
@@ -29,7 +54,6 @@ const {
   MOCK_USDC_MINT,
   MOCK_TX_SIGNATURE,
   MOCK_BLOCKHASH,
-  mockTransaction,
   MockTransaction,
   MockPublicKey,
   MockSystemProgram,
@@ -41,7 +65,8 @@ const {
   const _MOCK_PAYER_ADDRESS = 'HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH';
   const _MOCK_RECIPIENT_ADDRESS = 'BobVAwj3ySXFHR2eq6bBg9rp1fTQEUGegCGpCvTCnDvL';
   const _MOCK_USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
-  const _MOCK_TX_SIGNATURE = '5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d1MV3ry2FaLDDpTWFwJiE3FGJbDTdqtSURHEKnPfScTD';
+  const _MOCK_TX_SIGNATURE =
+    '5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d1MV3ry2FaLDDpTWFwJiE3FGJbDTdqtSURHEKnPfScTD';
   const _MOCK_BLOCKHASH = 'EkSnNWid2cvwEVnVx9aBqawnmiCNiDgp3gUdkDPTKN1N';
 
   const _mockTransaction = {
@@ -57,7 +82,10 @@ const {
     }),
     signatures: [
       {
-        publicKey: { toBase58: () => _MOCK_PAYER_ADDRESS, toBytes: () => new Uint8Array(32).fill(1) },
+        publicKey: {
+          toBase58: () => _MOCK_PAYER_ADDRESS,
+          toBytes: () => new Uint8Array(32).fill(1),
+        },
         signature: Buffer.from(new Uint8Array(64).fill(2)),
       },
     ],
@@ -66,7 +94,9 @@ const {
   };
 
   const _MockTransaction = vi.fn().mockImplementation(() => ({ ..._mockTransaction }));
-  (_MockTransaction as unknown as Record<string, unknown>).from = vi.fn().mockReturnValue({ ..._mockTransaction });
+  (_MockTransaction as unknown as Record<string, unknown>).from = vi
+    .fn()
+    .mockReturnValue({ ..._mockTransaction });
 
   const _MockPublicKey = vi.fn().mockImplementation((key: string) => ({
     toBase58: () => key,
@@ -143,38 +173,12 @@ vi.mock('@solana/spl-token', () => ({
     keys: [],
     data: Buffer.alloc(10),
   }),
-  getAssociatedTokenAddress: vi.fn().mockImplementation((_mint: unknown, owner: { toBase58(): string }) =>
-    Promise.resolve(
-      owner.toBase58() === MOCK_PAYER_ADDRESS ? MOCK_SOURCE_ATA : MOCK_DEST_ATA,
+  getAssociatedTokenAddress: vi
+    .fn()
+    .mockImplementation((_mint: unknown, owner: { toBase58(): string }) =>
+      Promise.resolve(owner.toBase58() === MOCK_PAYER_ADDRESS ? MOCK_SOURCE_ATA : MOCK_DEST_ATA),
     ),
-  ),
 }));
-
-// ─── Import SUT after mocks are hoisted ──────────────────────────────────────
-
-import {
-  createAssociatedTokenAccountIdempotentInstruction,
-  createTransferInstruction as mockCreateTransferInstruction,
-} from '@solana/spl-token';
-import {
-  ExactSolanaServerScheme,
-  ExactSolanaClientScheme,
-  ExactSolanaFacilitatorScheme,
-  SolanaPaymentAdapter,
-  SolanaKeypairSigner,
-  SOLANA_DEVNET_CAIP2,
-  SOLANA_MAINNET_CAIP2,
-  NATIVE_SOL_MINT,
-  USDC_DEVNET_MINT,
-  BASE_FEE_LAMPORTS,
-  ATA_RENT_LAMPORTS,
-} from '../src/index.js';
-import type {
-  ClientSolanaSigner,
-  FacilitatorSolanaSigner,
-  SolanaSimulateResult,
-} from '../src/index.js';
-import type { s402PaymentRequirements } from 's402';
 
 // ─── Test fixtures ────────────────────────────────────────────────────────────
 
@@ -293,7 +297,9 @@ describe('SolanaKeypairSigner', () => {
       sign: vi.fn().mockReturnValue({ signature: new Uint8Array(64) }),
     };
 
-    const signer = new SolanaKeypairSigner(mockKeypair as ConstructorParameters<typeof SolanaKeypairSigner>[0]);
+    const signer = new SolanaKeypairSigner(
+      mockKeypair as ConstructorParameters<typeof SolanaKeypairSigner>[0],
+    );
     expect(signer.address).toBe(MOCK_PAYER_ADDRESS);
   });
 });
@@ -307,7 +313,9 @@ describe('SolanaPaymentAdapter', () => {
     vi.clearAllMocks();
     adapter = new SolanaPaymentAdapter({
       wallet: mockSigner,
-      connection: mockConnection as ConstructorParameters<typeof SolanaPaymentAdapter>[0]['connection'],
+      connection: mockConnection as ConstructorParameters<
+        typeof SolanaPaymentAdapter
+      >[0]['connection'],
       network: SOLANA_DEVNET_CAIP2,
     });
   });
@@ -375,10 +383,15 @@ describe('SolanaPaymentAdapter — ATA creation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Default: ATA exists. Individual tests override with null to simulate missing ATA.
-    mockConnection.getAccountInfo.mockResolvedValue({ lamports: 2_039_280, data: Buffer.alloc(165) });
+    mockConnection.getAccountInfo.mockResolvedValue({
+      lamports: 2_039_280,
+      data: Buffer.alloc(165),
+    });
     adapter = new SolanaPaymentAdapter({
       wallet: mockSigner,
-      connection: mockConnection as ConstructorParameters<typeof SolanaPaymentAdapter>[0]['connection'],
+      connection: mockConnection as ConstructorParameters<
+        typeof SolanaPaymentAdapter
+      >[0]['connection'],
       network: SOLANA_DEVNET_CAIP2,
     });
   });
@@ -445,11 +458,11 @@ describe('SolanaPaymentAdapter — ATA creation', () => {
   it('signAndBroadcast() — ATA appears between simulate and broadcast: takes normal scheme path', async () => {
     // simulate() sees missing ATA; signAndBroadcast()'s independent check sees it now exists
     mockConnection.getAccountInfo
-      .mockResolvedValueOnce(null)                               // simulate's check
-      .mockResolvedValueOnce({ lamports: 2_039_280 });           // signAndBroadcast's check
+      .mockResolvedValueOnce(null) // simulate's check
+      .mockResolvedValueOnce({ lamports: 2_039_280 }); // signAndBroadcast's check
 
     const simResult = await adapter.simulate(makeReqs());
-    expect(simResult.ataCreationRequired).toBe(true);           // simulate correctly flagged it
+    expect(simResult.ataCreationRequired).toBe(true); // simulate correctly flagged it
 
     vi.clearAllMocks();
     mockConnection.getAccountInfo.mockResolvedValueOnce({ lamports: 2_039_280 });
@@ -487,7 +500,7 @@ describe('SolanaPaymentAdapter — ATA creation', () => {
 
     expect(createAssociatedTokenAccountIdempotentInstruction).toHaveBeenCalledWith(
       expect.objectContaining({ toBase58: expect.any(Function) }), // payer (PublicKey)
-      MOCK_DEST_ATA,                                                // destAta (string from getAssociatedTokenAddress mock)
+      MOCK_DEST_ATA, // destAta (string from getAssociatedTokenAddress mock)
       expect.objectContaining({ toBase58: expect.any(Function) }), // recipient (PublicKey)
       expect.objectContaining({ toBase58: expect.any(Function) }), // mint (PublicKey)
     );
@@ -520,7 +533,10 @@ describe('SolanaPaymentAdapter — ATA creation', () => {
     mockConnection.getAccountInfo.mockResolvedValueOnce(null);
 
     const { txId } = await adapter.signAndBroadcast(
-      makeReqs({ protocolFeeBps: 50, protocolFeeAddress: 'FeeWallet11111111111111111111111111111111111' }),
+      makeReqs({
+        protocolFeeBps: 50,
+        protocolFeeAddress: 'FeeWallet11111111111111111111111111111111111',
+      }),
     );
 
     expect(txId).toBe(MOCK_TX_SIGNATURE);
@@ -573,11 +589,13 @@ describe('ExactSolanaClientScheme', () => {
 describe('ExactSolanaFacilitatorScheme', () => {
   const mockFacilitatorSigner: FacilitatorSolanaSigner = {
     verifyAndGetPayer: vi.fn().mockResolvedValue(MOCK_PAYER_ADDRESS),
-    simulateTransaction: vi.fn().mockResolvedValue(makeSimResult({
-      // SOL path: recipient (index 1) received 1_000_000 lamports
-      preBalances: [1_000_000_000, 0],
-      postBalances: [998_995_000, 1_000_000],
-    })),
+    simulateTransaction: vi.fn().mockResolvedValue(
+      makeSimResult({
+        // SOL path: recipient (index 1) received 1_000_000 lamports
+        preBalances: [1_000_000_000, 0],
+        postBalances: [998_995_000, 1_000_000],
+      }),
+    ),
     executeTransaction: vi.fn().mockResolvedValue(MOCK_TX_SIGNATURE),
     confirmTransaction: vi.fn().mockResolvedValue(undefined),
   };
@@ -592,15 +610,21 @@ describe('ExactSolanaFacilitatorScheme', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (mockFacilitatorSigner.verifyAndGetPayer as ReturnType<typeof vi.fn>).mockResolvedValue(MOCK_PAYER_ADDRESS);
+    (mockFacilitatorSigner.verifyAndGetPayer as ReturnType<typeof vi.fn>).mockResolvedValue(
+      MOCK_PAYER_ADDRESS,
+    );
     (mockFacilitatorSigner.simulateTransaction as ReturnType<typeof vi.fn>).mockResolvedValue(
       makeSimResult({
         preBalances: [1_000_000_000, 0],
         postBalances: [998_995_000, 1_000_000],
       }),
     );
-    (mockFacilitatorSigner.executeTransaction as ReturnType<typeof vi.fn>).mockResolvedValue(MOCK_TX_SIGNATURE);
-    (mockFacilitatorSigner.confirmTransaction as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
+    (mockFacilitatorSigner.executeTransaction as ReturnType<typeof vi.fn>).mockResolvedValue(
+      MOCK_TX_SIGNATURE,
+    );
+    (mockFacilitatorSigner.confirmTransaction as ReturnType<typeof vi.fn>).mockResolvedValue(
+      undefined,
+    );
   });
 
   it('has scheme = "exact"', () => {
@@ -689,9 +713,7 @@ describe('ExactSolanaFacilitatorScheme', () => {
       'implement by mocking postTokenBalances with owner === MOCK_RECIPIENT_ADDRESS',
   );
 
-  it.todo(
-    'Danny: verify() returns invalid when SPL token recipient balance did not increase',
-  );
+  it.todo('Danny: verify() returns invalid when SPL token recipient balance did not increase');
 });
 
 // ─── Constants sanity ─────────────────────────────────────────────────────────

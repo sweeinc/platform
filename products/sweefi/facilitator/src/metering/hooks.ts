@@ -1,9 +1,9 @@
-import { AsyncLocalStorage } from "node:async_hooks";
-import { createHash } from "node:crypto";
-import type { MiddlewareHandler } from "hono";
-import type { UsageTracker } from "./usage-tracker";
-import { calculateFee } from "./fee-calculator";
-import type { s402SettleResponse, s402PaymentRequirements } from "s402";
+import type { MiddlewareHandler } from 'hono';
+import type { s402PaymentRequirements, s402SettleResponse } from 's402';
+import type { UsageTracker } from './usage-tracker';
+import { AsyncLocalStorage } from 'node:async_hooks';
+import { createHash } from 'node:crypto';
+import { calculateFee } from './fee-calculator';
 
 /**
  * Request-scoped storage for the authenticated API key.
@@ -19,7 +19,7 @@ export const requestApiKey = new AsyncLocalStorage<string>();
  */
 export function meteringContext(): MiddlewareHandler {
   return async (c, next) => {
-    const apiKey = c.get("apiKey") as string | undefined;
+    const apiKey = c.get('apiKey') as string | undefined;
     if (apiKey) {
       await requestApiKey.run(apiKey, next);
     } else {
@@ -43,28 +43,25 @@ export function recordSettlement(
   feeMicroPercent: number,
 ): void {
   try {
-    tracker.record(
-      apiKey,
-      requirements.amount,
-      requirements.network,
-      result.txDigest ?? "",
-    );
+    tracker.record(apiKey, requirements.amount, requirements.network, result.txDigest ?? '');
 
     const fee = calculateFee(requirements.amount, feeMicroPercent);
 
     // Phase 1: structured log for manual invoicing
     // Phase 2: replace with on-chain fee splitting via Move contract
-    console.log(JSON.stringify({
-      event: "settlement_metered",
-      apiKey: createHash("sha256").update(apiKey).digest("hex").slice(0, 8),
-      amount: requirements.amount,
-      fee: fee.toString(),
-      feeMicroPercent,
-      network: requirements.network,
-      txDigest: result.txDigest,
-    }));
+    console.log(
+      JSON.stringify({
+        event: 'settlement_metered',
+        apiKey: createHash('sha256').update(apiKey).digest('hex').slice(0, 8),
+        amount: requirements.amount,
+        fee: fee.toString(),
+        feeMicroPercent,
+        network: requirements.network,
+        txDigest: result.txDigest,
+      }),
+    );
   } catch (err) {
     // Metering failure must not break the payment flow
-    console.error("[metering] recordSettlement error:", err);
+    console.error('[metering] recordSettlement error:', err);
   }
 }

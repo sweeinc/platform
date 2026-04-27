@@ -8,20 +8,19 @@
  * Then any component can call useSweefiPayment() without passing the controller.
  */
 
-import type { App, InjectionKey } from "vue";
-import { inject } from "vue";
-import type { PaymentController } from "@sweefi/ui-core";
+import type { PaymentController } from '@sweefi/ui-core';
+import type { App, InjectionKey } from 'vue';
+import { inject } from 'vue';
 
 /** InjectionKey used by SweefiPlugin and useSweefiPayment(). */
-export const SWEEFI_CONTROLLER_KEY: InjectionKey<PaymentController> =
-  Symbol("sweefi:controller");
+export const SWEEFI_CONTROLLER_KEY: InjectionKey<PaymentController> = Symbol('sweefi:controller');
 
 export const SweefiPlugin = {
   install(app: App, controller: PaymentController): void {
     if (!controller) {
       throw new Error(
-        "SweefiPlugin requires a PaymentController. " +
-          "Pass one as the second argument: app.use(SweefiPlugin, controller)"
+        'SweefiPlugin requires a PaymentController. ' +
+          'Pass one as the second argument: app.use(SweefiPlugin, controller)',
       );
     }
     app.provide(SWEEFI_CONTROLLER_KEY, controller);
@@ -36,8 +35,8 @@ export function useSweefiController(): PaymentController {
   const controller = inject(SWEEFI_CONTROLLER_KEY);
   if (!controller) {
     throw new Error(
-      "useSweefiController: SweefiPlugin is not installed on this app. " +
-        "Call app.use(SweefiPlugin, controller) before using this function."
+      'useSweefiController: SweefiPlugin is not installed on this app. ' +
+        'Call app.use(SweefiPlugin, controller) before using this function.',
     );
   }
   return controller;

@@ -1,7 +1,7 @@
-import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
-import type { SweefiConfig, PayParams } from "./types";
-import { SUI_CLOCK } from "./deployments";
-import { assertFeeMicroPercent, assertPositive } from "./assert";
+import type { PayParams, SweefiConfig } from './types';
+import { coinWithBalance, Transaction } from '@mysten/sui/transactions';
+import { assertFeeMicroPercent, assertPositive } from './assert';
+import { SUI_CLOCK } from './deployments';
 
 /**
  * Parameters for the atomic pay-and-keep-receipt flow.
@@ -30,19 +30,17 @@ export interface PayAndProveParams extends PayParams {
  *
  * @returns The built Transaction, ready to sign and execute
  */
-export function buildPayAndProveTx(
-  config: SweefiConfig,
-  params: PayAndProveParams,
-): Transaction {
-  assertPositive(params.amount, "amount", "buildPayAndProveTx");
-  assertFeeMicroPercent(params.feeMicroPercent, "buildPayAndProveTx");
+export function buildPayAndProveTx(config: SweefiConfig, params: PayAndProveParams): Transaction {
+  assertPositive(params.amount, 'amount', 'buildPayAndProveTx');
+  assertFeeMicroPercent(params.feeMicroPercent, 'buildPayAndProveTx');
 
   const tx = new Transaction();
   tx.setSender(params.sender);
 
-  const memo = typeof params.memo === "string"
-    ? new TextEncoder().encode(params.memo)
-    : params.memo ?? new Uint8Array();
+  const memo =
+    typeof params.memo === 'string'
+      ? new TextEncoder().encode(params.memo)
+      : (params.memo ?? new Uint8Array());
 
   const coin = coinWithBalance({ type: params.coinType, balance: params.amount });
 
@@ -56,7 +54,7 @@ export function buildPayAndProveTx(
       tx.pure.u64(params.amount),
       tx.pure.u64(params.feeMicroPercent),
       tx.pure.address(params.feeRecipient),
-      tx.pure.vector("u8", Array.from(memo)),
+      tx.pure.vector('u8', Array.from(memo)),
       tx.object(SUI_CLOCK),
     ],
   });
