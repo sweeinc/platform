@@ -21,6 +21,7 @@
     "typecheck": "turbo run typecheck",
     "lint": "pnpm run oxlint:check && pnpm run prettier:check",
     "lint:fix": "pnpm run oxlint:fix && pnpm run prettier:fix",
+    "check:boundary": "node scripts/check-boundary.mjs",
     "oxlint:check": "oxlint .",
     "oxlint:fix": "oxlint --fix .",
     "prettier:check": "prettier -c --ignore-unknown .",
@@ -28,7 +29,7 @@
     "clean": "turbo run clean && rm -rf node_modules/.cache .turbo",
     "changeset": "changeset",
     "version": "changeset version",
-    "release": "turbo run build && changeset publish"
+    "release": "pnpm run check:boundary && turbo run build && changeset publish"
   },
   "engines": {
     "node": ">=20",

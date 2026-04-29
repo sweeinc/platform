@@ -1,0 +1,28 @@
+name: Boundary Check
+
+# Enforces DAN-411 §15 rule #4: platform packages CANNOT depend on lab-only
+# scopes (@sweeagent/*, @sweeos/*, @sweesense/*, @sweeworld/*, @sweeinc/swee*).
+# This is the load-bearing invariant of the two-monorepo architecture — if it
+# silently breaks, the geometric guarantees of platform/lab separation
+# collapse to "trust the convention."
+#
+# Runs on every push to main and every PR. Fails the build if a violation is
+# found. The same check runs locally via `pnpm check:boundary` and is gated
+# into `pnpm release` so it cannot be bypassed via direct npm publish.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  boundary:
+    name: Cross-monorepo dependency boundary
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Run boundary check
+        run: node scripts/check-boundary.mjs
